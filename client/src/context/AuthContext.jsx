@@ -20,11 +20,23 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser && token) {
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed._id) {
+          setUser(parsed);
+        } else {
+          throw new Error('Invalid user data');
+        }
+      }
+    } catch (err) {
+      console.error('Failed to parse stored user:', err);
+      localStorage.removeItem('user');
+      setToken('');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [token]);
 
   const login = async (email, password) => {
