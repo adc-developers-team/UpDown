@@ -90,11 +90,21 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, [user._id]);
 
-  // Safety: ensure users is an array
+  // ✅ নিরাপদ সার্চ ফাংশন
   const safeUsers = Array.isArray(users) ? users : [];
-  const filteredUsers = safeUsers.filter(u => u.username?.toLowerCase().includes(search.toLowerCase()));
+  const filteredUsers = safeUsers.filter(u => {
+    const name = (u.fullName || u.username || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const keyword = search.toLowerCase();
+    return name.includes(keyword) || email.includes(keyword);
+  });
+
   const safeGroups = Array.isArray(groups) ? groups : [];
-  const filteredGroups = safeGroups.filter(g => g.name?.toLowerCase().includes(search.toLowerCase()));
+  const filteredGroups = safeGroups.filter(g => {
+    const name = (g.name || '').toLowerCase();
+    const keyword = search.toLowerCase();
+    return name.includes(keyword);
+  });
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white max-w-7xl mx-auto w-full">
@@ -158,8 +168,8 @@ const Homepage = () => {
 
         {activeTab === 'groups' && filteredGroups.map(g => (
           <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-800 border-b border-gray-800/50">
-            <div className="w-12 h-12 rounded-full bg-light-blue flex items-center justify-center text-lg font-semibold">{g.name[0].toUpperCase()}</div>
-            <div className="flex-1"><h3 className="font-medium">{g.name}</h3><p className="text-sm text-gray-400">{g.members.length} members</p></div>
+            <div className="w-12 h-12 rounded-full bg-light-blue flex items-center justify-center text-lg font-semibold">{g.name?.[0]?.toUpperCase()}</div>
+            <div className="flex-1"><h3 className="font-medium">{g.name}</h3><p className="text-sm text-gray-400">{g.members?.length || 0} members</p></div>
           </Link>
         ))}
 
