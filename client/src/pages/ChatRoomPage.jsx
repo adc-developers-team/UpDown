@@ -6,10 +6,11 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
-  FiMicOff, FiVolume2
+  FiMicOff, FiVolume2, FiPhoneCall, FiPhoneMissed, FiPhoneIncoming
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
+/* ---------- helpers ---------- */
 const getLastSeenText = (d) => {
   if (!d) return 'Last seen long ago';
   const date = new Date(d), now = new Date();
@@ -67,6 +68,7 @@ const renderTextWithLinks = (text) => {
   return elements;
 };
 
+/* ---------- WebRTC config ---------- */
 const iceServers = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -74,6 +76,7 @@ const iceServers = {
   ],
 };
 
+/* ---------- component ---------- */
 const ChatRoomPage = () => {
   const { userId } = useParams();
   const { user } = useAuth();
@@ -94,6 +97,7 @@ const ChatRoomPage = () => {
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
+  // ---------- call states ----------
   const [inCall, setInCall] = useState(false);
   const [calling, setCalling] = useState(false);
   const [incoming, setIncoming] = useState(false);
@@ -112,6 +116,7 @@ const ChatRoomPage = () => {
 
   useEffect(() => {
     socketRef.current = io('https://updown-hms5.onrender.com');
+
     axios.get('https://updown-hms5.onrender.com/api/auth/users')
       .then(res => {
         const found = res.data.find(u => u._id === userId);
@@ -123,45 +128,257 @@ const ChatRoomPage = () => {
     socketRef.current.on('message deleted', id => setMessages(prev => prev.filter(m => m._id !== id)));
     socketRef.current.on('message reaction updated', updated => setMessages(prev => prev.map(m => m._id === updated._id ? updated : m)));
 
+    // Call listeners
     socketRef.current.on('incoming-call', ({ callerId, signal, callType }) => {
       setCallerSignal({ callerId, signal });
       setCallType(callType);
       setIncoming(true);
     });
+
     socketRef.current.on('call-accepted', ({ signal }) => {
       if (peerRef.current) peerRef.current.setRemoteDescription(new RTCSessionDescription(signal));
-      setCalling(false); setInCall(true); startCallTimer();
+      setCalling(false);
+      setInCall(true);
+      startCallTimer();
     });
-    socketRef.current.on('call-rejected', () => { setCalling(false); setInCall(false); cleanupCall(); alert('Call rejected'); });
-    socketRef.current.on('call-ended', () => { setInCall(false); setIncoming(false); setCalling(false); cleanupCall(); });
-    socketRef.current.on('call-failed', ({ message }) => { alert(message); setCalling(false); });
+
+    socketRef.current.on('call-rejected', () => {
+      setCalling(false);
+      setInCall(false);
+      cleanupCall();
+      alert('Call rejected');
+    });
+
+    socketRef.current.on('call-ended', () => {
+      setInCall(false);
+      setIncoming(false);
+      setCalling(false);
+      cleanupCall();
+    });
+
+    socketRef.current.on('call-failed', ({ message }) => {
+      alert(message);
+      setCalling(false);
+    });
+
     socketRef.current.on('ice-candidate', ({ candidate }) => {
-      if (peerRef.current) { try { peerRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) {} }
+      if (peerRef.current) {
+        try { peerRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) {}
+      }
     });
+
     socketRef.current.emit('set-username', user.username);
 
     return () => socketRef.current.disconnect();
   }, [userId, setSelectedUser, user.username]);
 
-  const startCall = async (type) => { /* unchanged */ };
-  const acceptIncomingCall = async () => { /* unchanged */ };
-  const rejectIncomingCall = () => { /* unchanged */ };
-  const endCall = () => { /* unchanged */ };
-  const cleanupCall = () => { /* unchanged */ };
-  const startCallTimer = () => { /* unchanged */ };
-  const toggleMic = () => { /* unchanged */ };
-  const toggleVideo = () => { /* unchanged */ };
-  const toggleSpeaker = () => { /* unchanged */ };
+  /* ---------- call logic ---------- */
+  const startCall = async (type) => {
+    setCallType(type);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: type === 'video',
+      });
+      setLocalStream(stream);
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
-  const uploadFile = async (file, type) => { /* unchanged */ };
-  const handleImageSelect = (e) => { /* unchanged */ };
-  const handleVideoSelect = (e) => { /* unchanged */ };
-  const startRecording = async () => { /* unchanged */ };
-  const stopRecording = () => { /* unchanged */ };
-  const deleteMsg = async (id) => { /* unchanged */ };
-  const reactToMsg = (msgId, emoji) => { /* unchanged */ };
-  const handleTyping = () => { /* unchanged */ };
-  const handleSend = (e) => { e.preventDefault(); if (newMsg.trim()) { sendMessage(newMsg); setNewMsg(''); socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') }); } };
+      const peer = new RTCPeerConnection(iceServers);
+      peerRef.current = peer;
+      stream.getTracks().forEach(track => peer.addTrack(track, stream));
+
+      peer.onicecandidate = (e) => {
+        if (e.candidate) socketRef.current.emit('ice-candidate', { to: userId, candidate: e.candidate });
+      };
+
+      peer.ontrack = (e) => {
+        if (e.streams && e.streams[0]) {
+          setRemoteStream(e.streams[0]);
+          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
+        }
+      };
+
+      const offer = await peer.createOffer();
+      await peer.setLocalDescription(offer);
+
+      socketRef.current.emit('call-user', {
+        callerId: user._id,
+        receiverId: userId,
+        signal: offer,
+        callType: type,
+      });
+
+      setCalling(true);
+    } catch (err) {
+      if (err.name === 'NotAllowedError') alert('Please allow camera & microphone in browser settings.');
+      else if (err.name === 'NotFoundError') alert('No camera or microphone found.');
+      else alert('Call failed: ' + err.message);
+    }
+  };
+
+  const acceptIncomingCall = async () => {
+    if (!callerSignal) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: callType === 'video',
+      });
+      setLocalStream(stream);
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+
+      const peer = new RTCPeerConnection(iceServers);
+      peerRef.current = peer;
+      stream.getTracks().forEach(track => peer.addTrack(track, stream));
+
+      peer.onicecandidate = (e) => {
+        if (e.candidate) socketRef.current.emit('ice-candidate', { to: callerSignal.callerId, candidate: e.candidate });
+      };
+
+      peer.ontrack = (e) => {
+        if (e.streams && e.streams[0]) {
+          setRemoteStream(e.streams[0]);
+          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
+        }
+      };
+
+      await peer.setRemoteDescription(new RTCSessionDescription(callerSignal.signal));
+      const answer = await peer.createAnswer();
+      await peer.setLocalDescription(answer);
+
+      socketRef.current.emit('accept-call', { callerId: callerSignal.callerId, signal: answer });
+      setIncoming(false);
+      setInCall(true);
+      startCallTimer();
+    } catch (err) {
+      alert('Could not answer: ' + err.message);
+    }
+  };
+
+  const rejectIncomingCall = () => {
+    socketRef.current.emit('reject-call', { callerId: callerSignal.callerId });
+    setIncoming(false);
+    setCallerSignal(null);
+  };
+
+  const endCall = () => {
+    if (peerRef.current) peerRef.current.close();
+    socketRef.current.emit('end-call', { to: userId });
+    cleanupCall();
+    setInCall(false);
+    setCalling(false);
+    setIncoming(false);
+  };
+
+  const cleanupCall = () => {
+    if (localStream) localStream.getTracks().forEach(track => track.stop());
+    setLocalStream(null);
+    setRemoteStream(null);
+    if (peerRef.current) { peerRef.current.close(); peerRef.current = null; }
+    clearInterval(callTimerRef.current);
+    setCallDuration(0);
+  };
+
+  const startCallTimer = () => {
+    callTimerRef.current = setInterval(() => setCallDuration(prev => prev + 1), 1000);
+  };
+
+  const toggleMic = () => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach(track => track.enabled = !track.enabled);
+      setMicMuted(!micMuted);
+    }
+  };
+
+  const toggleVideo = () => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(track => track.enabled = !track.enabled);
+      setVideoEnabled(!videoEnabled);
+    }
+  };
+
+  const toggleSpeaker = () => setSpeakerOn(!speakerOn);
+
+  /* ---------- file/message functions ---------- */
+  const uploadFile = async (file, type) => {
+    if (file.size > MAX_FILE_SIZE) return alert(`File too large. Max ${MAX_FILE_SIZE/1048576}MB.`);
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      const result = await new Promise((res, rej) => { reader.onload = () => res(reader.result); reader.onerror = rej; reader.readAsDataURL(file); });
+      const token = localStorage.getItem('token');
+      const endpoint = type === 'image' ? '/api/upload/image' : '/api/upload/video';
+      const field = type === 'image' ? 'image' : 'video';
+      const { data } = await axios.post(`https://updown-hms5.onrender.com${endpoint}`, { [field]: result }, { headers: { Authorization: `Bearer ${token}` } });
+      const url = type === 'image' ? data.imageUrl : data.videoUrl;
+      socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: url });
+      socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
+    } catch (err) { alert(err.response?.data?.message || err.message || 'Upload failed'); }
+    finally { setUploading(false); }
+  };
+
+  const handleImageSelect = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0], 'image'); e.target.value = ''; };
+  const handleVideoSelect = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0], 'video'); e.target.value = ''; };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder; chunksRef.current = [];
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          try {
+            const token = localStorage.getItem('token');
+            const { data } = await axios.post('https://updown-hms5.onrender.com/api/upload/audio', { audio: reader.result }, { headers: { Authorization: `Bearer ${token}` } });
+            socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: data.audioUrl });
+            socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
+          } catch (err) { alert('Audio upload failed'); }
+        };
+        reader.readAsDataURL(blob);
+      };
+      recorder.start(); setIsRecording(true); setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime(p => p + 1), 1000);
+    } catch { alert('Microphone access denied'); }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current?.state === 'recording') {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+      setIsRecording(false); clearInterval(recordingTimerRef.current);
+    }
+  };
+
+  const deleteMsg = async (id) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`https://updown-hms5.onrender.com/api/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const convId = [user._id, userId].sort().join('_');
+      socketRef.current?.emit('delete message', { messageId: id, conversationId: convId });
+      setMessages(prev => prev.filter(m => m._id !== id));
+    } catch (err) { alert(err.response?.data?.message || 'Delete failed'); }
+  };
+
+  const reactToMsg = (msgId, emoji) => {
+    const convId = [user._id, userId].sort().join('_');
+    socketRef.current?.emit('react to message', { messageId: msgId, emoji, userId: user._id, conversationId: convId });
+    setReactionPicker(null);
+  };
+
+  const handleTyping = () => {
+    if (!socketRef.current) return;
+    const convId = [user._id, userId].sort().join('_');
+    socketRef.current.emit('typing', { conversationId: convId, senderName: user.username });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => socketRef.current.emit('stop typing', { conversationId: convId }), 2000);
+  };
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    if (newMsg.trim()) { sendMessage(newMsg); setNewMsg(''); socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') }); }
+  };
 
   const renderTick = (msg) => {
     if (msg.sender._id !== user._id) return null;
@@ -172,9 +389,19 @@ const ChatRoomPage = () => {
       default: return null;
     }
   };
-  const renderReactions = (msg) => { /* unchanged */ };
+
+  const renderReactions = (msg) => {
+    if (!msg.reactions || Object.keys(msg.reactions).length === 0) return null;
+    return <div className="flex gap-1 mt-1">{Object.entries(msg.reactions).map(([emoji, ids]) => <span key={emoji} className="text-sm bg-gray-800 rounded-full px-1.5 py-0.5">{emoji} {ids.length > 1 && ids.length}</span>)}</div>;
+  };
+
   const formatRecTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-  const getMediaType = (url) => { /* unchanged */ };
+  const getMediaType = (url) => {
+    if (/\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url)) return 'video';
+    if (/\.(mp3|wav|aac|m4a|flac)$/i.test(url)) return 'audio';
+    if (/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url)) return 'image';
+    return 'unknown';
+  };
 
   if (!chatUser) return <div className="h-screen bg-chat-bg flex items-center justify-center text-white">Loading...</div>;
 
@@ -184,48 +411,76 @@ const ChatRoomPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white max-w-7xl mx-auto w-full">
-      {/* Call overlay */}
+      {/* ===== CALL SCREEN OVERLAY ===== */}
       {(inCall || calling || incoming) && (
-        <div className="absolute inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 z-50 bg-gradient-to-b from-dark-blue to-black bg-opacity-95 flex flex-col items-center justify-center">
+          {/* Incoming call */}
           {incoming && callerSignal && (
-            <div className="text-center space-y-6">
-              <div className="w-24 h-24 rounded-full bg-light-blue flex items-center justify-center text-4xl mx-auto">{chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}</div>
-              <h2 className="text-2xl font-bold">{chatUser.fullName || chatUser.username}</h2>
-              <p className="text-gray-300">{callType === 'video' ? 'Video call' : 'Voice call'}</p>
-              <div className="flex gap-6 justify-center">
-                <button onClick={rejectIncomingCall} className="bg-red-600 rounded-full p-4"><FiPhoneOff size={28} /></button>
-                <button onClick={acceptIncomingCall} className="bg-green-600 rounded-full p-4"><FiPhone size={28} /></button>
+            <div className="text-center space-y-8 animate-fade-in">
+              <div className="w-32 h-32 rounded-full bg-light-blue flex items-center justify-center text-5xl mx-auto relative">
+                <span className="animate-ping absolute inset-0 rounded-full bg-light-blue opacity-20"></span>
+                {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover rounded-full" /> : (chatUser.fullName?.[0] || chatUser.username[0].toUpperCase())}
+              </div>
+              <h2 className="text-3xl font-bold">{chatUser.fullName || chatUser.username}</h2>
+              <p className="text-gray-300 text-lg">{callType === 'video' ? '📹 Video call' : '📞 Voice call'}</p>
+              <div className="flex gap-8 justify-center mt-8">
+                <button onClick={rejectIncomingCall} className="bg-red-600 hover:bg-red-700 rounded-full p-5 transform transition hover:scale-110">
+                  <FiPhoneOff size={32} />
+                </button>
+                <button onClick={acceptIncomingCall} className="bg-green-600 hover:bg-green-700 rounded-full p-5 transform transition hover:scale-110">
+                  <FiPhone size={32} />
+                </button>
               </div>
             </div>
           )}
+
+          {/* Outgoing call / In call */}
           {(calling || inCall) && (
-            <div className="text-center w-full h-full flex flex-col">
+            <div className="w-full h-full flex flex-col">
               <div className="flex-1 flex items-center justify-center relative">
+                {/* Video call background */}
                 {callType === 'video' && (
                   <>
                     <video ref={remoteVideoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
-                    <video ref={localVideoRef} autoPlay playsInline muted className="absolute bottom-4 right-4 w-24 h-24 rounded-xl border-2 border-white object-cover z-10" />
+                    <video ref={localVideoRef} autoPlay playsInline muted className="absolute bottom-6 right-6 w-28 h-40 rounded-xl border-2 border-white object-cover z-10 shadow-2xl" />
                   </>
                 )}
+                {/* Audio call avatar */}
                 {callType === 'audio' && (
                   <div className="flex flex-col items-center">
-                    <div className="w-32 h-32 rounded-full bg-light-blue flex items-center justify-center text-5xl mb-4">{chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}</div>
-                    <p className="text-xl">{chatUser.fullName || chatUser.username}</p>
-                    <p className="text-gray-400">{calling ? 'Calling...' : callTime}</p>
+                    <div className="w-36 h-36 rounded-full bg-light-blue flex items-center justify-center text-6xl mb-6 relative">
+                      <span className="animate-ping absolute inset-0 rounded-full bg-light-blue opacity-20"></span>
+                      {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover rounded-full" /> : (chatUser.fullName?.[0] || chatUser.username[0].toUpperCase())}
+                    </div>
+                    <h2 className="text-2xl font-semibold">{chatUser.fullName || chatUser.username}</h2>
+                    <p className="text-gray-400 mt-2 text-lg">{calling ? 'Ringing...' : callTime}</p>
                   </div>
                 )}
               </div>
-              <div className="bg-gray-900 p-4 flex justify-center gap-6">
-                <button onClick={toggleMic} className={`p-3 rounded-full ${micMuted ? 'bg-red-600' : 'bg-gray-700'}`}><FiMicOff size={20} /></button>
-                {callType === 'video' && <button onClick={toggleVideo} className={`p-3 rounded-full ${!videoEnabled ? 'bg-red-600' : 'bg-gray-700'}`}><FiVideoOff size={20} /></button>}
-                <button onClick={toggleSpeaker} className={`p-3 rounded-full ${speakerOn ? 'bg-gray-700' : 'bg-blue-600'}`}><FiVolume2 size={20} /></button>
-                <button onClick={endCall} className="p-3 rounded-full bg-red-600"><FiPhoneOff size={20} /></button>
+
+              {/* Call controls */}
+              <div className="bg-gray-900/90 backdrop-blur px-6 py-5 flex items-center justify-center gap-6 rounded-t-3xl">
+                <button onClick={toggleMic} className={`p-4 rounded-full transition ${micMuted ? 'bg-red-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
+                  {micMuted ? <FiMicOff size={22} /> : <FiMic size={22} />}
+                </button>
+                {callType === 'video' && (
+                  <button onClick={toggleVideo} className={`p-4 rounded-full transition ${!videoEnabled ? 'bg-red-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
+                    {!videoEnabled ? <FiVideoOff size={22} /> : <FiVideo size={22} />}
+                  </button>
+                )}
+                <button onClick={toggleSpeaker} className={`p-4 rounded-full transition ${speakerOn ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-blue-600 text-white'}`}>
+                  <FiVolume2 size={22} />
+                </button>
+                <button onClick={endCall} className="p-4 rounded-full bg-red-600 hover:bg-red-700 transition transform hover:scale-110">
+                  <FiPhoneOff size={28} />
+                </button>
               </div>
             </div>
           )}
         </div>
       )}
 
+      {/* ===== NORMAL CHAT UI ===== */}
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
         <Link to="/" className="text-white hover:text-light-blue"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-light-blue overflow-hidden flex items-center justify-center">
