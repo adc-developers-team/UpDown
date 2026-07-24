@@ -43,8 +43,8 @@ const Homepage = () => {
     const fetchData = async () => {
       try {
         const [friendsRes, groupsRes] = await Promise.all([
-          axios.get('http://192.168.0.102:5000/api/friends', config),
-          axios.get('http://192.168.0.102:5000/api/groups', config)
+          axios.get('import.meta.env.VITE_API_URL/api/friends', config),
+          axios.get('import.meta.env.VITE_API_URL/api/groups', config)
         ]);
         setUsers(friendsRes.data);
         setGroups(groupsRes.data);
@@ -59,7 +59,7 @@ const Homepage = () => {
   useEffect(() => {
     const fetchPending = async () => {
       try {
-        const { data } = await axios.get('http://192.168.0.102:5000/api/friends/requests/received', config);
+        const { data } = await axios.get('import.meta.env.VITE_API_URL/api/friends/requests/received', config);
         setPendingCount(data.length);
       } catch (err) { console.error(err); }
     };
@@ -73,8 +73,8 @@ const Homepage = () => {
     const fetchMessageData = async () => {
       try {
         const [lastRes, unreadRes] = await Promise.all([
-          axios.get(`http://192.168.0.102:5000/api/messages/last-messages/${user._id}`, config),
-          axios.get(`http://192.168.0.102:5000/api/messages/unread-counts/${user._id}`, config)
+          axios.get(`import.meta.env.VITE_API_URL/api/messages/last-messages/${user._id}`, config),
+          axios.get(`import.meta.env.VITE_API_URL/api/messages/unread-counts/${user._id}`, config)
         ]);
         const map = {};
         lastRes.data.forEach(msg => {

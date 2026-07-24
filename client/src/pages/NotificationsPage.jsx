@@ -18,7 +18,7 @@ const NotificationsPage = () => {
 
   const fetchRequests = async () => {
     try {
-      const { data } = await axios.get('http://192.168.0.102:5000/api/friends/requests/received', config);
+      const { data } = await axios.get('import.meta.env.VITE_API_URL/api/friends/requests/received', config);
       setRequests(data);
     } catch (err) {
       console.error(err);
@@ -40,7 +40,7 @@ const NotificationsPage = () => {
     const { requestId, action } = confirming;
     try {
       await axios.put(
-        `http://192.168.0.102:5000/api/friends/request/${requestId}`,
+        `import.meta.env.VITE_API_URL/api/friends/request/${requestId}`,
         { action },
         config
       );

@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await axios.post('http://192.168.0.102:5000/api/auth/login', { email, password });
+    const res = await axios.post('import.meta.env.VITE_API_URL/api/auth/login', { email, password });
     const { token, ...userData } = res.data;
     setUser(userData);
     setToken(token);
@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (username, email, password) => {
-    const res = await axios.post('http://192.168.0.102:5000/api/auth/signup', { username, email, password });
+    const res = await axios.post('import.meta.env.VITE_API_URL/api/auth/signup', { username, email, password });
     const { token, ...userData } = res.data;
     setUser(userData);
     setToken(token);

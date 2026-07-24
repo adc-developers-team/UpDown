@@ -34,14 +34,14 @@ const GroupChatPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const config = { headers: { Authorization: `Bearer ${token}` } };
-    axios.get(`http://192.168.0.102:5000/api/groups/${groupId}`, config)
+    axios.get(`import.meta.env.VITE_API_URL/api/groups/${groupId}`, config)
       .then(res => setGroup(res.data))
       .catch(console.log);
-    axios.get(`http://192.168.0.102:5000/api/group-messages/${groupId}`)
+    axios.get(`import.meta.env.VITE_API_URL/api/group-messages/${groupId}`)
       .then(res => setMessages(res.data))
       .catch(console.log);
 
-    socketRef.current = io('http://192.168.0.102:5000');
+    socketRef.current = io('import.meta.env.VITE_API_URL');
     socketRef.current.emit('join group', groupId);
     socketRef.current.on('group message received', (msg) => setMessages(prev => [...prev, msg]));
     socketRef.current.on('group user typing', ({ senderName }) => setTypingUsers(prev => prev.includes(senderName) ? prev : [...prev, senderName]));

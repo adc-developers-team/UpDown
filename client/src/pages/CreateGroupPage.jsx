@@ -15,7 +15,7 @@ const CreateGroupPage = () => {
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
   useEffect(() => {
-    axios.get('http://192.168.0.102:5000/api/friends', config)
+    axios.get('import.meta.env.VITE_API_URL/api/friends', config)
       .then(res => setFriends(res.data))
       .catch(console.log);
   }, []);
@@ -27,7 +27,7 @@ const CreateGroupPage = () => {
   const handleCreate = async () => {
     if (!groupName.trim() || selected.length === 0) return alert('Enter group name and select members');
     try {
-      const { data } = await axios.post('http://192.168.0.102:5000/api/groups', {
+      const { data } = await axios.post('import.meta.env.VITE_API_URL/api/groups', {
         name: groupName,
         members: selected
       }, config);

@@ -23,7 +23,7 @@ const EditProfilePage = () => {
       try {
         const token = localStorage.getItem('token');
         const { data } = await axios.post(
-          'http://192.168.0.102:5000/api/upload/profile-pic',
+          'import.meta.env.VITE_API_URL/api/upload/profile-pic',
           { image: reader.result },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -45,7 +45,7 @@ const EditProfilePage = () => {
     try {
       const token = localStorage.getItem('token');
       const { data } = await axios.put(
-        'http://192.168.0.102:5000/api/auth/profile',
+        'import.meta.env.VITE_API_URL/api/auth/profile',
         { username, profilePic },
         { headers: { Authorization: `Bearer ${token}` } }
       );

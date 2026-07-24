@@ -17,7 +17,7 @@ export const ChatProvider = ({ children }) => {
 
   useEffect(() => {
     if (user) {
-      socketRef.current = io('http://192.168.0.102:5000');
+      socketRef.current = io('import.meta.env.VITE_API_URL');
       socketRef.current.emit('setup', user._id);
       socketRef.current.on('users online', (online) => setOnlineUsers(online));
 
@@ -32,7 +32,7 @@ export const ChatProvider = ({ children }) => {
       const conversationId = [user._id, selectedUser._id].sort().join('_');
       socketRef.current?.emit('join chat', conversationId);
 
-      axios.get(`http://192.168.0.102:5000/api/messages/${user._id}/${selectedUser._id}`)
+      axios.get(`import.meta.env.VITE_API_URL/api/messages/${user._id}/${selectedUser._id}`)
         .then(res => setMessages(res.data))
         .catch(console.log);
 

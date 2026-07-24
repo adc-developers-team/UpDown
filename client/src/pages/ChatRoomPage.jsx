@@ -115,9 +115,9 @@ const ChatRoomPage = () => {
   const callTimerRef = useRef(null);
 
   useEffect(() => {
-    socketRef.current = io('http://192.168.0.102:5000');
+    socketRef.current = io('import.meta.env.VITE_API_URL');
 
-    axios.get('http://192.168.0.102:5000/api/auth/users')
+    axios.get('import.meta.env.VITE_API_URL/api/auth/users')
       .then(res => {
         const found = res.data.find(u => u._id === userId);
         if (found) { setChatUser(found); setSelectedUser(found); }
@@ -345,7 +345,7 @@ const ChatRoomPage = () => {
       const token = localStorage.getItem('token');
       const endpoint = type === 'image' ? '/api/upload/image' : '/api/upload/video';
       const field = type === 'image' ? 'image' : 'video';
-      const { data } = await axios.post(`http://192.168.0.102:5000${endpoint}`, { [field]: result }, { headers: { Authorization: `Bearer ${token}` } });
+      const { data } = await axios.post(`import.meta.env.VITE_API_URL${endpoint}`, { [field]: result }, { headers: { Authorization: `Bearer ${token}` } });
       const url = type === 'image' ? data.imageUrl : data.videoUrl;
       socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: url });
       socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
@@ -369,7 +369,7 @@ const ChatRoomPage = () => {
         reader.onloadend = async () => {
           try {
             const token = localStorage.getItem('token');
-            const { data } = await axios.post('http://192.168.0.102:5000/api/upload/audio', { audio: reader.result }, { headers: { Authorization: `Bearer ${token}` } });
+            const { data } = await axios.post('import.meta.env.VITE_API_URL/api/upload/audio', { audio: reader.result }, { headers: { Authorization: `Bearer ${token}` } });
             socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: data.audioUrl });
             socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
           } catch (err) { alert('Audio upload failed'); }
@@ -392,7 +392,7 @@ const ChatRoomPage = () => {
   const deleteMsg = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      await axios.delete(`http://192.168.0.102:5000/api/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.delete(`import.meta.env.VITE_API_URL/api/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       const convId = [user._id, userId].sort().join('_');
       socketRef.current?.emit('delete message', { messageId: id, conversationId: convId });
       setMessages(prev => prev.filter(m => m._id !== id));

@@ -21,10 +21,10 @@ const AddFriendsPage = () => {
     const fetchData = async () => {
       try {
         const [usersRes, friendsRes, sentRes, recvRes] = await Promise.all([
-          axios.get('http://192.168.0.102:5000/api/auth/users', config),
-          axios.get('http://192.168.0.102:5000/api/friends', config),
-          axios.get('http://192.168.0.102:5000/api/friends/requests/sent', config),
-          axios.get('http://192.168.0.102:5000/api/friends/requests/received', config),
+          axios.get('import.meta.env.VITE_API_URL/api/auth/users', config),
+          axios.get('import.meta.env.VITE_API_URL/api/friends', config),
+          axios.get('import.meta.env.VITE_API_URL/api/friends/requests/sent', config),
+          axios.get('import.meta.env.VITE_API_URL/api/friends/requests/received', config),
         ]);
         const usersExceptMe = usersRes.data.filter(u => u._id !== user._id);
         setAllUsers(usersExceptMe);
@@ -42,7 +42,7 @@ const AddFriendsPage = () => {
 
   const sendFriendRequest = async (userId) => {
     try {
-      await axios.post('http://192.168.0.102:5000/api/friends/request', { to: userId }, config);
+      await axios.post('import.meta.env.VITE_API_URL/api/friends/request', { to: userId }, config);
       setSentRequests(prev => [...prev, userId]);
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to send request');
@@ -52,10 +52,10 @@ const AddFriendsPage = () => {
   const cancelRequest = async (userId) => {
     try {
       // Find the request object from server
-      const { data: sentReqs } = await axios.get('http://192.168.0.102:5000/api/friends/requests/sent', config);
+      const { data: sentReqs } = await axios.get('import.meta.env.VITE_API_URL/api/friends/requests/sent', config);
       const req = sentReqs.find(r => r.to._id === userId);
       if (!req) return;
-      await axios.delete(`http://192.168.0.102:5000/api/friends/request/${req._id}`, config);
+      await axios.delete(`import.meta.env.VITE_API_URL/api/friends/request/${req._id}`, config);
       setSentRequests(prev => prev.filter(id => id !== userId));
       setCancellingId(null);
     } catch (err) {
