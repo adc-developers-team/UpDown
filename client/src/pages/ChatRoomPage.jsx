@@ -363,13 +363,34 @@ const ChatRoomPage = () => {
     if (newMsg.trim()) { sendMessage(newMsg); setNewMsg(''); socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') }); }
   };
 
+  // Updated renderTick with proper status handling
   const renderTick = (msg) => {
     if (msg.sender._id !== user._id) return null;
     switch (msg.status) {
-      case 'sent': return <span className="text-xs opacity-70 ml-1">✔</span>;
-      case 'delivered': return <span className="text-xs opacity-90 ml-1">✔✔</span>;
-      case 'read': return <span className="text-xs ml-1" style={{ color: '#3b82f6' }}>✔✔</span>;
-      default: return null;
+      case 'sent':
+        return (
+          <span className="text-xs opacity-60 ml-1 flex items-center gap-0.5" title="Sent">
+            <span>✔</span>
+          </span>
+        );
+      case 'delivered':
+        return (
+          <span className="text-xs opacity-80 ml-1 flex items-center gap-0.5" title="Delivered">
+            <span>✔✔</span>
+          </span>
+        );
+      case 'read':
+        return (
+          <span className="text-xs ml-1 flex items-center gap-0.5" style={{ color: '#3b82f6' }} title="Seen">
+            <span>✔✔</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="text-xs opacity-60 ml-1" title="Sending...">
+            <span>✔</span>
+          </span>
+        );
     }
   };
 
@@ -397,7 +418,6 @@ const ChatRoomPage = () => {
       {/* ===== CALL SCREEN OVERLAY ===== */}
       {(inCall || calling || incoming) && (
         <div className="absolute inset-0 z-50 bg-gradient-to-b from-dark-blue to-black bg-opacity-95 flex flex-col items-center justify-center">
-          {/* Incoming call */}
           {incoming && callerSignal && (
             <div className="text-center space-y-8 animate-fade-in">
               <div className="w-32 h-32 rounded-full bg-light-blue flex items-center justify-center text-5xl mx-auto relative">
@@ -417,7 +437,6 @@ const ChatRoomPage = () => {
             </div>
           )}
 
-          {/* Outgoing call / In call */}
           {(calling || inCall) && (
             <div className="w-full h-full flex flex-col">
               <div className="flex-1 flex items-center justify-center relative">
@@ -439,7 +458,6 @@ const ChatRoomPage = () => {
                 )}
               </div>
 
-              {/* Call controls */}
               <div className="bg-gray-900/90 backdrop-blur px-6 py-5 flex items-center justify-center gap-6 rounded-t-3xl">
                 <button onClick={toggleMic} className={`p-4 rounded-full transition ${micMuted ? 'bg-red-600 text-white' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
                   {micMuted ? <FiMicOff size={22} /> : <FiMic size={22} />}
