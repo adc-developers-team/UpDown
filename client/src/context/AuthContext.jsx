@@ -36,8 +36,8 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const signup = async (username, email, password) => {
-    const res = await axios.post('https://updown-hms5.onrender.com/api/auth/signup', { username, email, password });
+  const signup = async (fullName, username, email, password) => {
+    const res = await axios.post('https://updown-hms5.onrender.com/api/auth/signup', { fullName, username, email, password });
     return res.data;
   };
 
