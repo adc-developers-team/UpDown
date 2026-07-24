@@ -6,7 +6,15 @@ const User = require('../models/User');
 
 router.post('/signup', signup);
 router.post('/login', login);
-router.get('/verify-email', verifyEmail); // new
+router.get('/verify-email', verifyEmail);
+
+// Check username availability
+router.get('/check-username', async (req, res) => {
+  const { username } = req.query;
+  if (!username) return res.status(400).json({ message: 'Username is required' });
+  const user = await User.findOne({ username });
+  res.json({ available: !user });
+});
 
 router.get('/users', async (req, res) => {
   try {
@@ -19,24 +27,20 @@ router.get('/users', async (req, res) => {
 
 router.put('/profile', protect, async (req, res) => {
   try {
-    const { username, profilePic } = req.body;
+    const { fullName, username, profilePic } = req.body;
     const user = await User.findById(req.user._id);
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
+    if (!user) return res.status(404).json({ message: 'User not found' });
     if (username && username !== user.username) {
       const existing = await User.findOne({ username });
-      if (existing) {
-        return res.status(400).json({ message: 'Username already taken' });
-      }
+      if (existing) return res.status(400).json({ message: 'Username already taken' });
       user.username = username;
     }
-    if (profilePic !== undefined) {
-      user.profilePic = profilePic;
-    }
+    if (fullName !== undefined) user.fullName = fullName;
+    if (profilePic !== undefined) user.profilePic = profilePic;
     const updatedUser = await user.save();
     res.json({
       _id: updatedUser._id,
+      fullName: updatedUser.fullName,
       username: updatedUser.username,
       email: updatedUser.email,
       profilePic: updatedUser.profilePic,
