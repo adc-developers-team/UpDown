@@ -3,7 +3,7 @@ import { Component } from 'react';
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -12,6 +12,7 @@ class ErrorBoundary extends Component {
 
   componentDidCatch(error, errorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
+    this.setState({ errorInfo });
   }
 
   render() {
@@ -19,14 +20,18 @@ class ErrorBoundary extends Component {
       return (
         <div className="h-screen bg-chat-bg text-white flex flex-col items-center justify-center p-4">
           <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
-          <p className="text-gray-400 mb-6 text-center">
-            The app encountered an error. Please try refreshing the page.
-          </p>
+          <div className="bg-gray-800 p-4 rounded-lg max-w-lg w-full mb-4 overflow-auto">
+            <p className="text-red-400 font-mono text-sm break-all">
+              {this.state.error?.message || 'Unknown error'}
+            </p>
+            {this.state.error?.stack && (
+              <pre className="text-xs text-gray-400 mt-2 whitespace-pre-wrap">
+                {this.state.error.stack}
+              </pre>
+            )}
+          </div>
           <button
-            onClick={() => {
-              this.setState({ hasError: false });
-              window.location.reload();
-            }}
+            onClick={() => window.location.reload()}
             className="bg-light-blue px-6 py-2 rounded-full font-medium"
           >
             Refresh
