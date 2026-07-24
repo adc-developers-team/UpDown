@@ -90,7 +90,6 @@ const Homepage = () => {
     return () => clearInterval(interval);
   }, [user._id]);
 
-  // ✅ নিরাপদ সার্চ ফাংশন
   const safeUsers = Array.isArray(users) ? users : [];
   const filteredUsers = safeUsers.filter(u => {
     const name = (u.fullName || u.username || '').toLowerCase();
@@ -107,35 +106,35 @@ const Homepage = () => {
   });
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white max-w-7xl mx-auto w-full">
+    <div className="h-screen flex flex-col bg-chat-bg text-white w-full">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-dark-blue border-b border-gray-700">
-        <h1 className="text-xl font-bold">UpDown</h1>
-        <div className="flex items-center gap-5">
-          <Link to="/notifications" className="relative text-2xl hover:text-light-blue">
+      <header className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-dark-blue border-b border-gray-700">
+        <h1 className="text-lg sm:text-xl font-bold">UpDown</h1>
+        <div className="flex items-center gap-3 sm:gap-5">
+          <Link to="/notifications" className="relative text-xl sm:text-2xl hover:text-light-blue">
             <FiBell strokeWidth={2} />
-            {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-dark-blue"></span>}
+            {pendingCount > 0 && <span className="absolute -top-1 -right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-red-500 rounded-full border-2 border-dark-blue"></span>}
           </Link>
-          <Link to="/profile" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-full overflow-hidden bg-light-blue flex items-center justify-center">
-              {user?.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" /> : <span className="font-semibold">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>}
+          <Link to="/profile" className="flex items-center gap-1 sm:gap-2">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-light-blue flex items-center justify-center">
+              {user?.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" /> : <span className="text-sm sm:text-base font-semibold">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>}
             </div>
-            <span className="hidden md:inline text-sm">{user?.fullName || user?.username}</span>
+            <span className="hidden sm:inline text-xs sm:text-sm">{user?.fullName || user?.username}</span>
           </Link>
         </div>
       </header>
 
       {/* Tabs */}
-      <div className="flex bg-sidebar-bg border-b border-gray-700">
-        <button onClick={() => setActiveTab('chats')} className={`flex-1 py-2 font-medium text-sm ${activeTab === 'chats' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-400'}`}>Chats</button>
-        <button onClick={() => setActiveTab('groups')} className={`flex-1 py-2 font-medium text-sm ${activeTab === 'groups' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-400'}`}>Groups</button>
+      <div className="flex bg-sidebar-bg border-b border-gray-700 text-sm sm:text-base">
+        <button onClick={() => setActiveTab('chats')} className={`flex-1 py-2 font-medium ${activeTab === 'chats' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-400'}`}>Chats</button>
+        <button onClick={() => setActiveTab('groups')} className={`flex-1 py-2 font-medium ${activeTab === 'groups' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-400'}`}>Groups</button>
       </div>
 
       {/* Search */}
-      <div className="px-4 py-2 bg-sidebar-bg">
-        <div className="flex items-center bg-gray-800 rounded-full px-4 py-2">
-          <FiSearch className="text-gray-400" />
-          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="ml-2 bg-transparent outline-none flex-1 text-sm text-white placeholder-gray-400" />
+      <div className="px-3 sm:px-4 py-2 bg-sidebar-bg">
+        <div className="flex items-center bg-gray-800 rounded-full px-3 py-1.5 sm:px-4 sm:py-2">
+          <FiSearch className="text-gray-400 text-sm sm:text-base" />
+          <input type="text" placeholder="Search..." value={search} onChange={(e) => setSearch(e.target.value)} className="ml-2 bg-transparent outline-none flex-1 text-xs sm:text-sm text-white placeholder-gray-400" />
         </div>
       </div>
 
@@ -145,21 +144,21 @@ const Homepage = () => {
           const lastMsg = lastMessages[u._id];
           const unread = unreadCounts[u._id] || 0;
           return (
-            <Link key={u._id} to={`/chat/${u._id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-800 border-b border-gray-800/50">
+            <Link key={u._id} to={`/chat/${u._id}`} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-800 border-b border-gray-800/50">
               <div className="relative flex-shrink-0">
-                <div className="w-12 h-12 rounded-full bg-light-blue overflow-hidden flex items-center justify-center">
-                  {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" /> : <span className="text-lg font-semibold">{u.fullName?.[0] || u.username[0].toUpperCase()}</span>}
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-light-blue overflow-hidden flex items-center justify-center">
+                  {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" /> : <span className="text-sm sm:text-lg font-semibold">{u.fullName?.[0] || u.username[0].toUpperCase()}</span>}
                 </div>
-                {onlineUsers.includes(u._id) && <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-sidebar-bg" />}
+                {onlineUsers.includes(u._id) && <span className="absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-sidebar-bg" />}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline">
-                  <h3 className="font-medium truncate">{u.fullName || u.username}</h3>
+                  <h3 className="font-medium truncate text-sm sm:text-base">{u.fullName || u.username}</h3>
                   {lastMsg && <span className="text-xs text-gray-400 ml-2">{formatLastMessageTime(lastMsg.createdAt)}</span>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <p className="text-sm text-gray-400 truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Image' : '🎤 Audio')) : 'No messages yet'}</p>
-                  {unread > 0 && <span className="flex-shrink-0 w-5 h-5 bg-green-500 rounded-full text-xs flex items-center justify-center font-bold">{unread}</span>}
+                  <p className="text-xs sm:text-sm text-gray-400 truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Image' : '🎤 Audio')) : 'No messages yet'}</p>
+                  {unread > 0 && <span className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full text-xs flex items-center justify-center font-bold">{unread}</span>}
                 </div>
               </div>
             </Link>
@@ -167,20 +166,23 @@ const Homepage = () => {
         })}
 
         {activeTab === 'groups' && filteredGroups.map(g => (
-          <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-gray-800 border-b border-gray-800/50">
-            <div className="w-12 h-12 rounded-full bg-light-blue flex items-center justify-center text-lg font-semibold">{g.name?.[0]?.toUpperCase()}</div>
-            <div className="flex-1"><h3 className="font-medium">{g.name}</h3><p className="text-sm text-gray-400">{g.members?.length || 0} members</p></div>
+          <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-800 border-b border-gray-800/50">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-light-blue flex items-center justify-center text-sm sm:text-lg font-semibold">{g.name?.[0]?.toUpperCase()}</div>
+            <div className="flex-1">
+              <h3 className="font-medium text-sm sm:text-base">{g.name}</h3>
+              <p className="text-xs sm:text-sm text-gray-400">{g.members?.length || 0} members</p>
+            </div>
           </Link>
         ))}
 
-        {activeTab === 'chats' && filteredUsers.length === 0 && <div className="text-center text-gray-500 mt-10">No chats found</div>}
-        {activeTab === 'groups' && filteredGroups.length === 0 && <div className="text-center text-gray-500 mt-10">No groups found</div>}
+        {activeTab === 'chats' && filteredUsers.length === 0 && <div className="text-center text-gray-500 mt-10 text-sm">No chats found</div>}
+        {activeTab === 'groups' && filteredGroups.length === 0 && <div className="text-center text-gray-500 mt-10 text-sm">No groups found</div>}
       </div>
 
       {/* Floating Buttons */}
-      <div className="absolute bottom-6 left-6 flex flex-col gap-3">
-        <Link to="/add-friends" className="w-12 h-12 bg-light-blue rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><FiPlus size={22} /></Link>
-        <Link to="/create-group" className="w-12 h-12 bg-light-blue rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><FiUsers size={22} /></Link>
+      <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 flex flex-col gap-2 sm:gap-3">
+        <Link to="/add-friends" className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><FiPlus size={20} /></Link>
+        <Link to="/create-group" className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><FiUsers size={20} /></Link>
       </div>
     </div>
   );
