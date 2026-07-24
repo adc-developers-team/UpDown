@@ -6,7 +6,7 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
-  FiMicOff, FiVolume2, FiPhoneCall, FiPhoneMissed, FiPhoneIncoming
+  FiMicOff, FiVolume2
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
@@ -68,7 +68,6 @@ const renderTextWithLinks = (text) => {
   return elements;
 };
 
-/* ---------- WebRTC config ---------- */
 const iceServers = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
@@ -116,7 +115,6 @@ const ChatRoomPage = () => {
 
   useEffect(() => {
     socketRef.current = io('https://updown-hms5.onrender.com');
-
     axios.get('https://updown-hms5.onrender.com/api/auth/users')
       .then(res => {
         const found = res.data.find(u => u._id === userId);
@@ -128,7 +126,6 @@ const ChatRoomPage = () => {
     socketRef.current.on('message deleted', id => setMessages(prev => prev.filter(m => m._id !== id)));
     socketRef.current.on('message reaction updated', updated => setMessages(prev => prev.map(m => m._id === updated._id ? updated : m)));
 
-    // Call listeners
     socketRef.current.on('incoming-call', ({ callerId, signal, callType }) => {
       setCallerSignal({ callerId, signal });
       setCallType(callType);
@@ -176,10 +173,7 @@ const ChatRoomPage = () => {
   const startCall = async (type) => {
     setCallType(type);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: type === 'video',
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
@@ -200,14 +194,7 @@ const ChatRoomPage = () => {
 
       const offer = await peer.createOffer();
       await peer.setLocalDescription(offer);
-
-      socketRef.current.emit('call-user', {
-        callerId: user._id,
-        receiverId: userId,
-        signal: offer,
-        callType: type,
-      });
-
+      socketRef.current.emit('call-user', { callerId: user._id, receiverId: userId, signal: offer, callType: type });
       setCalling(true);
     } catch (err) {
       if (err.name === 'NotAllowedError') alert('Please allow camera & microphone in browser settings.');
@@ -219,10 +206,7 @@ const ChatRoomPage = () => {
   const acceptIncomingCall = async () => {
     if (!callerSignal) return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: callType === 'video',
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callType === 'video' });
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
@@ -244,7 +228,6 @@ const ChatRoomPage = () => {
       await peer.setRemoteDescription(new RTCSessionDescription(callerSignal.signal));
       const answer = await peer.createAnswer();
       await peer.setLocalDescription(answer);
-
       socketRef.current.emit('accept-call', { callerId: callerSignal.callerId, signal: answer });
       setIncoming(false);
       setInCall(true);
@@ -438,14 +421,12 @@ const ChatRoomPage = () => {
           {(calling || inCall) && (
             <div className="w-full h-full flex flex-col">
               <div className="flex-1 flex items-center justify-center relative">
-                {/* Video call background */}
                 {callType === 'video' && (
                   <>
                     <video ref={remoteVideoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
                     <video ref={localVideoRef} autoPlay playsInline muted className="absolute bottom-6 right-6 w-28 h-40 rounded-xl border-2 border-white object-cover z-10 shadow-2xl" />
                   </>
                 )}
-                {/* Audio call avatar */}
                 {callType === 'audio' && (
                   <div className="flex flex-col items-center">
                     <div className="w-36 h-36 rounded-full bg-light-blue flex items-center justify-center text-6xl mb-6 relative">
