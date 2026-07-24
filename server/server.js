@@ -24,13 +24,20 @@ cloudinary.config({
 
 const app = express();
 const server = http.createServer(app);
+
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://192.168.0.102:5173',
+  'https://updown-app.onrender.com'
+];
+
 const io = new Server(server, {
-  cors: { origin: 'http://192.168.0.102:5173', methods: ['GET', 'POST'] }
+  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] }
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: 'http://192.168.0.102:5173' }));
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -58,7 +65,6 @@ io.on('connection', (socket) => {
 
   socket.on('join chat', (room) => { socket.join(room); });
 
-  // ... existing message, typing, reaction, delete, group events (unchanged) ...
   socket.on('typing', ({ conversationId, senderName }) => {
     socket.to(conversationId).emit('user typing', senderName);
   });
@@ -139,47 +145,35 @@ io.on('connection', (socket) => {
   socket.on('call-user', ({ callerId, receiverId, signal, callType }) => {
     const receiverSocketId = onlineUsers.get(receiverId);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit('incoming-call', {
-        callerId,
-        signal,
-        callType,
-        callerName: socket.userName || 'User' // we'll pass name from frontend
-      });
+      io.to(receiverSocketId).emit('incoming-call', { callerId, signal, callType });
     } else {
-      // User offline -> emit to caller that user is unavailable
       socket.emit('call-failed', { message: 'User is offline' });
     }
   });
-
   socket.on('accept-call', ({ callerId, signal }) => {
     const callerSocketId = onlineUsers.get(callerId);
     if (callerSocketId) {
       io.to(callerSocketId).emit('call-accepted', { signal });
     }
   });
-
   socket.on('reject-call', ({ callerId }) => {
     const callerSocketId = onlineUsers.get(callerId);
     if (callerSocketId) {
       io.to(callerSocketId).emit('call-rejected');
     }
   });
-
   socket.on('end-call', ({ to }) => {
     const toSocketId = onlineUsers.get(to);
     if (toSocketId) {
       io.to(toSocketId).emit('call-ended');
     }
   });
-
   socket.on('ice-candidate', ({ to, candidate }) => {
     const toSocketId = onlineUsers.get(to);
     if (toSocketId) {
       io.to(toSocketId).emit('ice-candidate', { candidate });
     }
   });
-
-  // store user name for caller identification
   socket.on('set-username', (username) => {
     socket.userName = username;
   });
