@@ -8,7 +8,9 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [loading, setLoading] = useState(true);   // ← নতুন
 
+  // টোকেন পরিবর্তনে axios হেডার আপডেট
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -19,6 +21,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // অ্যাপ লোডের সময় localStorage থেকে ইউজার রিস্টোর
   useEffect(() => {
     if (token) {
       const storedUser = localStorage.getItem('user');
@@ -26,10 +29,11 @@ export const AuthProvider = ({ children }) => {
         setUser(JSON.parse(storedUser));
       }
     }
+    setLoading(false);   // ← চেক শেষ
   }, [token]);
 
   const login = async (email, password) => {
-    const res = await axios.post('import.meta.env.VITE_API_URL/api/auth/login', { email, password });
+    const res = await axios.post('https://updown-hms5.onrender.com/api/auth/login', { email, password });
     const { token, ...userData } = res.data;
     setUser(userData);
     setToken(token);
@@ -38,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (username, email, password) => {
-    const res = await axios.post('import.meta.env.VITE_API_URL/api/auth/signup', { username, email, password });
+    const res = await axios.post('https://updown-hms5.onrender.com/api/auth/signup', { username, email, password });
     const { token, ...userData } = res.data;
     setUser(userData);
     setToken(token);
@@ -59,7 +63,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, signup, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, token, login, signup, logout, updateUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

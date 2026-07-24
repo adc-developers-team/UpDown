@@ -12,7 +12,16 @@ import CreateGroupPage from './pages/CreateGroupPage'
 import GroupChatPage from './pages/GroupChatPage'
 
 function App() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="h-screen bg-chat-bg flex items-center justify-center text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-light-blue"></div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
