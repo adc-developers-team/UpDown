@@ -10,6 +10,8 @@ import AddFriendsPage from './pages/AddFriendsPage'
 import NotificationsPage from './pages/NotificationsPage'
 import CreateGroupPage from './pages/CreateGroupPage'
 import GroupChatPage from './pages/GroupChatPage'
+import VerifyEmailPage from './pages/VerifyEmailPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 function App() {
   const { user, loading } = useAuth();
@@ -25,6 +27,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/" element={user ? <Homepage /> : <Navigate to="/login" />} />
       <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
       <Route path="/settings" element={user ? <SettingsPage /> : <Navigate to="/login" />} />
@@ -34,6 +37,7 @@ function App() {
       <Route path="/notifications" element={user ? <NotificationsPage /> : <Navigate to="/login" />} />
       <Route path="/create-group" element={user ? <CreateGroupPage /> : <Navigate to="/login" />} />
       <Route path="/group-chat/:groupId" element={user ? <GroupChatPage /> : <Navigate to="/login" />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
