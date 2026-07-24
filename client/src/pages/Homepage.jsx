@@ -95,7 +95,7 @@ const Homepage = () => {
   const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white">
+    <div className="h-screen flex flex-col bg-chat-bg text-white max-w-7xl mx-auto w-full">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-dark-blue border-b border-gray-700">
         <h1 className="text-xl font-bold">UpDown</h1>

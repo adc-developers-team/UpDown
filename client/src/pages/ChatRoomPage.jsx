@@ -448,7 +448,7 @@ const ChatRoomPage = () => {
   const callTime = `${Math.floor(callDuration/60)}:${(callDuration%60).toString().padStart(2,'0')}`;
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white">
+    <div className="h-screen flex flex-col bg-chat-bg text-white max-w-7xl mx-auto w-full">
       {/* ===== CALL SCREEN OVERLAY ===== */}
       {(inCall || calling || incoming) && (
         <div className="absolute inset-0 z-50 bg-black bg-opacity-90 flex flex-col items-center justify-center">
