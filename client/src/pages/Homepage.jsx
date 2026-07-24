@@ -44,9 +44,12 @@ const Homepage = () => {
           axios.get('https://updown-hms5.onrender.com/api/friends', config),
           axios.get('https://updown-hms5.onrender.com/api/groups', config)
         ]);
-        setUsers(friendsRes.data);
-        setGroups(groupsRes.data);
-      } catch (err) { console.error(err); }
+        setUsers(Array.isArray(friendsRes.data) ? friendsRes.data : []);
+        setGroups(Array.isArray(groupsRes.data) ? groupsRes.data : []);
+      } catch (err) {
+        setUsers([]);
+        setGroups([]);
+      }
     };
     fetchData();
   }, [user._id]);
@@ -55,8 +58,8 @@ const Homepage = () => {
     const fetchPending = async () => {
       try {
         const { data } = await axios.get('https://updown-hms5.onrender.com/api/friends/requests/received', config);
-        setPendingCount(data.length);
-      } catch (err) { console.error(err); }
+        setPendingCount(Array.isArray(data) ? data.length : 0);
+      } catch (err) { setPendingCount(0); }
     };
     fetchPending();
     const interval = setInterval(fetchPending, 10000);
@@ -71,22 +74,27 @@ const Homepage = () => {
           axios.get(`https://updown-hms5.onrender.com/api/messages/unread-counts/${user._id}`, config)
         ]);
         const map = {};
-        lastRes.data.forEach(msg => {
-          const ids = msg.conversationId.split('_');
-          const other = ids.find(id => id !== user._id);
-          if (other) map[other] = msg;
-        });
+        if (Array.isArray(lastRes.data)) {
+          lastRes.data.forEach(msg => {
+            const ids = msg.conversationId.split('_');
+            const other = ids.find(id => id !== user._id);
+            if (other) map[other] = msg;
+          });
+        }
         setLastMessages(map);
-        setUnreadCounts(unreadRes.data);
-      } catch (err) { console.error(err); }
+        setUnreadCounts(unreadRes.data || {});
+      } catch (err) { /* silent */ }
     };
     fetchMessageData();
     const interval = setInterval(fetchMessageData, 5000);
     return () => clearInterval(interval);
   }, [user._id]);
 
-  const filteredUsers = users.filter(u => u.username.toLowerCase().includes(search.toLowerCase()));
-  const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search.toLowerCase()));
+  // Safety: ensure users is an array
+  const safeUsers = Array.isArray(users) ? users : [];
+  const filteredUsers = safeUsers.filter(u => u.username?.toLowerCase().includes(search.toLowerCase()));
+  const safeGroups = Array.isArray(groups) ? groups : [];
+  const filteredGroups = safeGroups.filter(g => g.name?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white max-w-7xl mx-auto w-full">
