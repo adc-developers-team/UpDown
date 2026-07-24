@@ -1,9 +1,9 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiArrowLeft, FiEdit, FiLogOut } from 'react-icons/fi';
+import { FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail } from 'react-icons/fi';
 
 const SettingsPage = () => {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -13,6 +13,7 @@ const SettingsPage = () => {
 
   return (
     <div className="min-h-screen bg-chat-bg text-white">
+      {/* Header */}
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
         <Link to="/profile" className="text-white hover:text-light-blue">
           <FiArrowLeft size={22} />
@@ -20,7 +21,26 @@ const SettingsPage = () => {
         <h2 className="font-semibold text-lg">Settings</h2>
       </header>
 
-      <div className="px-4 mt-6 space-y-3">
+      <div className="px-4 py-6 space-y-4">
+        {/* User Info Card */}
+        <div className="bg-sidebar-bg rounded-xl p-4 flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-light-blue overflow-hidden flex items-center justify-center">
+            {user?.profilePic ? (
+              <img src={user.profilePic} className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-xl font-semibold">
+                {user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-lg">{user?.fullName || user?.username}</h3>
+            <p className="text-gray-400 text-sm flex items-center gap-1"><FiMail size={14} /> {user?.email}</p>
+            <p className="text-gray-400 text-sm flex items-center gap-1"><FiUser size={14} /> @{user?.username}</p>
+          </div>
+        </div>
+
+        {/* Edit Profile Button */}
         <Link
           to="/edit-profile"
           className="flex items-center gap-4 bg-sidebar-bg hover:bg-gray-700 p-4 rounded-xl transition-colors"
@@ -29,6 +49,7 @@ const SettingsPage = () => {
           <span>Edit Profile</span>
         </Link>
 
+        {/* Logout Button */}
         <button
           onClick={handleLogout}
           className="flex items-center gap-4 bg-red-600 hover:bg-red-700 w-full p-4 rounded-xl transition-colors"

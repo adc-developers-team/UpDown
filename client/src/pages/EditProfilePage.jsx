@@ -6,6 +6,7 @@ import axios from 'axios';
 
 const EditProfilePage = () => {
   const { user, updateUser } = useAuth();
+  const [fullName, setFullName] = useState(user?.fullName || '');
   const [username, setUsername] = useState(user?.username || '');
   const [profilePic, setProfilePic] = useState(user?.profilePic || '');
   const [loading, setLoading] = useState(false);
@@ -16,26 +17,27 @@ const EditProfilePage = () => {
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      setUploading(true);
-      try {
-        const token = localStorage.getItem('token');
-        const { data } = await axios.post(
-          'import.meta.env.VITE_API_URL/api/upload/profile-pic',
-          { image: reader.result },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setProfilePic(data.profilePic);
-        updateUser({ profilePic: data.profilePic });
-      } catch (err) {
-        alert(err.response?.data?.message || 'Upload failed');
-      } finally {
-        setUploading(false);
-      }
-    };
-    reader.readAsDataURL(file);
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      const result = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const token = localStorage.getItem('token');
+      const { data } = await axios.post(
+        'https://updown-hms5.onrender.com/api/upload/profile-pic',
+        { image: result },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setProfilePic(data.profilePic);
+      updateUser({ profilePic: data.profilePic });
+    } catch (err) {
+      alert(err.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -45,8 +47,8 @@ const EditProfilePage = () => {
     try {
       const token = localStorage.getItem('token');
       const { data } = await axios.put(
-        'import.meta.env.VITE_API_URL/api/auth/profile',
-        { username, profilePic },
+        'https://updown-hms5.onrender.com/api/auth/profile',
+        { fullName, username, profilePic },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       updateUser(data);
@@ -68,28 +70,34 @@ const EditProfilePage = () => {
       </header>
 
       <form onSubmit={handleSubmit} className="px-4 py-8 space-y-6 max-w-md mx-auto">
-        {/* Avatar with camera overlay */}
+        {/* Avatar */}
         <div className="flex justify-center relative group cursor-pointer" onClick={() => fileInputRef.current.click()}>
           <div className="w-24 h-24 rounded-full bg-light-blue flex items-center justify-center text-3xl font-bold overflow-hidden relative">
             {profilePic ? (
               <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
             ) : (
-              username[0]?.toUpperCase() || '?'
+              fullName[0]?.toUpperCase() || username[0]?.toUpperCase() || '?'
             )}
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
               <FiCamera size={24} />
             </div>
           </div>
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
         </div>
         {uploading && <p className="text-center text-sm text-gray-400">Uploading...</p>}
 
+        {/* Full Name */}
+        <div>
+          <label className="block text-sm text-gray-400 mb-1">Full Name</label>
+          <input
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue"
+          />
+        </div>
+
+        {/* Username */}
         <div>
           <label className="block text-sm text-gray-400 mb-1">Username</label>
           <input
