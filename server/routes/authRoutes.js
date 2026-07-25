@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, verifyEmail, resendVerification, refreshToken } = require('../controllers/authController');
+const { signup, login, verifyEmail, resendVerification, refreshToken, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
 const Message = require('../models/Message');
@@ -10,6 +10,8 @@ router.post('/login', login);
 router.get('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerification);
 router.post('/refresh', refreshToken);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 router.get('/check-username', async (req, res) => {
   const { username } = req.query;

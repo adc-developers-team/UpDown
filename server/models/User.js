@@ -21,6 +21,8 @@ const userSchema = new mongoose.Schema(
       autoDownloadMedia: { type: Boolean, default: true },
     },
     status: { type: String, enum: ['active', 'deactivated', 'deleted'], default: 'active' },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
   },
   { timestamps: true }
 );
