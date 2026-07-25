@@ -16,24 +16,36 @@
   --danger: #ef4444;
   --success: #10b981;
   --warning: #f59e0b;
+  --btn-primary-bg: #2dd4bf;
+  --btn-primary-text: #0a0a0a;
+  --btn-secondary-bg: #0d1f17;
+  --btn-secondary-text: #2dd4bf;
 }
 
-/* Light mode overrides */
+/* ===== Light mode overrides ===== */
 .light {
   --bg-main: #fafbfc;
   --bg-sidebar: #ffffff;
-  --bg-header: #ffffff;
+  --bg-header: #f0fdf4;
   --bg-card: #ffffff;
-  --bg-input: #f0fdf4;
+  --bg-input: #f8fafc;
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --border-color: #d1d5db;
-  --accent: #0d9488;
-  --accent-hover: #0f766e;
+  --border-color: #e2e8f0;
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --danger: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --btn-primary-bg: #0f172a;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-text: #7c3aed;
+  --btn-secondary-border: #7c3aed;
 }
 
-/* Base */
+/* ===== Base ===== */
 body {
   background-color: var(--bg-main);
   color: var(--text-primary);
@@ -49,7 +61,7 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ===== Tailwind theme ===== */
+/* ===== Tailwind theme extension ===== */
 @theme {
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
@@ -65,27 +77,42 @@ body {
 }
 
 /* ===== Utility classes ===== */
-.bg-header { background-color: var(--bg-header); }
-.bg-sidebar { background-color: var(--bg-sidebar); }
-.bg-card { background-color: var(--bg-card); }
-.bg-input { background-color: var(--bg-input); }
-.text-primary { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-muted { color: var(--text-muted); }
-.border-custom { border-color: var(--border-color); }
-.accent-text { color: var(--accent); }
-.accent-bg { background-color: var(--accent); }
+.bg-chat-bg { background-color: var(--bg-main); }
+.bg-dark-blue { background-color: var(--bg-header); }
+.bg-sidebar-bg { background-color: var(--bg-sidebar); }
+.bg-gray-800 { background-color: var(--bg-input); }
+.bg-gray-700 { background-color: var(--bg-card); }
+.border-gray-700 { border-color: var(--border-color); }
+.text-gray-400 { color: var(--text-secondary); }
+.text-gray-500 { color: var(--text-muted); }
+.text-white, .text-gray-100 { color: var(--text-primary); }
+.bg-light-blue { background-color: var(--accent); color: var(--btn-primary-text); }
+.light .bg-light-blue { background-color: var(--btn-primary-bg); color: var(--btn-primary-text); }
 
 /* ===== Component styles ===== */
-.btn-accent {
-  background-color: var(--accent);
-  color: #0a0a0a;
+.btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font-weight: 600;
   border-radius: 9999px;
   padding: 10px 24px;
   transition: all 0.2s ease;
 }
-.btn-accent:hover { background-color: var(--accent-hover); }
+.btn-primary:hover { opacity: 0.9; }
+
+.btn-secondary {
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+  border: 1px solid var(--btn-secondary-border);
+  border-radius: 12px;
+  padding: 8px 20px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  background-color: var(--accent);
+  color: white;
+}
 
 .search-bar {
   background-color: var(--bg-input);
@@ -96,9 +123,17 @@ body {
 }
 .search-bar::placeholder { color: var(--text-muted); }
 
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 20px;
+}
+.card.light { box-shadow: none; }
+
 .message-bubble-sent {
   background-color: var(--accent);
-  color: #0a0a0a;
+  color: var(--btn-primary-text);
   border-bottom-right-radius: 4px;
 }
 .message-bubble-received {
@@ -132,7 +167,7 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* ===== Smooth header bottom corners ===== */
+/* ===== Header bottom rounded corners ===== */
 .header-rounded { border-radius: 0 0 20px 20px; }
 
 /* ===== Step indicator ===== */
@@ -143,5 +178,5 @@ body {
   display: flex; align-items: center; justify-content: center;
   font-size: 12px;
 }
-.step-dot.active { border-color: var(--accent); background-color: var(--accent); color: #0a0a0a; }
+.step-dot.active { border-color: var(--accent); background-color: var(--accent); color: var(--btn-primary-text); }
 .step-line { width: 2px; height: 20px; background-color: var(--border-color); }
