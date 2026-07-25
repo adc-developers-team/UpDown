@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiImage, FiUsers, FiBarChart2,
-  FiX, FiPlus, FiCheck, FiInfo
+  FiX, FiPlus, FiCheck, FiChevronDown
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
@@ -14,12 +14,12 @@ const formatMessageTime = (dateString) => {
   const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
   const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   if (diffDays === 0) return timeStr;
-  if (diffDays === 1) return 'Yesterday ' + timeStr;
+  if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) {
     const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return weekdays[date.getDay()] + ' ' + timeStr;
+    return weekdays[date.getDay()];
   }
-  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + timeStr;
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 };
 
 const GroupChatPage = () => {
@@ -44,17 +44,14 @@ const GroupChatPage = () => {
     const token = localStorage.getItem('token');
     const config = { headers: { Authorization: `Bearer ${token}` } };
     
-    // Fetch group details
     axios.get(`https://updown-hms5.onrender.com/api/groups/${groupId}`, config)
       .then(res => setGroup(res.data))
       .catch(() => {});
     
-    // Fetch messages
     axios.get(`https://updown-hms5.onrender.com/api/group-messages/${groupId}`)
       .then(res => setMessages(Array.isArray(res.data) ? res.data : []))
       .catch(() => setMessages([]));
     
-    // Fetch polls
     axios.get(`https://updown-hms5.onrender.com/api/polls/group/${groupId}`, config)
       .then(res => setPolls(Array.isArray(res.data) ? res.data : []))
       .catch(() => setPolls([]));
