@@ -7,6 +7,7 @@ import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
   FiMicOff, FiVolume2, FiCornerUpLeft
+import { FiEdit } from 'react-icons/fi';
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
@@ -93,6 +94,8 @@ const ChatRoomPage = () => {
   const [reactingMsgId, setReactingMsgId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
+  const [editingMsgId, setEditingMsgId] = useState(null);
+  const [editText, setEditText] = useState('');
   const [recordingTime, setRecordingTime] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -169,6 +172,9 @@ const ChatRoomPage = () => {
     socketRef.current.on('user typing', setTypingUser);
     socketRef.current.on('user stop typing', () => setTypingUser(null));
     socketRef.current.on('message deleted', id => setMessages(prev => prev.filter(m => m._id !== id)));
+    socketRef.current.on('message edited', (editedMsg) => {
+      setMessages(prev => prev.map(m => m._id === editedMsg._id ? editedMsg : m));
+    });
     socketRef.current.on('message reaction updated', updated => setMessages(prev => prev.map(m => m._id === updated._id ? updated : m)));
 
     socketRef.current.on('incoming-call', ({ callerId, signal, callType }) => {
@@ -475,17 +481,32 @@ const ChatRoomPage = () => {
           return (
             <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-2 rounded-2xl relative group ${isMine ? 'bg-light-blue text-white rounded-br-none' : 'bg-gray-700 text-gray-100 rounded-bl-none'}`}>
+                {isMine && editingMsgId !== msg._id && (
+                  <button onClick={() => startEdit(msg)} className="absolute -top-2 -right-8 bg-yellow-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><FiEdit size={12} /></button>
+                )}
                 {isMine && <button onClick={() => deleteMsg(msg._id)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><FiTrash2 size={12} /></button>}
                 {mediaType === 'image' && <img src={msg.image} className="rounded-lg mb-1 max-w-full" alt="" />}
                 {mediaType === 'video' && <video controls className="max-w-full rounded-lg mb-1" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
                 {mediaType === 'audio' && <audio controls className="w-full mb-1" style={{height:'35px'}}><source src={msg.image} /></audio>}
-                {msg.text && <div className="text-sm sm:text-base">{renderTextWithLinks(msg.text)}</div>}
+                {editingMsgId === msg._id ? (
+                  <div className="flex gap-1">
+                    <input type="text" value={editText} onChange={e => setEditText(e.target.value)} className="flex-1 bg-gray-600 text-white rounded px-2 py-1 text-sm outline-none" autoFocus />
+                    <button onClick={() => submitEdit(msg._id)} className="text-green-400 p-1">✓</button>
+                    <button onClick={cancelEdit} className="text-red-400 p-1">✕</button>
+                  </div>
+                ) : (
+                  <>
+                    {msg.text && <div className="text-sm sm:text-base">{renderTextWithLinks(msg.text)}</div>}
+                    {msg.text && msg.createdAt !== msg.updatedAt && <span className="text-xs opacity-50 ml-1">(edited)</span>}
+                  </>
+                )}
                 {renderReactions(msg)}
                 <div className="flex items-center justify-end gap-1 mt-1">
                   <button onClick={() => setReactionPicker(reactionPicker === msg._id ? null : msg._id)} className="text-xs opacity-50 hover:opacity-100"><FiSmile size={12} /></button>
                   <span className="text-xs opacity-70">{formatMsgTime(msg.createdAt)}</span>
                   {renderTick(msg)}
                   <button onClick={() => setReplyTo(msg)} className="text-xs opacity-50 hover:opacity-100"><FiCornerUpLeft size={12} /></button>
+import { FiEdit } from 'react-icons/fi';
                 </div>
                 {reactionPicker === msg._id && (
                   <div className="absolute bottom-8 left-0 bg-gray-800 rounded-full px-2 py-1 flex gap-1 shadow-lg z-10 text-sm">
@@ -514,6 +535,7 @@ const ChatRoomPage = () => {
       {replyTo && (
         <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
           <FiCornerUpLeft size={14} className="text-light-blue" />
+import { FiEdit } from 'react-icons/fi';
           <div className="flex-1 text-xs text-gray-300 truncate">
             Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
             <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>
@@ -529,6 +551,7 @@ const ChatRoomPage = () => {
       {replyTo && (
         <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
           <FiCornerUpLeft size={14} className="text-light-blue" />
+import { FiEdit } from 'react-icons/fi';
           <div className="flex-1 text-xs text-gray-300 truncate">
             Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
             <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>

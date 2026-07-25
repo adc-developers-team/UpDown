@@ -4,10 +4,9 @@ const mongoose = require('mongoose');
 const Message = require('../models/Message');
 const { protect } = require('../middleware/auth');
 
-// POST /api/messages
 router.post('/', protect, async (req, res) => {
   try {
-    const { senderId, receiverId, text, image, mediaType } = req.body;
+    const { senderId, receiverId, text, image, mediaType, replyTo } = req.body;
     const conversationId = [senderId, receiverId].sort().join('_');
     const message = await Message.create({
       conversationId,
@@ -16,6 +15,7 @@ router.post('/', protect, async (req, res) => {
       text: text || '',
       image: image || '',
       mediaType: mediaType || 'text',
+      replyTo: replyTo || null,
     });
     res.status(201).json(message);
   } catch (error) {
@@ -23,7 +23,6 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// GET /api/messages/:userId1/:userId2
 router.get('/:userId1/:userId2', async (req, res) => {
   try {
     const { userId1, userId2 } = req.params;
@@ -31,6 +30,7 @@ router.get('/:userId1/:userId2', async (req, res) => {
     const messages = await Message.find({ conversationId })
       .populate('sender', 'username profilePic fullName')
       .populate('receiver', 'username profilePic fullName')
+      .populate({ path: 'replyTo', populate: { path: 'sender', select: 'username fullName' } })
       .sort({ createdAt: 1 });
     res.json(messages);
   } catch (error) {
@@ -38,7 +38,26 @@ router.get('/:userId1/:userId2', async (req, res) => {
   }
 });
 
-// DELETE /api/messages/:messageId
+router.put('/:messageId', protect, async (req, res) => {
+  try {
+    const { text } = req.body;
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+    if (message.sender.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only edit your own messages' });
+    }
+    message.text = text;
+    await message.save();
+    const populated = await Message.findById(message._id)
+      .populate('sender', 'username profilePic fullName')
+      .populate('receiver', 'username profilePic fullName')
+      .populate({ path: 'replyTo', populate: { path: 'sender', select: 'username fullName' } });
+    res.json(populated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.delete('/:messageId', protect, async (req, res) => {
   try {
     const message = await Message.findById(req.params.messageId);
@@ -53,7 +72,6 @@ router.delete('/:messageId', protect, async (req, res) => {
   }
 });
 
-// GET /api/messages/last-messages/:userId
 router.get('/last-messages/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
@@ -75,7 +93,6 @@ router.get('/last-messages/:userId', async (req, res) => {
   }
 });
 
-// GET /api/messages/unread-counts/:userId
 router.get('/unread-counts/:userId', async (req, res) => {
   try {
     const userId = req.params.userId;
