@@ -10,10 +10,119 @@ import {
   FiMoreVertical, FiSlash, FiCheckCircle, FiUserX, FiTrash
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
+import AudioPlayer from '../engines/AudioPlayer';
+
+/* ---------- helpers ---------- */
+const getLastSeenText = (d) => {
+  if (!d) return 'Last seen long ago';
+  const date = new Date(d), now = new Date();
+  const diffSec = Math.floor((now - date) / 1000);
+  if (diffSec < 60) return 'Last seen just now';
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `Last seen ${diffMin}m ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `Last seen ${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay === 1) return 'Last seen yesterday';
+  if (diffDay < 7) return `${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()]}`;
+  return `Last seen ${date.toLocaleDateString('en-US',{day:'numeric',month:'short'})}`;
+};
+
+const formatMsgTime = (d) => {
+  const date = new Date(d), now = new Date();
+  const diffDay = Math.floor((now - date) / 86400000);
+  const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  if (diffDay === 0) return time;
+  if (diffDay === 1) return 'Yesterday';
+  if (diffDay < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
+  return date.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+};
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
+/* ---------- YouTube/Vimeo thumbnail helpers ---------- */
+const isVideoLink = (url) => /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url) || /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/.test(url) || /vimeo\.com\/(\d+)/.test(url);
+const getYouTubeId = (url) => (url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) || [])[1] || null;
+const getVimeoId = (url) => (url.match(/vimeo\.com\/(\d+)/) || [])[1] || null;
+const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+const renderTextWithLinks = (text) => {
+  if (!text) return null;
+  const elements = [];
+  let lastIndex = 0, match;
+  const regex = new RegExp(urlRegex);
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) elements.push(<span key={lastIndex}>{text.slice(lastIndex, match.index)}</span>);
+    const url = match[0];
+    const ytId = getYouTubeId(url);
+    const vimeoId = getVimeoId(url);
+    const isDirectVideo = /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url);
+
+    if (ytId || vimeoId || isDirectVideo) {
+      elements.push(
+        <a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline break-all">
+          {url}
+        </a>
+      );
+      if (ytId) {
+        elements.push(
+          <div key={`yt-${match.index}`} className="mt-1">
+            <img
+              src={`https://img.youtube.com/vi/${ytId}/0.jpg`}
+              alt="YouTube thumbnail"
+              className="rounded-lg max-w-full cursor-pointer"
+              onClick={() => window.open(url, '_blank')}
+            />
+          </div>
+        );
+      } else if (vimeoId) {
+        elements.push(
+          <div key={`vimeo-${match.index}`} className="mt-1">
+            <img
+              src={`https://vumbnail.com/${vimeoId}.jpg`}
+              alt="Vimeo thumbnail"
+              className="rounded-lg max-w-full cursor-pointer"
+              onClick={() => window.open(url, '_blank')}
+            />
+          </div>
+        );
+      } else if (isDirectVideo) {
+        elements.push(
+          <div key={`vid-${match.index}`} className="mt-1">
+            <video controls className="max-w-full rounded-lg" style={{ maxHeight: '200px' }}>
+              <source src={url} />
+            </video>
+          </div>
+        );
+      }
+    } else {
+      elements.push(
+        <a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline break-all">
+          {url}
+        </a>
+      );
+    }
+    lastIndex = match.index + url.length;
+  }
+  if (lastIndex < text.length) elements.push(<span key={lastIndex}>{text.slice(lastIndex)}</span>);
+  return elements;
+};
+
+/* ---------- ICE servers ---------- */
+const iceServers = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    {
+      urls: 'turn:updown.metered.live:443?transport=tcp',
+      username: '81900d4e96d01f518684bc5a',
+      credential: 'bo8JgogjdLo7sUNX',
+    },
+  ],
+};
+
+/* ---------- component ---------- */
 const ChatRoomPage = () => {
   const { userId } = useParams();
   const { user } = useAuth();
@@ -59,7 +168,6 @@ const ChatRoomPage = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error('Failed to fetch chat user:', err);
         setChatUser({ _id: userId, username: 'Unknown', fullName: 'User' });
         setError('Could not load user details');
         setLoading(false);
@@ -67,11 +175,12 @@ const ChatRoomPage = () => {
 
     socketRef.current.on('user typing', setTypingUser);
     socketRef.current.on('user stop typing', () => setTypingUser(null));
+
     return () => { socketRef.current.disconnect(); };
   }, [userId]);
 
   const handleBlock = async () => {
-    if (!confirm(isBlocked ? 'Unblock this user?' : 'Block this user? They will not be able to message you.')) return;
+    if (!confirm(isBlocked ? 'Unblock this user?' : 'Block this user?')) return;
     try {
       if (isBlocked) {
         await axios.put(`https://updown-hms5.onrender.com/api/auth/unblock/${userId}`, {}, config);
@@ -85,12 +194,7 @@ const ChatRoomPage = () => {
   };
 
   const handleMessageClick = (e, msg) => {
-    if (reactionPicker === msg._id) {
-      setReactionPicker(null);
-    } else {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setReactionPicker(msg._id);
-    }
+    setReactionPicker(reactionPicker === msg._id ? null : msg._id);
   };
 
   const handleTouchStart = (e, msg) => {
@@ -102,10 +206,7 @@ const ChatRoomPage = () => {
   };
 
   const handleTouchEnd = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
   };
 
   const handleMouseDown = (e, msg) => {
@@ -117,10 +218,7 @@ const ChatRoomPage = () => {
   };
 
   const handleMouseUp = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
+    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
   };
 
   const reactToMsg = (emoji) => {
@@ -204,7 +302,7 @@ const ChatRoomPage = () => {
   if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center text-white"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-accent text-black px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
 
   const isOnline = onlineUsers.includes(chatUser._id);
-  const statusText = isOnline ? 'Online' : 'Offline';
+  const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white w-full">
@@ -246,15 +344,16 @@ const ChatRoomPage = () => {
               >
                 {mediaType === 'image' && <img src={msg.image} className="rounded-lg mb-1 max-w-full pointer-events-none" alt="" />}
                 {mediaType === 'video' && <video controls className="max-w-full rounded-lg mb-1 pointer-events-none" style={{maxHeight:'180px'}}><source src={msg.image} /></video>}
-                {mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1 pointer-events-none" style={{height:'30px'}} />}
-                {msg.text && <p className="text-sm pointer-events-none">{msg.text}</p>}
+                {mediaType === 'audio' && <AudioPlayer src={msg.image} />}
+                {msg.text && <div className="text-sm pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
                 <div className="flex items-center justify-end gap-1 mt-1">
-                  <button onClick={(e) => { e.stopPropagation(); setReactionPicker(reactionPicker === msg._id ? null : msg._id); }} className="text-sm opacity-80 hover:opacity-100 hover:text-accent transition"><FiSmile size={16} /></button>
-                  <span className="text-[10px] opacity-60">{new Date(msg.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+                  <span className="text-[10px] opacity-60">{formatMsgTime(msg.createdAt)}</span>
                 </div>
                 {reactionPicker === msg._id && (
                   <div className="absolute -top-14 left-0 bg-gray-800 rounded-full px-2 py-1.5 flex gap-1.5 shadow-xl z-50" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
-                    {QUICK_EMOJIS.map(e => <button key={e} onClick={() => reactToMsg(e)} className="hover:scale-125 transition-transform text-lg">{e}</button>)}
+                    {QUICK_EMOJIS.map(e => (
+                      <button key={e} onClick={() => reactToMsg(e)} className="hover:scale-125 transition-transform text-lg">{e}</button>
+                    ))}
                   </div>
                 )}
               </div>
