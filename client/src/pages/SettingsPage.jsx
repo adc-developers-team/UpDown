@@ -1,18 +1,17 @@
-import BottomNav from '../components/BottomNav';
-import { FiPhone,  useState, useEffect } from 'react';
-import { FiPhone,  Link, useNavigate } from 'react-router-dom';
-import { FiPhone,  useAuth } from '../context/AuthContext';
-import { FiPhone,  usePWA } from '../hooks/usePWA';
-import { FiPhone,  useTheme } from '../context/ThemeContext';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { usePWA } from '../hooks/usePWA';
+import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
-import { FiPhone, 
+import {
   FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
   FiMoon, FiSun, FiShield, FiInfo, FiSmartphone,
-  FiTrash2, FiAlertTriangle, FiDatabase, FiToggleRight,
+  FiTrash2, FiAlertTriangle, FiDatabase,
   FiMonitor, FiXCircle, FiLock, FiUnlock,
-  FiBell, FiCamera, FiGlobe, FiDroplet, FiWifi,
-  FiVolume2, FiCpu, FiHelpCircle, FiStar
+  FiBell, FiGlobe, FiCpu, FiHelpCircle, FiStar, FiPhone
 } from 'react-icons/fi';
+import BottomNav from '../components/BottomNav';
 
 const SettingsPage = () => {
   const { user, logout, updateUser } = useAuth();
@@ -22,22 +21,15 @@ const SettingsPage = () => {
   const token = localStorage.getItem('token');
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  // State for various sections
   const [privacy, setPrivacy] = useState({ showLastSeen: true, showOnlineStatus: true, sendReadReceipts: true });
   const [autoDownload, setAutoDownload] = useState(true);
   const [showAccount, setShowAccount] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showCalls, setShowCalls] = useState(false);
-  const [showAppearance, setShowAppearance] = useState(false);
-  const [showLanguage, setShowLanguage] = useState(false);
-  const [showStorage, setShowStorage] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
-  const [showAccessibility, setShowAccessibility] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  const [showExperimental, setShowExperimental] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -132,14 +124,12 @@ const SettingsPage = () => {
 
   return (
     <div className="min-h-screen bg-chat-bg text-white pb-16">
-      {/* Header */}
       <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
         <Link to="/profile" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Settings</h2>
       </header>
 
       <div className="px-4 py-6 space-y-6 max-w-2xl mx-auto">
-        {/* Profile Card */}
         <div className="bg-surface rounded-2xl p-5 flex items-center gap-4 border border-border-light shadow-1">
           <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/20">
             {user?.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-2xl font-bold text-primary">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>}
@@ -152,7 +142,6 @@ const SettingsPage = () => {
           <Link to="/edit-profile" className="text-primary p-2 hover:bg-primary/10 rounded-full"><FiEdit size={18} /></Link>
         </div>
 
-        {/* Theme Toggle (Appearance) */}
         <div className="bg-surface rounded-2xl p-5 border border-border-light shadow-1 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${dark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-indigo-400/10 text-indigo-400'}`}>
@@ -167,12 +156,10 @@ const SettingsPage = () => {
           </button>
         </div>
 
-        {/* Install PWA */}
         {isInstallable && (
           <button onClick={installApp} className="w-full flex items-center gap-4 bg-primary text-white font-semibold p-5 rounded-2xl hover:bg-primary-dark transition-all shadow-2"><FiDownload size={20} /> Install UpDown App</button>
         )}
 
-        {/* Accordion Sections */}
         <AccordionSection title="Account" icon={<FiUser size={20} className="text-primary" />} show={showAccount} setShow={setShowAccount}>
           <Link to="/edit-profile" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Edit Profile</Link>
           <button onClick={handleDeactivate} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-warning">Deactivate Account</button>
@@ -182,7 +169,22 @@ const SettingsPage = () => {
           <Toggle label="Show Last Seen" checked={privacy.showLastSeen} onChange={(v) => handlePrivacyToggle('showLastSeen', v)} />
           <Toggle label="Show Online Status" checked={privacy.showOnlineStatus} onChange={(v) => handlePrivacyToggle('showOnlineStatus', v)} />
           <Toggle label="Send Read Receipts" checked={privacy.sendReadReceipts} onChange={(v) => handlePrivacyToggle('sendReadReceipts', v)} />
-          <BlockedUsersList blockedUsers={blockedUsers} onUnblock={handleUnblock} />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-text-secondary">Blocked Users</p>
+            {blockedUsers.length === 0 ? (
+              <p className="text-sm text-text-muted">No blocked users</p>
+            ) : (
+              blockedUsers.map(u => (
+                <div key={u._id} className="flex items-center gap-3 p-2 bg-bg-input rounded-xl">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-bold text-primary">{u.fullName?.[0] || u.username?.[0]?.toUpperCase()}</span>}
+                  </div>
+                  <span className="text-sm flex-1">{u.fullName || u.username}</span>
+                  <button onClick={() => handleUnblock(u._id)} className="text-primary text-sm hover:underline">Unblock</button>
+                </div>
+              ))
+            )}
+          </div>
         </AccordionSection>
 
         <AccordionSection title="Chats" icon={<FiSmartphone size={20} className="text-primary" />} show={showChat} setShow={setShowChat}>
@@ -190,41 +192,28 @@ const SettingsPage = () => {
           <button onClick={handleClearHistory} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger">Clear Chat History</button>
         </AccordionSection>
 
-        <AccordionSection title="Notifications" icon={<FiBell size={20} className="text-primary" />} show={showNotifications} setShow={setShowNotifications}>
-          <div className="space-y-2">
-            <p className="text-sm text-text-secondary">Manage notification preferences</p>
-            <p className="text-xs text-text-muted">Coming soon</p>
-          </div>
-        </AccordionSection>
-
         <AccordionSection title="Calls" icon={<FiPhone size={20} className="text-primary" />} show={showCalls} setShow={setShowCalls}>
-          <div className="space-y-2">
-            <p className="text-sm text-text-secondary">Call quality, data saver, noise suppression</p>
-            <p className="text-xs text-text-muted">Coming soon</p>
-          </div>
-        </AccordionSection>
-
-        <AccordionSection title="Language" icon={<FiGlobe size={20} className="text-primary" />} show={showLanguage} setShow={setShowLanguage}>
-          <div className="space-y-2">
-            <p className="text-sm text-text-secondary">English · বাংলা · हिन्दी</p>
-            <p className="text-xs text-text-muted">Coming soon</p>
-          </div>
-        </AccordionSection>
-
-        <AccordionSection title="Storage & Data" icon={<FiDatabase size={20} className="text-primary" />} show={showStorage} setShow={setShowStorage}>
-          <button onClick={handleExportData} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Export My Data</button>
+          <div className="space-y-2"><p className="text-sm text-text-secondary">Call quality, data saver, noise suppression</p><p className="text-xs text-text-muted">Coming soon</p></div>
         </AccordionSection>
 
         <AccordionSection title="Security" icon={<FiLock size={20} className="text-primary" />} show={showSecurity} setShow={setShowSecurity}>
-          <ActiveSessions sessions={sessions} onRemove={handleRemoveSession} />
-          <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger mt-2">Delete Account</button>
-        </AccordionSection>
-
-        <AccordionSection title="Accessibility" icon={<FiCpu size={20} className="text-primary" />} show={showAccessibility} setShow={setShowAccessibility}>
           <div className="space-y-2">
-            <p className="text-sm text-text-secondary">Font size, reduce motion, high contrast</p>
-            <p className="text-xs text-text-muted">Coming soon</p>
+            <p className="text-sm font-medium text-text-secondary">Active Sessions</p>
+            {sessions.length === 0 ? (
+              <p className="text-sm text-text-muted">No other sessions</p>
+            ) : (
+              sessions.map((session, i) => (
+                <div key={session._id || i} className="flex items-center gap-3 p-3 bg-bg-input rounded-xl">
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{session.device?.substring(0, 30) || 'Unknown Device'}</p>
+                    <p className="text-xs text-text-muted">IP: {session.ip} · {new Date(session.lastActive).toLocaleString()}</p>
+                  </div>
+                  <button onClick={() => handleRemoveSession(session._id)} className="text-danger hover:text-red-400 p-1"><FiXCircle size={16} /></button>
+                </div>
+              ))
+            )}
           </div>
+          <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger mt-2">Delete Account</button>
         </AccordionSection>
 
         <AccordionSection title="Help" icon={<FiHelpCircle size={20} className="text-primary" />} show={showHelp} setShow={setShowHelp}>
@@ -242,20 +231,9 @@ const SettingsPage = () => {
           </div>
         </AccordionSection>
 
-        <AccordionSection title="Experimental" icon={<FiStar size={20} className="text-primary" />} show={showExperimental} setShow={setShowExperimental}>
-          <div className="space-y-2">
-            <p className="text-sm text-text-secondary">Beta features and labs</p>
-            <p className="text-xs text-text-muted">Coming soon</p>
-          </div>
-        </AccordionSection>
-
-        {/* Logout */}
-        <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-danger/10 hover:bg-danger/20 border border-danger/30 p-5 rounded-2xl transition text-danger font-medium">
-          <FiLogOut size={20} /> Logout
-        </button>
+        <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-danger/10 hover:bg-danger/20 border border-danger/30 p-5 rounded-2xl transition text-danger font-medium"><FiLogOut size={20} /> Logout</button>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-surface rounded-2xl p-6 max-w-sm w-full space-y-4 shadow-3">
@@ -269,21 +247,17 @@ const SettingsPage = () => {
           </div>
         </div>
       )}
+      <BottomNav />
     </div>
   );
 };
 
-// Reusable components
 const AccordionSection = ({ title, icon, show, setShow, children }) => (
   <div className="bg-surface rounded-2xl border border-border-light shadow-1 overflow-hidden transition-all">
     <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
-      {icon}
-      <span className="flex-1 text-left font-medium">{title}</span>
-      <span className={`text-sm text-text-secondary transition-transform ${show ? 'rotate-180' : ''}`}>▼</span>
+      {icon}<span className="flex-1 text-left font-medium">{title}</span><span className={`text-sm text-text-secondary transition-transform ${show ? 'rotate-180' : ''}`}>▼</span>
     </button>
-    <div className={`transition-all duration-300 ${show ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-      <div className="px-5 pb-4 space-y-2">{children}</div>
-    </div>
+    <div className={`transition-all duration-300 ${show ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}><div className="px-5 pb-4 space-y-2">{children}</div></div>
   </div>
 );
 
@@ -296,43 +270,4 @@ const Toggle = ({ label, checked, onChange }) => (
   </div>
 );
 
-const BlockedUsersList = ({ blockedUsers, onUnblock }) => (
-  <div className="space-y-2">
-    <p className="text-sm font-medium text-text-secondary">Blocked Users</p>
-    {blockedUsers.length === 0 ? (
-      <p className="text-sm text-text-muted">No blocked users</p>
-    ) : (
-      blockedUsers.map(u => (
-        <div key={u._id} className="flex items-center gap-3 p-2 bg-bg-input rounded-xl">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-            {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-bold text-primary">{u.fullName?.[0] || u.username?.[0]?.toUpperCase()}</span>}
-          </div>
-          <span className="text-sm flex-1">{u.fullName || u.username}</span>
-          <button onClick={() => onUnblock(u._id)} className="text-primary text-sm hover:underline">Unblock</button>
-        </div>
-      ))
-    )}
-  </div>
-);
-
-const ActiveSessions = ({ sessions, onRemove }) => (
-  <div className="space-y-2">
-    <p className="text-sm font-medium text-text-secondary">Active Sessions</p>
-    {sessions.length === 0 ? (
-      <p className="text-sm text-text-muted">No other sessions</p>
-    ) : (
-      sessions.map((session, i) => (
-        <div key={session._id || i} className="flex items-center gap-3 p-3 bg-bg-input rounded-xl">
-          <div className="flex-1">
-            <p className="text-sm font-medium">{session.device?.substring(0, 30) || 'Unknown Device'}</p>
-            <p className="text-xs text-text-muted">IP: {session.ip} · {new Date(session.lastActive).toLocaleString()}</p>
-          </div>
-          <button onClick={() => onRemove(session._id)} className="text-danger hover:text-red-400 p-1"><FiXCircle size={16} /></button>
-        </div>
-      ))
-    )}
-  </div>
-);
-
-    <BottomNav />
 export default SettingsPage;
