@@ -516,7 +516,7 @@ const ChatRoomPage = () => {
               >
                 {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
                 {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
-                {mediaType === 'audio' {mediaType === 'audio' && <AudioPlayer src={msg.image} />}{mediaType === 'audio' && <AudioPlayer src={msg.image} />} <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" />}
+                mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" />
                 {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
                 <div className="flex items-center justify-end gap-1.5 mt-1.5">
                   <span className="text-[11px] opacity-70 font-medium">{formatMsgTime(msg.createdAt)}</span>
