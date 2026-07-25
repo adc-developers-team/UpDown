@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
-const dotenv = require('dotenv');
 const cors = require('cors');
 const cloudinary = require('cloudinary').v2;
 
@@ -14,8 +13,7 @@ const groupMessageRoutes = require('./routes/groupMessageRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const User = require('./models/User');
 
-dotenv.config();
-
+// Render injects env vars directly — no dotenv needed
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -27,8 +25,7 @@ const server = http.createServer(app);
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'http://192.168.0.102:5173',
-  'https://updown-app.onrender.com'
+  'https://updown-app.onrender.com',
 ];
 
 const io = new Server(server, {
@@ -64,13 +61,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('join chat', (room) => { socket.join(room); });
-
-  socket.on('typing', ({ conversationId, senderName }) => {
-    socket.to(conversationId).emit('user typing', senderName);
-  });
-  socket.on('stop typing', ({ conversationId }) => {
-    socket.to(conversationId).emit('user stop typing');
-  });
+  socket.on('typing', ({ conversationId, senderName }) => { socket.to(conversationId).emit('user typing', senderName); });
+  socket.on('stop typing', ({ conversationId }) => { socket.to(conversationId).emit('user stop typing'); });
   socket.on('send message', async (data) => {
     const { senderId, receiverId, text, image } = data;
     const conversationId = [senderId, receiverId].sort().join('_');
@@ -125,12 +117,8 @@ io.on('connection', (socket) => {
     } catch (err) { console.error(err); }
   });
   socket.on('join group', (groupId) => { socket.join(groupId); });
-  socket.on('group typing', ({ groupId, senderName }) => {
-    socket.to(groupId).emit('group user typing', { senderName });
-  });
-  socket.on('stop group typing', ({ groupId }) => {
-    socket.to(groupId).emit('group user stop typing');
-  });
+  socket.on('group typing', ({ groupId, senderName }) => { socket.to(groupId).emit('group user typing', { senderName }); });
+  socket.on('stop group typing', ({ groupId }) => { socket.to(groupId).emit('group user stop typing'); });
   socket.on('send group message', async (data) => {
     const { groupId, senderId, text, image } = data;
     const GroupMessage = require('./models/GroupMessage');
@@ -140,8 +128,6 @@ io.on('connection', (socket) => {
     const populated = await GroupMessage.findById(message._id).populate('sender', 'username profilePic');
     io.to(groupId).emit('group message received', populated);
   });
-
-  // ---------- Calling events ----------
   socket.on('call-user', ({ callerId, receiverId, signal, callType }) => {
     const receiverSocketId = onlineUsers.get(receiverId);
     if (receiverSocketId) {
@@ -152,32 +138,21 @@ io.on('connection', (socket) => {
   });
   socket.on('accept-call', ({ callerId, signal }) => {
     const callerSocketId = onlineUsers.get(callerId);
-    if (callerSocketId) {
-      io.to(callerSocketId).emit('call-accepted', { signal });
-    }
+    if (callerSocketId) io.to(callerSocketId).emit('call-accepted', { signal });
   });
   socket.on('reject-call', ({ callerId }) => {
     const callerSocketId = onlineUsers.get(callerId);
-    if (callerSocketId) {
-      io.to(callerSocketId).emit('call-rejected');
-    }
+    if (callerSocketId) io.to(callerSocketId).emit('call-rejected');
   });
   socket.on('end-call', ({ to }) => {
     const toSocketId = onlineUsers.get(to);
-    if (toSocketId) {
-      io.to(toSocketId).emit('call-ended');
-    }
+    if (toSocketId) io.to(toSocketId).emit('call-ended');
   });
   socket.on('ice-candidate', ({ to, candidate }) => {
     const toSocketId = onlineUsers.get(to);
-    if (toSocketId) {
-      io.to(toSocketId).emit('ice-candidate', { candidate });
-    }
+    if (toSocketId) io.to(toSocketId).emit('ice-candidate', { candidate });
   });
-  socket.on('set-username', (username) => {
-    socket.userName = username;
-  });
-
+  socket.on('set-username', (username) => { socket.userName = username; });
   socket.on('disconnect', async () => {
     for (let [userId, sid] of onlineUsers.entries()) {
       if (sid === socket.id) {
