@@ -33,12 +33,14 @@ const Homepage = () => {
   const [activeTab, setActiveTab] = useState('chats');
   const [groups, setGroups] = useState([]);
   const [unreadCounts, setUnreadCounts] = useState({});
+  const [loading, setLoading] = useState(true);   // ← new
 
   const token = localStorage.getItem('token');
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [friendsRes, groupsRes] = await Promise.all([
           axios.get('https://updown-hms5.onrender.com/api/friends', config),
@@ -49,6 +51,8 @@ const Homepage = () => {
       } catch (err) {
         setUsers([]);
         setGroups([]);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -140,7 +144,20 @@ const Homepage = () => {
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'chats' && (
+        {loading ? (
+          /* Skeleton loaders */
+          <div className="space-y-2 p-3">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-700"></div>
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-gray-700 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-700 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : activeTab === 'chats' ? (
           filteredUsers.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4">
               <FiMessageSquare size={48} className="mb-4 opacity-50" />
@@ -174,9 +191,8 @@ const Homepage = () => {
               );
             })
           )
-        )}
-
-        {activeTab === 'groups' && (
+        ) : (
+          /* Groups tab */
           filteredGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4">
               <FiUsers size={48} className="mb-4 opacity-50" />
