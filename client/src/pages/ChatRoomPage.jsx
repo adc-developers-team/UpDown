@@ -6,7 +6,8 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
-  FiMicOff, FiVolume2, FiCornerUpLeft, FiEdit, FiFilm, FiStar, FiSearch
+  FiMicOff, FiVolume2, FiCornerUpLeft, FiEdit, FiFilm, FiStar, FiSearch,
+  FiMoreVertical, FiSlash, FiCheckCircle
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
@@ -26,19 +27,24 @@ const ChatRoomPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
-  const [editingMsgId, setEditingMsgId] = useState(null);
-  const [editText, setEditText] = useState('');
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlockedByThem, setIsBlockedByThem] = useState(false);
   const socketRef = useRef(null);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const messagesEndRef = useRef(null);
 
+  const token = localStorage.getItem('token');
+  const config = { headers: { Authorization: `Bearer ${token}` } };
+
   useEffect(() => {
     setLoading(true);
     setError(null);
     socketRef.current = io('https://updown-hms5.onrender.com');
+
     axios.get('https://updown-hms5.onrender.com/api/auth/users')
       .then(res => {
         const found = (Array.isArray(res.data) ? res.data : []).find(u => u._id === userId);
@@ -48,6 +54,11 @@ const ChatRoomPage = () => {
         } else {
           setChatUser({ _id: userId, username: 'Unknown', fullName: 'User' });
         }
+        return axios.get('https://updown-hms5.onrender.com/api/auth/blocked', config);
+      })
+      .then(res => {
+        const blocked = Array.isArray(res.data) ? res.data : [];
+        setIsBlocked(blocked.some(b => b._id === userId));
         setLoading(false);
       })
       .catch(err => {
@@ -63,6 +74,22 @@ const ChatRoomPage = () => {
     return () => { socketRef.current.disconnect(); };
   }, [userId]);
 
+  const handleBlock = async () => {
+    if (!confirm(isBlocked ? 'Unblock this user?' : 'Block this user? They will not be able to message you.')) return;
+    try {
+      if (isBlocked) {
+        await axios.put(`https://updown-hms5.onrender.com/api/auth/unblock/${userId}`, {}, config);
+        setIsBlocked(false);
+      } else {
+        await axios.put(`https://updown-hms5.onrender.com/api/auth/block/${userId}`, {}, config);
+        setIsBlocked(true);
+      }
+      setShowMoreMenu(false);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Action failed');
+    }
+  };
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -75,10 +102,8 @@ const ChatRoomPage = () => {
         const reader = new FileReader();
         reader.onloadend = async () => {
           try {
-            const token = localStorage.getItem('token');
             const { data } = await axios.post('https://updown-hms5.onrender.com/api/upload/audio', 
-              { audio: reader.result }, 
-              { headers: { Authorization: `Bearer ${token}` } }
+              { audio: reader.result }, config
             );
             socketRef.current?.emit('send message', { 
               senderId: user._id, receiverId: userId, text: '', image: data.audioUrl, mediaType: 'audio' 
@@ -110,13 +135,11 @@ const ChatRoomPage = () => {
         reader.onerror = rej; 
         reader.readAsDataURL(file); 
       });
-      const token = localStorage.getItem('token');
       const endpoint = type === 'image' ? '/api/upload/image' : '/api/upload/video';
       const field = type === 'image' ? 'image' : 'video';
       const { data } = await axios.post(
         `https://updown-hms5.onrender.com${endpoint}`, 
-        { [field]: result }, 
-        { headers: { Authorization: `Bearer ${token}` } }
+        { [field]: result }, config
       );
       const url = type === 'image' ? data.imageUrl : data.videoUrl;
       socketRef.current?.emit('send message', { 
@@ -139,6 +162,7 @@ const ChatRoomPage = () => {
 
   const handleSend = (e) => {
     e.preventDefault();
+    if (isBlocked) return alert('You have blocked this user. Unblock to send messages.');
     if (newMsg.trim()) {
       sendMessage(newMsg, replyTo?._id);
       setNewMsg('');
@@ -173,6 +197,17 @@ const ChatRoomPage = () => {
         <div className="flex-1 min-w-0">
           <h2 className="font-semibold text-base truncate">{chatUser.fullName || chatUser.username}</h2>
           <p className={`text-xs ${isOnline ? 'text-green-400' : 'text-text-secondary'}`}>{typingUser ? `${typingUser} is typing...` : statusText}</p>
+        </div>
+        <div className="relative">
+          <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="p-2 hover:bg-gray-700 rounded-full"><FiMoreVertical size={18} /></button>
+          {showMoreMenu && (
+            <div className="absolute right-0 top-full mt-1 bg-gray-800 rounded-xl shadow-lg py-1 z-30 w-40 text-sm">
+              <button onClick={handleBlock} className={`w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-700 transition ${isBlocked ? 'text-green-400' : 'text-red-400'}`}>
+                {isBlocked ? <FiCheckCircle size={14} /> : <FiSlash size={14} />}
+                {isBlocked ? 'Unblock User' : 'Block User'}
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -225,15 +260,22 @@ const ChatRoomPage = () => {
           )}
         </button>
         <div className="flex-1 flex items-center bg-bg-input rounded-full px-4 py-1.5 border border-gray-700">
-          <input type="text" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder="Message" className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-400" />
+          <input 
+            type="text" 
+            value={newMsg} 
+            onChange={e => setNewMsg(e.target.value)} 
+            placeholder={isBlocked ? "You blocked this user" : "Message"} 
+            className="flex-1 bg-transparent outline-none text-sm text-white placeholder-gray-400"
+            disabled={isBlocked}
+          />
         </div>
         {isRecording ? (
           <button type="button" onClick={stopRecording} className="text-red-400 p-1 animate-pulse"><FiStopCircle size={22} /></button>
-        ) : newMsg.trim() ? (
+        ) : newMsg.trim() && !isBlocked ? (
           <button type="submit" className="text-accent hover:text-accent-hover p-1"><FiSend size={22} /></button>
-        ) : (
+        ) : !isBlocked ? (
           <button type="button" onClick={startRecording} className="text-gray-400 hover:text-accent p-1"><FiMic size={22} /></button>
-        )}
+        ) : null}
       </form>
     </div>
   );
