@@ -13,7 +13,32 @@ const sendVerificationEmail = async (email, verifyToken) => {
       sender: { email: 'messagetoupdown.hq@gmail.com', name: 'UpDown Chat' },
       to: [{ email }],
       subject: 'Verify your email address',
-      htmlContent: `...`, // (উপরে দেওয়া HTML)
+      htmlContent: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"></head>
+      <body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:30px 0">
+          <tr><td align="center">
+            <table width="400" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
+              <tr><td style="background:#3b82f6;padding:20px;text-align:center">
+                <span style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:1px">UPDOWN</span>
+              </td></tr>
+              <tr><td style="padding:24px 20px;color:#333;font-size:15px;line-height:1.6">
+                <p style="margin:0 0 12px;color:#666">Click below to verify your email address and activate your account.</p>
+                <p style="margin:24px 0;text-align:center">
+                  <a href="${verificationUrl}" style="display:inline-block;padding:12px 32px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:15px">Verify Email</a>
+                </p>
+                <p style="margin:16px 0 0;font-size:12px;color:#999">Button not working? Copy and paste this link into your browser:<br><a href="${verificationUrl}" style="color:#3b82f6;word-break:break-all">${verificationUrl}</a></p>
+              </td></tr>
+              <tr><td style="background:#fafafa;padding:12px 20px;text-align:center;font-size:11px;color:#aaa">
+                © UpDown • Secure messaging, anywhere.
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>`,
     }, {
       headers: {
         'api-key': process.env.BREVO_API_KEY,
