@@ -591,7 +591,7 @@ const ChatRoomPage = () => {
           const quotedMessage = msg.replyTo;
           return (
             <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-2 rounded-2xl relative group ${isMine ? 'bg-light-blue text-white rounded-br-none' : 'bg-gray-700 text-gray-100 rounded-bl-none'}`}>
+              <div className={`max-w-[80%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-2 rounded-2xl relative group ${isMine ? 'message-sent rounded-br-none' : 'message-received rounded-bl-none'}`}>
                 {quotedMessage && (
                   <div className={`text-xs p-2 rounded-lg mb-1 opacity-80 ${isMine ? 'bg-blue-700' : 'bg-gray-600'}`}>
                     <span className="font-medium">{quotedMessage.sender?.fullName || quotedMessage.sender?.username || 'User'}</span>
@@ -616,7 +616,7 @@ const ChatRoomPage = () => {
                     {mediaType === 'video' && <video controls className="max-w-full rounded-lg mb-1" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
                     {mediaType === 'audio' && <audio controls className="w-full mb-1" style={{height:'35px'}}><source src={msg.image} /></audio>}
                     {msg.text && <div className="text-sm sm:text-base">{renderTextWithLinks(msg.text)}</div>}
-                    {msg.text && msg.createdAt !== msg.updatedAt && <span className="text-xs opacity-50 ml-1">(edited)</span>}
+                    {msg.text msg.text && msg.createdAt !== msg.updatedAtmsg.text && msg.createdAt !== msg.updatedAt msg.updatedAt msg.text && msg.createdAt !== msg.updatedAtmsg.text && msg.createdAt !== msg.updatedAt msg.createdAt !== msg.updatedAt msg.text && msg.createdAt !== msg.updatedAtmsg.text && msg.createdAt !== msg.updatedAt new Date(msg.createdAt).getTime() !== new Date(msg.updatedAt).getTime() && <span className="text-xs opacity-50 ml-1">(edited)</span>}
                   </>
                 )}
                 {renderReactions(msg)}
