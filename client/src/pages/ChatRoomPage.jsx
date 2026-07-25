@@ -38,8 +38,10 @@ const formatMsgTime = (d) => {
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const isVideoLink = (url) => /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url) || /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/.test(url);
+
+const isVideoLink = (url) => /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url) || /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/.test(url) || /vimeo\.com\/(\d+)/.test(url);
 const getYouTubeId = (url) => (url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) || [])[1] || null;
+const getVimeoId = (url) => (url.match(/vimeo\.com\/(\d+)/) || [])[1] || null;
 const urlRegex = /(https?:\/\/[^\s]+)/g;
 
 const renderTextWithLinks = (text) => {
@@ -51,12 +53,17 @@ const renderTextWithLinks = (text) => {
     if (match.index > lastIndex) elements.push(<span key={lastIndex}>{text.slice(lastIndex, match.index)}</span>);
     const url = match[0];
     const ytId = getYouTubeId(url);
-    if (isVideoLink(url)) {
+    const vimeoId = getVimeoId(url);
+    const isDirectVideo = /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url);
+
+    if (ytId || vimeoId || isDirectVideo) {
       elements.push(<a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">{url}</a>);
       if (ytId) {
-        elements.push(<div key={`yt-${match.index}`} className="mt-1"><img src={`https://img.youtube.com/vi/${ytId}/0.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={()=>window.open(url,'_blank')} /></div>);
-      } else {
-        elements.push(<div key={`vid-${match.index}`} className="mt-1"><video controls className="max-w-full rounded-lg" style={{maxHeight:'200px'}}><source src={url} /></video></div>);
+        elements.push(<div key={`yt-${match.index}`} className="mt-1"><img src={`https://img.youtube.com/vi/${ytId}/0.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={() => window.open(url, '_blank')} alt="YouTube" /></div>);
+      } else if (vimeoId) {
+        elements.push(<div key={`vimeo-${match.index}`} className="mt-1"><img src={`https://vumbnail.com/${vimeoId}.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={() => window.open(url, '_blank')} alt="Vimeo" /></div>);
+      } else if (isDirectVideo) {
+        elements.push(<div key={`vid-${match.index}`} className="mt-1"><video controls className="max-w-full rounded-lg" style={{ maxHeight: '200px' }}><source src={url} /></video></div>);
       }
     } else {
       elements.push(<a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">{url}</a>);
@@ -111,9 +118,8 @@ const ChatRoomPage = () => {
   const remoteVideoRef = useRef(null);
   const peerRef = useRef(null);
   const callTimerRef = useRef(null);
-  const ringtoneRef = useRef(null);          // ← ringtone
+  const ringtoneRef = useRef(null);
 
-  /* ---------- ringtone ---------- */
   const playRingtone = () => {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -138,7 +144,7 @@ const ChatRoomPage = () => {
         else beep();
       }, 2000);
       ctx.interval = interval;
-    } catch (e) { /* user gesture required, silent */ }
+    } catch (e) {}
   };
 
   const stopRingtone = () => {
@@ -167,7 +173,7 @@ const ChatRoomPage = () => {
       setCallerSignal({ callerId, signal });
       setCallType(callType);
       setIncoming(true);
-      playRingtone();   // ← start ringing
+      playRingtone();
     });
 
     socketRef.current.on('call-accepted', ({ signal }) => {
@@ -390,7 +396,7 @@ const ChatRoomPage = () => {
             <div className="text-center space-y-8">
               <div className="w-32 h-32 rounded-full bg-light-blue flex items-center justify-center text-5xl mx-auto relative">
                 <span className="animate-ping absolute inset-0 rounded-full bg-light-blue opacity-20"></span>
-                {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover rounded-full" /> : (chatUser.fullName?.[0] || chatUser.username[0].toUpperCase())}
+                {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover rounded-full" alt="" /> : (chatUser.fullName?.[0] || chatUser.username[0].toUpperCase())}
               </div>
               <h2 className="text-3xl font-bold">{chatUser.fullName || chatUser.username}</h2>
               <p className="text-gray-300 text-lg">{callType === 'video' ? '📹 Video call' : '📞 Voice call'}</p>
