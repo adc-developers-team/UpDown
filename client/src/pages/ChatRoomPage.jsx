@@ -6,11 +6,13 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
-  FiMicOff, FiVolume2, FiCornerUpLeft, FiEdit, FiFilm
+  FiFilm,
+  FiMicOff, FiVolume2, FiCornerUpLeft
+import { FiEdit } from 'react-icons/fi';
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
-/* ---------- helpers (unchanged) ---------- */
+/* ---------- helpers ---------- */
 const getLastSeenText = (d) => {
   if (!d) return 'Last seen long ago';
   const date = new Date(d), now = new Date();
@@ -59,9 +61,9 @@ const renderTextWithLinks = (text) => {
     if (ytId || vimeoId || isDirectVideo) {
       elements.push(<a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">{url}</a>);
       if (ytId) {
-        elements.push(<div key={`yt-${match.index}`} className="mt-1"><img src={`https://img.youtube.com/vi/${ytId}/0.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={() => window.open(url, '_blank')} alt="" /></div>);
+        elements.push(<div key={`yt-${match.index}`} className="mt-1"><img src={`https://img.youtube.com/vi/${ytId}/0.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={() => window.open(url, '_blank')} alt="YouTube" /></div>);
       } else if (vimeoId) {
-        elements.push(<div key={`vimeo-${match.index}`} className="mt-1"><img src={`https://vumbnail.com/${vimeoId}.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={() => window.open(url, '_blank')} alt="" /></div>);
+        elements.push(<div key={`vimeo-${match.index}`} className="mt-1"><img src={`https://vumbnail.com/${vimeoId}.jpg`} className="rounded-lg max-w-full cursor-pointer" onClick={() => window.open(url, '_blank')} alt="Vimeo" /></div>);
       } else if (isDirectVideo) {
         elements.push(<div key={`vid-${match.index}`} className="mt-1"><video controls className="max-w-full rounded-lg" style={{ maxHeight: '200px' }}><source src={url} /></video></div>);
       }
@@ -74,16 +76,10 @@ const renderTextWithLinks = (text) => {
   return elements;
 };
 
-/* ---------- WebRTC config (add TURN for reliability) ---------- */
 const iceServers = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-    {
-      urls: 'turn:updown.metered.live:443?transport=tcp',
-      username: '81900d4e96d01f518684bc5a',
-      credential: 'bo8JgogjdLo7sUNX',
-    },
   ],
 };
 
@@ -96,20 +92,18 @@ const ChatRoomPage = () => {
   const [chatUser, setChatUser] = useState(null);
   const [typingUser, setTypingUser] = useState(null);
   const [reactionPicker, setReactionPicker] = useState(null);
+  const [reactingMsgId, setReactingMsgId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [uploading, setUploading] = useState(false);
-  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [editingMsgId, setEditingMsgId] = useState(null);
   const [editText, setEditText] = useState('');
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [showGifModal, setShowGifModal] = useState(false);
   const [gifSearch, setGifSearch] = useState('');
   const [gifResults, setGifResults] = useState([]);
   const [searchingGif, setSearchingGif] = useState(false);
-  const [reactingMsgId, setReactingMsgId] = useState(null);
-  const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -189,7 +183,6 @@ const ChatRoomPage = () => {
     socketRef.current.on('message reaction updated', updated => setMessages(prev => prev.map(m => m._id === updated._id ? updated : m)));
 
     socketRef.current.on('incoming-call', ({ callerId, signal, callType }) => {
-      console.log('Incoming call from', callerId, 'type', callType);
       setCallerSignal({ callerId, signal });
       setCallType(callType);
       setIncoming(true);
@@ -197,11 +190,8 @@ const ChatRoomPage = () => {
     });
 
     socketRef.current.on('call-accepted', ({ signal }) => {
-      console.log('Call accepted, signal received');
       stopRingtone();
-      if (peerRef.current) {
-        peerRef.current.setRemoteDescription(new RTCSessionDescription(signal));
-      }
+      if (peerRef.current) peerRef.current.setRemoteDescription(new RTCSessionDescription(signal));
       setCalling(false); setInCall(true); startCallTimer();
     });
 
@@ -221,30 +211,10 @@ const ChatRoomPage = () => {
     });
 
     socketRef.current.on('ice-candidate', ({ candidate }) => {
-      if (peerRef.current) {
-        try {
-          peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error('ICE candidate error:', e);
-        }
-      }
+      if (peerRef.current) try { peerRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) {}
     });
 
     socketRef.current.emit('set-username', user.username);
-
-    // Scroll handling
-    const container = document.querySelector('.overflow-y-auto');
-    if (container) {
-      const handleScroll = () => {
-        setShowScrollBtn(container.scrollTop < container.scrollHeight - container.clientHeight - 100);
-      };
-      container.addEventListener('scroll', handleScroll);
-      return () => {
-        container.removeEventListener('scroll', handleScroll);
-        stopRingtone();
-        socketRef.current.disconnect();
-      };
-    }
 
     return () => {
       stopRingtone();
@@ -252,55 +222,21 @@ const ChatRoomPage = () => {
     };
   }, [userId, setSelectedUser, user.username]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // ---------- call logic ----------
+  // call logic
   const startCall = async (type) => {
-    console.log('Starting call, type:', type);
     setCallType(type);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: type === 'video',
-      });
-      console.log('Local stream acquired');
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-      const peer = new RTCPeerConnection(iceServers);
-      peerRef.current = peer;
-
+      const peer = new RTCPeerConnection(iceServers); peerRef.current = peer;
       stream.getTracks().forEach(track => peer.addTrack(track, stream));
-
-      peer.onicecandidate = (e) => {
-        if (e.candidate) {
-          console.log('Sending ICE candidate');
-          socketRef.current.emit('ice-candidate', { to: userId, candidate: e.candidate });
-        }
-      };
-
-      peer.ontrack = (e) => {
-        console.log('Remote track received');
-        if (e.streams && e.streams[0]) {
-          setRemoteStream(e.streams[0]);
-          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-        }
-      };
-
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
-      console.log('Sending call-user with offer');
-      socketRef.current.emit('call-user', {
-        callerId: user._id,
-        receiverId: userId,
-        signal: offer,
-        callType: type,
-      });
+      peer.onicecandidate = (e) => { if (e.candidate) socketRef.current.emit('ice-candidate', { to: userId, candidate: e.candidate }); };
+      peer.ontrack = (e) => { if (e.streams && e.streams[0]) { setRemoteStream(e.streams[0]); if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]; } };
+      const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
+      socketRef.current.emit('call-user', { callerId: user._id, receiverId: userId, signal: offer, callType: type });
       setCalling(true);
     } catch (err) {
-      console.error('Call start error:', err);
       if (err.name === 'NotAllowedError') alert('Please allow camera & microphone in browser settings.');
       else if (err.name === 'NotFoundError') alert('No camera or microphone found.');
       else alert('Call failed: ' + err.message);
@@ -309,42 +245,20 @@ const ChatRoomPage = () => {
 
   const acceptIncomingCall = async () => {
     if (!callerSignal) return;
-    console.log('Accepting call');
     stopRingtone();
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: callType === 'video',
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callType === 'video' });
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-      const peer = new RTCPeerConnection(iceServers);
-      peerRef.current = peer;
-
+      const peer = new RTCPeerConnection(iceServers); peerRef.current = peer;
       stream.getTracks().forEach(track => peer.addTrack(track, stream));
-
-      peer.onicecandidate = (e) => {
-        if (e.candidate) {
-          socketRef.current.emit('ice-candidate', { to: callerSignal.callerId, candidate: e.candidate });
-        }
-      };
-
-      peer.ontrack = (e) => {
-        if (e.streams && e.streams[0]) {
-          setRemoteStream(e.streams[0]);
-          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-        }
-      };
-
+      peer.onicecandidate = (e) => { if (e.candidate) socketRef.current.emit('ice-candidate', { to: callerSignal.callerId, candidate: e.candidate }); };
+      peer.ontrack = (e) => { if (e.streams && e.streams[0]) { setRemoteStream(e.streams[0]); if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]; } };
       await peer.setRemoteDescription(new RTCSessionDescription(callerSignal.signal));
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
-      console.log('Sending accept-call');
+      const answer = await peer.createAnswer(); await peer.setLocalDescription(answer);
       socketRef.current.emit('accept-call', { callerId: callerSignal.callerId, signal: answer });
       setIncoming(false); setInCall(true); startCallTimer();
     } catch (err) {
-      console.error('Accept call error:', err);
       if (err.name === 'NotAllowedError') alert('Please allow camera & microphone.');
       else alert('Could not answer: ' + err.message);
     }
@@ -375,7 +289,7 @@ const ChatRoomPage = () => {
   const toggleVideo = () => { if (localStream) { localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled); setVideoEnabled(!videoEnabled); } };
   const toggleSpeaker = () => setSpeakerOn(!speakerOn);
 
-  // file upload (unchanged)
+  // file upload
   const uploadFile = async (file, type) => {
     if (file.size > MAX_FILE_SIZE) return alert(`File too large. Max ${MAX_FILE_SIZE/1048576}MB.`);
     setUploading(true);
@@ -387,9 +301,8 @@ const ChatRoomPage = () => {
       const field = type === 'image' ? 'image' : 'video';
       const { data } = await axios.post(`https://updown-hms5.onrender.com${endpoint}`, { [field]: result }, { headers: { Authorization: `Bearer ${token}` } });
       const url = type === 'image' ? data.imageUrl : data.videoUrl;
-      socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: url, mediaType: type, replyTo: replyTo?._id || null });
+      socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: url, mediaType: type });
       socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
-      setReplyTo(null);
     } catch (err) { alert(err.response?.data?.message || err.message || 'Upload failed'); }
     finally { setUploading(false); }
   };
@@ -410,9 +323,8 @@ const ChatRoomPage = () => {
           try {
             const token = localStorage.getItem('token');
             const { data } = await axios.post('https://updown-hms5.onrender.com/api/upload/audio', { audio: reader.result }, { headers: { Authorization: `Bearer ${token}` } });
-            socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: data.audioUrl, mediaType: 'audio', replyTo: replyTo?._id || null });
+            socketRef.current.emit('send message', { senderId: user._id, receiverId: userId, text: '', image: data.audioUrl, mediaType: 'audio' });
             socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
-            setReplyTo(null);
           } catch (err) { alert('Audio upload failed'); }
         };
         reader.readAsDataURL(blob);
@@ -444,21 +356,7 @@ const ChatRoomPage = () => {
     const convId = [user._id, userId].sort().join('_');
     socketRef.current?.emit('react to message', { messageId: msgId, emoji, userId: user._id, conversationId: convId });
     setReactionPicker(null);
-    setReactingMsgId(msgId);
-    setTimeout(() => setReactingMsgId(null), 350);
-  };
-
-  const startEdit = (msg) => { setEditingMsgId(msg._id); setEditText(msg.text); };
-  const cancelEdit = () => { setEditingMsgId(null); setEditText(''); };
-  const submitEdit = async (msgId) => {
-    if (!editText.trim()) return;
-    const token = localStorage.getItem('token');
-    try {
-      await axios.put(`https://updown-hms5.onrender.com/api/messages/${msgId}`, { text: editText }, { headers: { Authorization: `Bearer ${token}` } });
-      const convId = [user._id, userId].sort().join('_');
-      socketRef.current?.emit('edit message', { messageId: msgId, text: editText, conversationId: convId });
-      setEditingMsgId(null); setEditText('');
-    } catch (err) { alert(err.response?.data?.message || 'Edit failed'); }
+      setReactingMsgId(msgId); setTimeout(() => setReactingMsgId(null), 350);
   };
 
   const handleTyping = () => {
@@ -471,12 +369,7 @@ const ChatRoomPage = () => {
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (newMsg.trim()) {
-      sendMessage(newMsg, replyTo?._id);
-      setNewMsg('');
-      setReplyTo(null);
-      socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
-    }
+    if (newMsg.trim()) { sendMessage(newMsg, replyTo?._id); setReplyTo(null); setNewMsg(''); socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') }); }
   };
 
   const renderTick = (msg) => {
@@ -582,28 +475,24 @@ const ChatRoomPage = () => {
 
       {/* Messages */}
       <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-3 sm:space-y-4">
-        {showScrollBtn && (
-          <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-light-blue rounded-full flex items-center justify-center shadow-lg z-10">↓</button>
-        )}
+      {showScrollBtn && (
+        <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-light-blue rounded-full flex items-center justify-center shadow-lg z-10">
+          ↓
+        </button>
+      )}
         {messages.map((msg, i) => {
           const isMine = msg.sender._id === user._id;
           const mediaType = msg.mediaType || (msg.image ? getMediaType(msg.image) : 'text');
-          const quotedMessage = msg.replyTo;
           return (
             <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] sm:max-w-[75%] px-3 py-2 sm:px-4 sm:py-2 rounded-2xl relative group ${isMine ? 'message-sent rounded-br-none' : 'message-received rounded-bl-none'}`}>
-                {quotedMessage && (
-                  <div className={`text-xs p-2 rounded-lg mb-1 opacity-80 ${isMine ? 'bg-blue-700' : 'bg-gray-600'}`}>
-                    <span className="font-medium">{quotedMessage.sender?.fullName || quotedMessage.sender?.username || 'User'}</span>
-                    <p className="truncate">{quotedMessage.text || (quotedMessage.image ? '📷 Media' : '')}</p>
-                  </div>
-                )}
                 {isMine && editingMsgId !== msg._id && (
-                  <>
-                    <button onClick={() => deleteMsg(msg._id)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><FiTrash2 size={12} /></button>
-                    <button onClick={() => startEdit(msg)} className="absolute -top-2 -right-8 bg-yellow-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><FiEdit size={12} /></button>
-                  </>
+                  <button onClick={() => startEdit(msg)} className="absolute -top-2 -right-8 bg-yellow-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><FiEdit size={12} /></button>
                 )}
+                {isMine && <button onClick={() => deleteMsg(msg._id)} className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"><FiTrash2 size={12} /></button>}
+                {mediaType === 'image' && <img src={msg.image} className="rounded-lg mb-1 max-w-full" alt="" />}
+                {mediaType === 'video' && <video controls className="max-w-full rounded-lg mb-1" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
+                {mediaType === 'audio' && <audio controls className="w-full mb-1" style={{height:'35px'}}><source src={msg.image} /></audio>}
                 {editingMsgId === msg._id ? (
                   <div className="flex gap-1">
                     <input type="text" value={editText} onChange={e => setEditText(e.target.value)} className="flex-1 bg-gray-600 text-white rounded px-2 py-1 text-sm outline-none" autoFocus />
@@ -612,43 +501,28 @@ const ChatRoomPage = () => {
                   </div>
                 ) : (
                   <>
-                    {mediaType === 'image' && <img src={msg.image} className="rounded-lg mb-1 max-w-full" alt="" />}
-                    {mediaType === 'video' && <video controls className="max-w-full rounded-lg mb-1" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
-                    {mediaType === 'audio' && <audio controls className="w-full mb-1" style={{height:'35px'}}><source src={msg.image} /></audio>}
                     {msg.text && <div className="text-sm sm:text-base">{renderTextWithLinks(msg.text)}</div>}
-                    {msg.text msg.text && msg.createdAt !== msg.updatedAtmsg.text && msg.createdAt !== msg.updatedAt msg.updatedAt msg.text && msg.createdAt !== msg.updatedAtmsg.text && msg.createdAt !== msg.updatedAt msg.createdAt !== msg.updatedAt msg.text && msg.createdAt !== msg.updatedAtmsg.text && msg.createdAt !== msg.updatedAt new Date(msg.createdAt).getTime() !== new Date(msg.updatedAt).getTime() && <span className="text-xs opacity-50 ml-1">(edited)</span>}
+                    {msg.text && msg.createdAt !== msg.updatedAt && <span className="text-xs opacity-50 ml-1">(edited)</span>}
                   </>
                 )}
                 {renderReactions(msg)}
                 <div className="flex items-center justify-end gap-1 mt-1">
-                  <button onClick={() => setReplyTo(msg)} className="text-xs opacity-50 hover:opacity-100"><FiCornerUpLeft size={12} /></button>
                   <button onClick={() => setReactionPicker(reactionPicker === msg._id ? null : msg._id)} className="text-xs opacity-50 hover:opacity-100"><FiSmile size={12} /></button>
                   <span className="text-xs opacity-70">{formatMsgTime(msg.createdAt)}</span>
                   {renderTick(msg)}
+                  <button onClick={() => setReplyTo(msg)} className="text-xs opacity-50 hover:opacity-100"><FiCornerUpLeft size={12} /></button>
+import { FiEdit } from 'react-icons/fi';
                 </div>
                 {reactionPicker === msg._id && (
-                  <div className={`absolute bottom-8 left-0 bg-gray-800 rounded-full px-2 py-1 flex gap-1 shadow-lg z-10 text-sm ${reactingMsgId === msg._id ? 'animate-react-pop' : ''}`}>
-                    {QUICK_EMOJIS.map(e => <button key={e} onClick={() => reactToMsg(msg._id, e)} className="hover:scale-125 transition-transform">{e}</button>)}
+                  <div className="absolute bottom-8 left-0 bg-gray-800 rounded-full px-2 py-1 flex gap-1 shadow-lg z-10 text-sm">
+                    {QUICK_EMOJIS.map(e => <button key={e} className={} onClick={() => reactToMsg(msg._id, e)} className="hover:scale-125 transition-transform">{e}</button>)}
                   </div>
                 )}
               </div>
             </div>
           );
         })}
-        <div ref={messagesEndRef} />
       </div>
-
-      {/* Reply bar */}
-      {replyTo && (
-        <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
-          <FiCornerUpLeft size={14} className="text-light-blue" />
-          <div className="flex-1 text-xs text-gray-300 truncate">
-            Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
-            <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>
-          </div>
-          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white">✕</button>
-        </div>
-      )}
 
       {/* Input */}
       <form onSubmit={handleSend} className="p-2 sm:p-3 bg-sidebar-bg border-t border-gray-700 flex items-center gap-1 sm:gap-2">
@@ -660,53 +534,36 @@ const ChatRoomPage = () => {
             <div className="absolute bottom-full left-0 mb-2 bg-gray-800 rounded-xl shadow-lg p-2 flex flex-col gap-1 z-20 text-sm">
               <button onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-700 text-white"><FiImage size={16} /> Image</button>
               <button onClick={() => { videoInputRef.current?.click(); setShowAttachMenu(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-700 text-white"><FiVideo size={16} /> Video</button>
-              <button onClick={() => { setShowGifModal(!showGifModal); setShowAttachMenu(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-700 text-white"><FiFilm size={16} /> GIF</button>
             </div>
           )}
         </div>
-        {/* GIF Modal */}
-        {showGifModal && (
-          <div className="absolute bottom-full left-0 mb-2 bg-gray-800 rounded-xl shadow-lg p-3 w-72 z-20">
-            <div className="flex items-center gap-2 mb-2">
-              <input type="text" placeholder="Search GIF..." value={gifSearch} onChange={e => setGifSearch(e.target.value)} className="flex-1 bg-gray-700 rounded-lg px-3 py-1.5 text-white text-sm outline-none" />
-              <button onClick={async () => {
-                if (!gifSearch.trim()) return;
-                setSearchingGif(true);
-                try {
-                  const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(gifSearch)}&key=AIzaSyA7h3q-cz_ah2P2Z_xM7E1zP2K5zHFV4A&limit=12`);
-                  const data = await res.json();
-                  setGifResults(data.results || []);
-                } catch (err) { setGifResults([]); }
-                setSearchingGif(false);
-              }} className="bg-light-blue px-2 py-1 rounded-lg text-sm">Go</button>
-            </div>
-            <div className="grid grid-cols-3 gap-1 max-h-48 overflow-y-auto">
-              {searchingGif ? <p className="text-xs text-gray-400 col-span-3">Searching...</p> :
-                gifResults.map(gif => (
-                  <img key={gif.id} src={gif.media_formats.tinygif.url} className="w-full h-16 object-cover rounded cursor-pointer hover:scale-105 transition" onClick={() => {
-                    socketRef.current?.emit('send message', {
-                      senderId: user._id,
-                      receiverId: userId,
-                      text: '',
-                      image: gif.media_formats.gif.url,
-                      mediaType: 'image',
-                      replyTo: replyTo?._id || null
-                    });
-                    setReplyTo(null);
-                    setShowGifModal(false);
-                    setGifSearch('');
-                    setGifResults([]);
-                  }} />
-                ))}
-            </div>
-            <button onClick={() => { setShowGifModal(false); setGifSearch(''); setGifResults([]); }} className="text-gray-400 text-xs mt-2">Close</button>
+      {replyTo && (
+        <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
+          <FiCornerUpLeft size={14} className="text-light-blue" />
+import { FiEdit } from 'react-icons/fi';
+          <div className="flex-1 text-xs text-gray-300 truncate">
+            Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
+            <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>
           </div>
-        )}
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+      )}
         {isRecording ? (
           <button type="button" onClick={stopRecording} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-600 flex items-center justify-center"><FiStopCircle size={18} /></button>
         ) : (
           <button type="button" onClick={startRecording} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-700 text-gray-400 flex items-center justify-center"><FiMic size={18} /></button>
         )}
+      {replyTo && (
+        <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
+          <FiCornerUpLeft size={14} className="text-light-blue" />
+import { FiEdit } from 'react-icons/fi';
+          <div className="flex-1 text-xs text-gray-300 truncate">
+            Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
+            <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+      )}
         {isRecording ? (
           <div className="flex-1 bg-gray-800 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 flex items-center text-red-400 text-xs sm:text-sm"><span className="animate-pulse">● Recording {formatRecTime(recordingTime)}</span></div>
         ) : (
