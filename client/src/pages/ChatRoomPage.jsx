@@ -6,9 +6,7 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
-  FiFilm,
-  FiMicOff, FiVolume2, FiCornerUpLeft
-import { FiEdit } from 'react-icons/fi';
+  FiMicOff, FiVolume2, FiCornerUpLeft, FiEdit, FiFilm
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
