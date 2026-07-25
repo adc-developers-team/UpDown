@@ -1,11 +1,11 @@
 import BottomNav from '../components/BottomNav';
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { usePWA } from '../hooks/usePWA';
-import { useTheme } from '../context/ThemeContext';
+import { FiPhone,  useState, useEffect } from 'react';
+import { FiPhone,  Link, useNavigate } from 'react-router-dom';
+import { FiPhone,  useAuth } from '../context/AuthContext';
+import { FiPhone,  usePWA } from '../hooks/usePWA';
+import { FiPhone,  useTheme } from '../context/ThemeContext';
 import axios from 'axios';
-import {
+import { FiPhone, 
   FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
   FiMoon, FiSun, FiShield, FiInfo, FiSmartphone,
   FiTrash2, FiAlertTriangle, FiDatabase, FiToggleRight,
@@ -197,7 +197,7 @@ const SettingsPage = () => {
           </div>
         </AccordionSection>
 
-        <AccordionSection title="Calls" icon={<FiPhoneCall size={20} className="text-primary" />} show={showCalls} setShow={setShowCalls}>
+        <AccordionSection title="Calls" icon={<FiPhone size={20} className="text-primary" />} show={showCalls} setShow={setShowCalls}>
           <div className="space-y-2">
             <p className="text-sm text-text-secondary">Call quality, data saver, noise suppression</p>
             <p className="text-xs text-text-muted">Coming soon</p>
