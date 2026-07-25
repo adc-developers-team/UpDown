@@ -34,14 +34,14 @@ const GroupChatPage = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const config = { headers: { Authorization: `Bearer ${token}` } };
-    axios.get(`import.meta.env.VITE_API_URL/api/groups/${groupId}`, config)
+    axios.get(`https://updown-hms5.onrender.com/api/groups/${groupId}`, config)
       .then(res => setGroup(res.data))
-      .catch(console.log);
-    axios.get(`import.meta.env.VITE_API_URL/api/group-messages/${groupId}`)
-      .then(res => setMessages(res.data))
-      .catch(console.log);
+      .catch(() => {});
+    axios.get(`https://updown-hms5.onrender.com/api/group-messages/${groupId}`)
+      .then(res => setMessages(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setMessages([]));
 
-    socketRef.current = io('import.meta.env.VITE_API_URL');
+    socketRef.current = io('https://updown-hms5.onrender.com');
     socketRef.current.emit('join group', groupId);
     socketRef.current.on('group message received', (msg) => setMessages(prev => [...prev, msg]));
     socketRef.current.on('group user typing', ({ senderName }) => setTypingUsers(prev => prev.includes(senderName) ? prev : [...prev, senderName]));
@@ -54,9 +54,7 @@ const GroupChatPage = () => {
     if (!socketRef.current) return;
     socketRef.current.emit('group typing', { groupId, senderName: user.username });
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      socketRef.current.emit('stop group typing', { groupId, senderName: user.username });
-    }, 2000);
+    typingTimeoutRef.current = setTimeout(() => socketRef.current.emit('stop group typing', { groupId, senderName: user.username }), 2000);
   };
 
   const handleSend = (e) => {
@@ -66,33 +64,30 @@ const GroupChatPage = () => {
       if (imageUrl.trim()) {
         socketRef.current.emit('send group message', { groupId, senderId: user._id, text: newMsg.trim(), image: imageUrl.trim() });
         setImageUrl(''); setNewMsg(''); setIsImageMode(false);
-        socketRef.current.emit('stop group typing', { groupId, senderName: user.username });
       }
     } else {
       if (newMsg.trim()) {
         socketRef.current.emit('send group message', { groupId, senderId: user._id, text: newMsg.trim(), image: '' });
         setNewMsg('');
-        socketRef.current.emit('stop group typing', { groupId, senderName: user.username });
       }
     }
   };
 
   if (!group) return <div className="h-screen bg-chat-bg flex items-center justify-center text-white">Loading...</div>;
 
+  // Ensure members is an array
+  const members = Array.isArray(group.members) ? group.members : [];
+
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
         <Link to="/" className="text-white hover:text-light-blue"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-light-blue flex items-center justify-center text-lg font-semibold">
-          {group.profilePic ? (
-            <img src={group.profilePic} className="w-full h-full object-cover rounded-full" />
-          ) : (
-            group.name[0].toUpperCase()
-          )}
+          {group.name[0].toUpperCase()}
         </div>
         <div className="flex-1">
           <h2 className="font-semibold">{group.name}</h2>
-          <p className="text-xs text-gray-400">{group.members.length} members</p>
+          <p className="text-xs text-gray-400">{members.length} members</p>
         </div>
       </header>
 

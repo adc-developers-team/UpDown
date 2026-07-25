@@ -13,7 +13,6 @@ const groupMessageRoutes = require('./routes/groupMessageRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const User = require('./models/User');
 
-// Render injects env vars directly — no dotenv needed
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -28,10 +27,7 @@ const allowedOrigins = [
   'https://updown-app.onrender.com',
 ];
 
-const io = new Server(server, {
-  cors: { origin: allowedOrigins, methods: ['GET', 'POST'] }
-});
-
+const io = new Server(server, { cors: { origin: allowedOrigins, methods: ['GET', 'POST'] } });
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: allowedOrigins }));
@@ -63,14 +59,21 @@ io.on('connection', (socket) => {
   socket.on('join chat', (room) => { socket.join(room); });
   socket.on('typing', ({ conversationId, senderName }) => { socket.to(conversationId).emit('user typing', senderName); });
   socket.on('stop typing', ({ conversationId }) => { socket.to(conversationId).emit('user stop typing'); });
+
   socket.on('send message', async (data) => {
-    const { senderId, receiverId, text, image } = data;
+    const { senderId, receiverId, text, image, mediaType } = data;
     const conversationId = [senderId, receiverId].sort().join('_');
     const Message = require('./models/Message');
     let status = 'sent';
     if (onlineUsers.has(receiverId)) status = 'delivered';
     const message = await Message.create({
-      conversationId, sender: senderId, receiver: receiverId, text: text || '', image: image || '', status
+      conversationId,
+      sender: senderId,
+      receiver: receiverId,
+      text: text || '',
+      image: image || '',
+      status,
+      mediaType: mediaType || 'text',
     });
     const populated = await Message.findById(message._id)
       .populate('sender', 'username profilePic')
@@ -80,6 +83,7 @@ io.on('connection', (socket) => {
       io.to(conversationId).emit('message status update', { messageId: message._id, status: 'delivered' });
     }
   });
+
   socket.on('mark as read', async ({ conversationId, userId }) => {
     const Message = require('./models/Message');
     await Message.updateMany(
@@ -88,6 +92,7 @@ io.on('connection', (socket) => {
     );
     io.to(conversationId).emit('messages read', { conversationId, reader: userId });
   });
+
   socket.on('delete message', async ({ messageId, conversationId }) => {
     try {
       const Message = require('./models/Message');
@@ -95,6 +100,7 @@ io.on('connection', (socket) => {
       io.to(conversationId).emit('message deleted', messageId);
     } catch (err) { console.error(err); }
   });
+
   socket.on('react to message', async ({ messageId, emoji, userId, conversationId }) => {
     try {
       const Message = require('./models/Message');
@@ -116,6 +122,7 @@ io.on('connection', (socket) => {
       io.to(conversationId).emit('message reaction updated', populated);
     } catch (err) { console.error(err); }
   });
+
   socket.on('join group', (groupId) => { socket.join(groupId); });
   socket.on('group typing', ({ groupId, senderName }) => { socket.to(groupId).emit('group user typing', { senderName }); });
   socket.on('stop group typing', ({ groupId }) => { socket.to(groupId).emit('group user stop typing'); });
@@ -128,6 +135,8 @@ io.on('connection', (socket) => {
     const populated = await GroupMessage.findById(message._id).populate('sender', 'username profilePic');
     io.to(groupId).emit('group message received', populated);
   });
+
+  // Call events (unchanged)
   socket.on('call-user', ({ callerId, receiverId, signal, callType }) => {
     const receiverSocketId = onlineUsers.get(receiverId);
     if (receiverSocketId) {

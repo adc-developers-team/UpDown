@@ -157,7 +157,7 @@ const Homepage = () => {
                   {lastMsg && <span className="text-xs text-gray-400 ml-2">{formatLastMessageTime(lastMsg.createdAt)}</span>}
                 </div>
                 <div className="flex items-center gap-1">
-                  <p className="text-xs sm:text-sm text-gray-400 truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Image' : '🎤 Audio')) : 'No messages yet'}</p>
+                  <p className="text-xs sm:text-sm text-gray-400 truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Media' : '')) : 'No messages yet'}</p>
                   {unread > 0 && <span className="flex-shrink-0 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full text-xs flex items-center justify-center font-bold">{unread}</span>}
                 </div>
               </div>

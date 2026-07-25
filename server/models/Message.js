@@ -10,9 +10,10 @@ const messageSchema = new mongoose.Schema(
     status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
     reactions: {
       type: Map,
-      of: [String], // array of user IDs who reacted with this emoji
-      default: {}
-    }
+      of: [String],
+      default: {},
+    },
+    mediaType: { type: String, enum: ['text', 'image', 'video', 'audio'], default: 'text' }
   },
   { timestamps: true }
 );
