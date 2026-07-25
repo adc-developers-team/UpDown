@@ -10,7 +10,6 @@ import {
   FiPhone, FiPhoneOff, FiMicOff, FiVideoOff, FiVolume2, FiSearch
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
-import AudioPlayer from '../engines/AudioPlayer';
 
 /* ---------- helpers ---------- */
 const getLastSeenText = (d) => {
@@ -647,7 +646,7 @@ const ChatRoomPage = () => {
                 {/* Media */}
                 {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
                 {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
-                {mediaType === 'audio' && <AudioPlayer src={msg.image} />}
+                mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" />
 
                 {/* Text */}
                 {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
