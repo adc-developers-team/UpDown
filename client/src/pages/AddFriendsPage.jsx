@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { FiArrowLeft, FiSearch, FiUserPlus, FiUserCheck } from 'react-icons/fi';
+import { FiArrowLeft, FiSearch, FiUserPlus, FiUserCheck, FiUsers } from 'react-icons/fi';
 
 const AddFriendsPage = () => {
   const { user } = useAuth();
@@ -51,12 +51,15 @@ const AddFriendsPage = () => {
     }
   };
 
-  const filteredUsers = allUsers.filter(u => {
-    const name = (u.fullName || u.username || '').toLowerCase();
-    const email = (u.email || '').toLowerCase();
-    const keyword = search.toLowerCase();
-    return name.includes(keyword) || email.includes(keyword);
-  });
+  // Filter users only when search query is not empty
+  const filteredUsers = search.trim()
+    ? allUsers.filter(u => {
+        const name = (u.fullName || u.username || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const keyword = search.toLowerCase();
+        return name.includes(keyword) || email.includes(keyword);
+      })
+    : [];
 
   const getButtonStatus = (u) => {
     if (friends.includes(u._id)) return 'friend';
@@ -72,28 +75,47 @@ const AddFriendsPage = () => {
         <h2 className="font-semibold text-lg">Add Friends</h2>
       </header>
 
+      {/* Search Bar */}
       <div className="px-4 py-3 bg-sidebar-bg">
-        <div className="flex items-center bg-bg-input rounded-full px-4 py-2 border border-gray-700">
-          <FiSearch className="text-gray-400" />
+        <div className="flex items-center bg-bg-input rounded-full px-4 py-2 border border-gray-700 focus-within:border-accent transition">
+          <FiSearch className="text-text-muted" />
           <input
             type="text"
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="ml-2 bg-transparent outline-none flex-1 text-sm text-white placeholder-gray-400"
+            className="ml-2 bg-transparent outline-none flex-1 text-sm text-white placeholder-text-muted"
           />
         </div>
       </div>
 
-      <div className="p-4 space-y-3 overflow-y-auto flex-1">
-        {loading && <p className="text-center text-gray-400">Loading...</p>}
-        {!loading && filteredUsers.length === 0 && (
-          <p className="text-center text-gray-400">No users found</p>
+      {/* Results */}
+      <div className="flex-1 p-4 overflow-y-auto">
+        {loading && (
+          <div className="text-center text-text-muted mt-10">Loading...</div>
         )}
+
+        {!loading && !search.trim() && (
+          <div className="flex flex-col items-center justify-center h-full text-text-muted mt-10">
+            <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mb-4">
+              <FiUsers size={36} className="text-accent/60" />
+            </div>
+            <p className="text-lg font-semibold text-white mb-1">Find your friends</p>
+            <p className="text-sm">Search by name or email to connect</p>
+          </div>
+        )}
+
+        {!loading && search.trim() && filteredUsers.length === 0 && (
+          <div className="text-center text-text-muted mt-10">
+            <p className="text-lg font-semibold text-white mb-1">No users found</p>
+            <p className="text-sm">Try a different search term</p>
+          </div>
+        )}
+
         {filteredUsers.map(u => {
           const status = getButtonStatus(u);
           return (
-            <div key={u._id} className="flex items-center gap-4 bg-sidebar-bg p-3 rounded-xl hover:bg-gray-800 transition-colors border border-gray-700">
+            <div key={u._id} className="flex items-center gap-4 bg-sidebar-bg p-3 rounded-xl hover:bg-gray-800 transition-colors border border-gray-700 mb-2">
               <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-lg font-semibold flex-shrink-0 overflow-hidden">
                 {u.profilePic ? (
                   <img src={u.profilePic} alt="" className="w-full h-full object-cover" />
@@ -104,27 +126,27 @@ const AddFriendsPage = () => {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-medium truncate">{u.fullName || u.username}</h3>
-                <p className="text-sm text-gray-400 truncate">{u.email}</p>
+                <h3 className="font-semibold text-sm truncate">{u.fullName || u.username}</h3>
+                <p className="text-xs text-text-secondary truncate">{u.email}</p>
               </div>
               <div className="flex-shrink-0">
                 {status === 'friend' && (
-                  <span className="px-3 py-1 rounded-full bg-green-600/20 text-green-400 text-sm font-medium flex items-center gap-1">
-                    <FiUserCheck size={14} /> Friend
+                  <span className="px-3 py-1 rounded-full bg-green-600/20 text-green-400 text-xs font-medium flex items-center gap-1">
+                    <FiUserCheck size={12} /> Friend
                   </span>
                 )}
                 {status === 'sent' && (
-                  <span className="px-3 py-1 rounded-full bg-yellow-600/20 text-yellow-400 text-sm">Request Sent</span>
+                  <span className="px-3 py-1 rounded-full bg-yellow-600/20 text-yellow-400 text-xs">Request Sent</span>
                 )}
                 {status === 'received' && (
-                  <span className="px-3 py-1 rounded-full bg-blue-600/20 text-blue-400 text-sm">Request Received</span>
+                  <span className="px-3 py-1 rounded-full bg-blue-600/20 text-blue-400 text-xs">Request Received</span>
                 )}
                 {status === 'none' && (
                   <button
                     onClick={() => sendFriendRequest(u._id)}
-                    className="flex items-center gap-1 px-3 py-1.5 bg-accent hover:bg-accent-hover text-black rounded-full text-sm font-medium transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 bg-accent hover:bg-accent-hover text-black rounded-full text-xs font-semibold transition-colors"
                   >
-                    <FiUserPlus size={16} />
+                    <FiUserPlus size={14} />
                     Add
                   </button>
                 )}
