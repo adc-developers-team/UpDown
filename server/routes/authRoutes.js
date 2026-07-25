@@ -3,6 +3,7 @@ const router = express.Router();
 const { signup, login, verifyEmail, resendVerification, refreshToken } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
+const Message = require('../models/Message');
 
 router.post('/signup', signup);
 router.post('/login', login);
@@ -46,6 +47,82 @@ router.put('/profile', protect, async (req, res) => {
       email: updatedUser.email,
       profilePic: updatedUser.profilePic,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Privacy settings
+router.put('/privacy', protect, async (req, res) => {
+  try {
+    const { showLastSeen, showOnlineStatus, sendReadReceipts } = req.body;
+    const user = await User.findById(req.user._id);
+    if (showLastSeen !== undefined) user.privacy.showLastSeen = showLastSeen;
+    if (showOnlineStatus !== undefined) user.privacy.showOnlineStatus = showOnlineStatus;
+    if (sendReadReceipts !== undefined) user.privacy.sendReadReceipts = sendReadReceipts;
+    await user.save();
+    res.json(user.privacy);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Chat settings
+router.put('/chat-settings', protect, async (req, res) => {
+  try {
+    const { autoDownloadMedia } = req.body;
+    const user = await User.findById(req.user._id);
+    if (autoDownloadMedia !== undefined) user.chatSettings.autoDownloadMedia = autoDownloadMedia;
+    await user.save();
+    res.json(user.chatSettings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Clear chat history
+router.delete('/chat-history', protect, async (req, res) => {
+  try {
+    await Message.deleteMany({
+      $or: [{ sender: req.user._id }, { receiver: req.user._id }]
+    });
+    res.json({ message: 'Chat history cleared' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Deactivate account
+router.put('/deactivate', protect, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { status: 'deactivated' });
+    res.json({ message: 'Account deactivated' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Delete account permanently
+router.delete('/account', protect, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user._id);
+    await Message.deleteMany({
+      $or: [{ sender: req.user._id }, { receiver: req.user._id }]
+    });
+    res.json({ message: 'Account permanently deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Export user data
+router.get('/export-data', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password').lean();
+    const messages = await Message.find({
+      $or: [{ sender: req.user._id }, { receiver: req.user._id }]
+    }).populate('sender', 'username').populate('receiver', 'username').lean();
+    res.json({ user, messages });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
