@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     profilePic: { type: String, default: '' },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     lastSeen: { type: Date, default: Date.now },
     isVerified: { type: Boolean, default: false },
     verifyToken: { type: String },
@@ -17,9 +18,7 @@ const userSchema = new mongoose.Schema(
       showOnlineStatus: { type: Boolean, default: true },
       sendReadReceipts: { type: Boolean, default: true },
     },
-    chatSettings: {
-      autoDownloadMedia: { type: Boolean, default: true },
-    },
+    chatSettings: { autoDownloadMedia: { type: Boolean, default: true } },
     status: { type: String, enum: ['active', 'deactivated', 'deleted'], default: 'active' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },

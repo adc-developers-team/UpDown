@@ -6,8 +6,9 @@ import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
 import {
   FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
-  FiMoon, FiSun, FiShield, FiInfo, FiEye, FiEyeOff, FiWifi,
-  FiSmartphone, FiTrash2, FiAlertTriangle, FiDatabase, FiToggleRight
+  FiMoon, FiSun, FiShield, FiInfo, FiSmartphone,
+  FiTrash2, FiAlertTriangle, FiDatabase, FiToggleRight,
+  FiLock, FiUnlock
 } from 'react-icons/fi';
 
 const SettingsPage = () => {
@@ -18,23 +19,29 @@ const SettingsPage = () => {
   const token = localStorage.getItem('token');
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const [privacy, setPrivacy] = useState({
-    showLastSeen: true,
-    showOnlineStatus: true,
-    sendReadReceipts: true,
-  });
+  const [privacy, setPrivacy] = useState({ showLastSeen: true, showOnlineStatus: true, sendReadReceipts: true });
   const [autoDownload, setAutoDownload] = useState(true);
   const [showAccount, setShowAccount] = useState(true);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [showSecurity, setShowSecurity] = useState(false);
+  const [showBlocked, setShowBlocked] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState([]);
 
   useEffect(() => {
     if (user?.privacy) setPrivacy(user.privacy);
     if (user?.chatSettings) setAutoDownload(user.chatSettings.autoDownloadMedia);
+    fetchBlockedUsers();
   }, [user]);
+
+  const fetchBlockedUsers = async () => {
+    try {
+      const { data } = await axios.get('https://updown-hms5.onrender.com/api/auth/blocked', config);
+      setBlockedUsers(Array.isArray(data) ? data : []);
+    } catch (err) { setBlockedUsers([]); }
+  };
 
   const handlePrivacyToggle = async (key, value) => {
     const newPrivacy = { ...privacy, [key]: value };
@@ -65,8 +72,7 @@ const SettingsPage = () => {
     if (!confirm('Deactivate your account? You can login again to reactivate.')) return;
     try {
       await axios.put('https://updown-hms5.onrender.com/api/auth/deactivate', {}, config);
-      logout();
-      navigate('/login');
+      logout(); navigate('/login');
     } catch (err) { alert('Failed to deactivate'); }
   };
 
@@ -74,8 +80,7 @@ const SettingsPage = () => {
     if (!confirm('PERMANENTLY DELETE your account? All data will be lost forever!')) return;
     try {
       await axios.delete('https://updown-hms5.onrender.com/api/auth/account', config);
-      logout();
-      navigate('/login');
+      logout(); navigate('/login');
     } catch (err) { alert('Failed to delete account'); }
   };
 
@@ -84,10 +89,16 @@ const SettingsPage = () => {
       const res = await axios.get('https://updown-hms5.onrender.com/api/auth/export-data', config);
       const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'updown_data.json'; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = 'updown_data.json'; a.click();
       URL.revokeObjectURL(url);
     } catch (err) { alert('Failed to export data'); }
+  };
+
+  const handleUnblock = async (userId) => {
+    try {
+      await axios.put(`https://updown-hms5.onrender.com/api/auth/unblock/${userId}`, {}, config);
+      setBlockedUsers(prev => prev.filter(u => u._id !== userId));
+    } catch (err) { alert('Failed to unblock'); }
   };
 
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -105,69 +116,69 @@ const SettingsPage = () => {
           <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center overflow-hidden">
             {user?.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-2xl font-bold text-accent">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>}
           </div>
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg">{user?.fullName || user?.username}</h3>
-            <p className="text-text-secondary text-sm"><FiMail size={14} className="inline" /> {user?.email}</p>
-            <p className="text-text-secondary text-sm"><FiUser size={14} className="inline" /> @{user?.username}</p>
-          </div>
+          <div className="flex-1"><h3 className="font-semibold text-lg">{user?.fullName || user?.username}</h3><p className="text-text-secondary text-sm"><FiMail size={14} className="inline" /> {user?.email}</p><p className="text-text-secondary text-sm"><FiUser size={14} className="inline" /> @{user?.username}</p></div>
           <Link to="/edit-profile" className="text-accent p-2 hover:bg-accent/10 rounded-full"><FiEdit size={18} /></Link>
         </div>
 
         {/* Theme Toggle */}
-        <div className="bg-sidebar-bg rounded-2xl p-5 border border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${dark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-indigo-400/10 text-indigo-400'}`}>{dark ? <FiMoon size={20} /> : <FiSun size={20} />}</div>
-              <div><h3 className="font-medium">Appearance</h3><p className="text-sm text-text-secondary">{dark ? 'Dark mode' : 'Light mode'}</p></div>
-            </div>
-            <button onClick={toggleTheme} className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${dark ? 'bg-accent' : 'bg-gray-600'}`}>
-              <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transform transition-transform ${dark ? 'translate-x-6' : 'translate-x-1'}`}>{dark ? <FiMoon size={12} className="text-accent" /> : <FiSun size={12} className="text-yellow-500" />}</span>
-            </button>
-          </div>
-        </div>
+        <ToggleRow icon={dark ? <FiMoon size={20} /> : <FiSun size={20} />} title="Appearance" subtitle={dark ? 'Dark mode' : 'Light mode'} checked={dark} onChange={toggleTheme} />
 
-        {/* Install PWA */}
         {isInstallable && (
-          <button onClick={installApp} className="w-full flex items-center gap-4 bg-accent hover:bg-accent-hover text-black font-semibold p-5 rounded-2xl transition-all"><FiDownload size={20} /><span>Install UpDown App</span></button>
+          <button onClick={installApp} className="w-full flex items-center gap-4 bg-accent hover:bg-accent-hover text-black font-semibold p-5 rounded-2xl transition-all"><FiDownload size={20} /> Install UpDown App</button>
         )}
 
         {/* Account Section */}
-        <Section title="Account" icon={<FiUser size={20} className="text-accent" />} show={showAccount} setShow={setShowAccount}>
+        <CollapsibleSection title="Account" icon={<FiUser size={20} className="text-accent" />} show={showAccount} setShow={setShowAccount}>
           <Link to="/edit-profile" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-700">Edit Profile</Link>
           <button onClick={handleDeactivate} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-700 text-yellow-400">Deactivate Account</button>
-        </Section>
+        </CollapsibleSection>
 
         {/* Privacy Section */}
-        <Section title="Privacy" icon={<FiShield size={20} className="text-accent" />} show={showPrivacy} setShow={setShowPrivacy}>
+        <CollapsibleSection title="Privacy" icon={<FiShield size={20} className="text-accent" />} show={showPrivacy} setShow={setShowPrivacy}>
           <Toggle label="Show Last Seen" checked={privacy.showLastSeen} onChange={(v) => handlePrivacyToggle('showLastSeen', v)} />
           <Toggle label="Show Online Status" checked={privacy.showOnlineStatus} onChange={(v) => handlePrivacyToggle('showOnlineStatus', v)} />
           <Toggle label="Send Read Receipts" checked={privacy.sendReadReceipts} onChange={(v) => handlePrivacyToggle('sendReadReceipts', v)} />
-        </Section>
+        </CollapsibleSection>
 
         {/* Chat Section */}
-        <Section title="Chat" icon={<FiSmartphone size={20} className="text-accent" />} show={showChat} setShow={setShowChat}>
+        <CollapsibleSection title="Chat" icon={<FiSmartphone size={20} className="text-accent" />} show={showChat} setShow={setShowChat}>
           <Toggle label="Auto-download media" checked={autoDownload} onChange={handleAutoDownloadToggle} />
           <button onClick={handleClearHistory} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-700 text-red-400">Clear Chat History</button>
-        </Section>
+        </CollapsibleSection>
+
+        {/* Blocked Users Section */}
+        <CollapsibleSection title="Blocked Users" icon={<FiLock size={20} className="text-accent" />} show={showBlocked} setShow={setShowBlocked}>
+          {blockedUsers.length === 0 ? (
+            <p className="text-sm text-text-muted py-2">No blocked users</p>
+          ) : (
+            blockedUsers.map(u => (
+              <div key={u._id} className="flex items-center gap-3 p-2 bg-bg-input rounded-xl">
+                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center overflow-hidden">
+                  {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-bold text-accent">{u.fullName?.[0] || u.username?.[0]?.toUpperCase()}</span>}
+                </div>
+                <span className="text-sm flex-1">{u.fullName || u.username}</span>
+                <button onClick={() => handleUnblock(u._id)} className="text-accent text-sm hover:underline flex items-center gap-1"><FiUnlock size={14} /> Unblock</button>
+              </div>
+            ))
+          )}
+        </CollapsibleSection>
 
         {/* Data & Storage */}
-        <Section title="Data & Storage" icon={<FiDatabase size={20} className="text-accent" />} show={showSecurity} setShow={setShowSecurity}>
+        <CollapsibleSection title="Data & Storage" icon={<FiDatabase size={20} className="text-accent" />} show={showSecurity} setShow={setShowSecurity}>
           <button onClick={handleExportData} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-700">Export My Data</button>
           <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-700 text-red-400">Delete Account</button>
-        </Section>
+        </CollapsibleSection>
 
         {/* About Section */}
-        <Section title="About" icon={<FiInfo size={20} className="text-accent" />} show={showAbout} setShow={setShowAbout}>
+        <CollapsibleSection title="About" icon={<FiInfo size={20} className="text-accent" />} show={showAbout} setShow={setShowAbout}>
           <p className="text-sm text-text-secondary">UpDown Chat v1.0.0</p>
           <Link to="/terms" className="block text-sm text-accent hover:underline">Terms of Service</Link>
           <Link to="/privacy" className="block text-sm text-accent hover:underline">Privacy Policy</Link>
-        </Section>
+        </CollapsibleSection>
 
-        {/* Logout */}
         <button onClick={handleLogout} className="w-full flex items-center gap-4 bg-red-600/10 hover:bg-red-600/20 border border-red-600/30 p-5 rounded-2xl transition"><FiLogOut size={20} className="text-red-400" /><span className="text-red-400 font-medium">Logout</span></button>
       </div>
 
-      {/* Delete Confirmation Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
           <div className="bg-sidebar-bg rounded-2xl p-6 max-w-sm w-full space-y-4">
@@ -185,12 +196,10 @@ const SettingsPage = () => {
   );
 };
 
-const Section = ({ title, icon, show, setShow, children }) => (
+const CollapsibleSection = ({ title, icon, show, setShow, children }) => (
   <div className="bg-sidebar-bg rounded-2xl border border-gray-700 overflow-hidden">
     <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 p-5 hover:bg-gray-800 transition">
-      {icon}
-      <span className="flex-1 text-left font-medium">{title}</span>
-      <span className="text-sm text-text-secondary">{show ? '▲' : '▼'}</span>
+      {icon}<span className="flex-1 text-left font-medium">{title}</span><span className="text-sm text-text-secondary">{show ? '▲' : '▼'}</span>
     </button>
     {show && <div className="px-5 pb-4 space-y-2">{children}</div>}
   </div>
@@ -201,6 +210,18 @@ const Toggle = ({ label, checked, onChange }) => (
     <span className="text-sm">{label}</span>
     <button onClick={() => onChange(!checked)} className={`relative inline-flex h-6 w-10 items-center rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-gray-600'}`}>
       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-1'}`} />
+    </button>
+  </div>
+);
+
+const ToggleRow = ({ icon, title, subtitle, checked, onChange }) => (
+  <div className="bg-sidebar-bg rounded-2xl p-5 border border-gray-700 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${checked ? 'bg-yellow-400/10 text-yellow-400' : 'bg-indigo-400/10 text-indigo-400'}`}>{icon}</div>
+      <div><h3 className="font-medium">{title}</h3><p className="text-sm text-text-secondary">{subtitle}</p></div>
+    </div>
+    <button onClick={onChange} className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-gray-600'}`}>
+      <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transform transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}>{checked ? <FiMoon size={12} className="text-accent" /> : <FiSun size={12} className="text-yellow-500" />}</span>
     </button>
   </div>
 );
