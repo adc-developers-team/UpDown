@@ -41,6 +41,10 @@ const ChatRoomPage = () => {
   const [searchingGif, setSearchingGif] = useState(false);
   const [reactingMsgId, setReactingMsgId] = useState(null);
   const [forwardMsg, setForwardMsg] = useState(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchIndex, setSearchIndex] = useState(0);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [showPinned, setShowPinned] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -287,6 +291,28 @@ const ChatRoomPage = () => {
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="font-semibold text-base truncate">{chatUser.fullName || chatUser.username}</h2>
+      {searchOpen && (
+        <div className="absolute top-14 left-0 right-0 bg-dark-blue px-4 py-2 flex items-center gap-2 z-30 border-b border-gray-700">
+          <input
+            type="text"
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleSearch(); }}
+            className="flex-1 bg-bg-input rounded-full px-3 py-1 text-sm text-white outline-none"
+            autoFocus
+          />
+          <button onClick={handleSearch} className="text-accent text-sm font-medium">Find</button>
+          {searchResults.length > 0 && (
+            <>
+              <span className="text-xs text-text-muted">{searchIndex + 1}/{searchResults.length}</span>
+              <button onClick={goToPrevResult} className="text-text-muted hover:text-white">▲</button>
+              <button onClick={goToNextResult} className="text-text-muted hover:text-white">▼</button>
+            </>
+          )}
+          <button onClick={() => { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+      )}
           <p className={`text-xs ${isOnline ? 'text-green-400' : 'text-text-secondary'}`}>{typingUser ? `${typingUser} is typing...` : statusText}</p>
         </div>
         <button onClick={() => startCall('audio')} className="p-2 hover:bg-gray-700 rounded-full"><FiPhone size={18} /></button>

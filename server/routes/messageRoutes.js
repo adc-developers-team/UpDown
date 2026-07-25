@@ -124,3 +124,20 @@ router.get('/unread-counts/:userId', async (req, res) => {
 });
 
 module.exports = router;
+
+// Search messages in conversation
+router.get('/search/:userId1/:userId2', async (req, res) => {
+  try {
+    const { userId1, userId2 } = req.params;
+    const { q } = req.query;
+    if (!q) return res.json([]);
+    const conversationId = [userId1, userId2].sort().join('_');
+    const messages = await Message.find({
+      conversationId,
+      text: { $regex: q, $options: 'i' }
+    }).populate('sender', 'username profilePic fullName')
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(messages);
+  } catch (error) { res.status(500).json({ message: error.message }); }
+});
