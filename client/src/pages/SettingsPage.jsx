@@ -7,7 +7,7 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
   FiMoon, FiSun, FiShield, FiInfo, FiEye, FiEyeOff, FiWifi,
-  FiSmartphone, FiTrash2, FiAlertTriangle, FiDatabase
+  FiSmartphone, FiTrash2, FiAlertTriangle, FiDatabase, FiToggleRight
 } from 'react-icons/fi';
 
 const SettingsPage = () => {
@@ -25,9 +25,9 @@ const SettingsPage = () => {
   });
   const [autoDownload, setAutoDownload] = useState(true);
   const [showAccount, setShowAccount] = useState(true);
-  const [showSecurity, setShowSecurity] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [showSecurity, setShowSecurity] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
@@ -185,7 +185,6 @@ const SettingsPage = () => {
   );
 };
 
-// Reusable components
 const Section = ({ title, icon, show, setShow, children }) => (
   <div className="bg-sidebar-bg rounded-2xl border border-gray-700 overflow-hidden">
     <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 p-5 hover:bg-gray-800 transition">
