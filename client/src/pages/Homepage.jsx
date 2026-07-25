@@ -190,7 +190,7 @@ const Homepage = () => {
             className="ml-3 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="p-1 hover:bg-gray-700 rounded-full"><FiX size={16} className="text-text-muted" /></button>
+            <button onClick={() => setSearch('')} className="p-1 hover:bg-surface rounded-full"><FiX size={16} className="text-text-muted" /></button>
           )}
         </div>
       </div>
@@ -212,7 +212,7 @@ const Homepage = () => {
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 ${
-              activeTab === tab ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-gray-800'
+              activeTab === tab ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-bg-input'
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -226,10 +226,10 @@ const Homepage = () => {
           <div className="space-y-1 p-2">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-4 animate-pulse">
-                <div className="w-14 h-14 rounded-full bg-gray-700" />
+                <div className="w-14 h-14 rounded-full bg-surface" />
                 <div className="flex-1 space-y-2.5">
-                  <div className="h-4 bg-gray-700 rounded w-1/3" />
-                  <div className="h-3.5 bg-gray-700 rounded w-2/3" />
+                  <div className="h-4 bg-surface rounded w-1/3" />
+                  <div className="h-3.5 bg-surface rounded w-2/3" />
                 </div>
               </div>
             ))}
@@ -253,7 +253,7 @@ const Homepage = () => {
                   <Link
                     key={u._id}
                     to={`/chat/${u._id}`}
-                    className="flex items-center gap-4 px-4 py-3.5 hover:bg-gray-800/20 transition-colors active:scale-[0.99]"
+                    className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]"
                   >
                     <div className="relative flex-shrink-0">
                       <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/10">
@@ -290,7 +290,7 @@ const Homepage = () => {
             {filteredGroups.map(g => {
               const members = Array.isArray(g.members) ? g.members : [];
               return (
-                <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-gray-800/20 transition-colors active:scale-[0.99]">
+                <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]">
                   <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/10">
                     <span className="text-xl font-bold text-primary">{g.name?.[0]?.toUpperCase()}</span>
                   </div>
@@ -319,7 +319,7 @@ const Homepage = () => {
         )}
         <button
           onClick={() => setFabOpen(!fabOpen)}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-3 transition-all duration-300 ${fabOpen ? 'bg-gray-700 rotate-45' : 'bg-primary text-primary'}`}
+          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-3 transition-all duration-300 ${fabOpen ? 'bg-surface rotate-45' : 'bg-primary text-primary'}`}
         >
           <FiPlus size={26} />
         </button>

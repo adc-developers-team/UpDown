@@ -18,12 +18,12 @@ const ProfilePage = () => {
           {user?.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" alt="" /> : (user?.fullName?.[0] || user?.username?.[0]?.toUpperCase())}
         </div>
         <h3 className="text-2xl font-semibold">{user?.fullName || user?.username}</h3>
-        <p className="text-gray-400 mt-1 flex items-center gap-1"><FiUser size={14} /> @{user?.username}</p>
-        <p className="text-gray-400 text-sm flex items-center gap-1"><FiMail size={14} /> {user?.email}</p>
+        <p className="text-text-secondary mt-1 flex items-center gap-1"><FiUser size={14} /> @{user?.username}</p>
+        <p className="text-text-secondary text-sm flex items-center gap-1"><FiMail size={14} /> {user?.email}</p>
       </div>
 
       <div className="px-4 mt-4">
-        <Link to="/settings" className="flex items-center gap-4 bg-sidebar-bg hover:bg-gray-700 p-4 rounded-xl transition-colors">
+        <Link to="/settings" className="flex items-center gap-4 bg-sidebar-bg hover:bg-surface p-4 rounded-xl transition-colors">
           <FiSettings size={20} className="text-primary" />
           <span>Settings</span><FiChevronRight size={16} />
         </Link>

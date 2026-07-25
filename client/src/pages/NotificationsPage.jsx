@@ -65,10 +65,10 @@ const NotificationsPage = () => {
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-3 animate-pulse">
-                <div className="w-12 h-12 rounded-full bg-gray-700" />
+                <div className="w-12 h-12 rounded-full bg-surface" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-700 rounded w-1/3" />
-                  <div className="h-3 bg-gray-700 rounded w-2/3" />
+                  <div className="h-4 bg-surface rounded w-1/3" />
+                  <div className="h-3 bg-surface rounded w-2/3" />
                 </div>
               </div>
             ))}
@@ -91,7 +91,7 @@ const NotificationsPage = () => {
                 <div
                   key={request._id}
                   className={`flex items-center gap-4 bg-sidebar-bg p-4 rounded-2xl border transition-all ${
-                    isConfirmingThis ? 'border-accent ring-1 ring-accent' : 'border-border-light hover:border-gray-600'
+                    isConfirmingThis ? 'border-accent ring-1 ring-accent' : 'border-border-light hover:border-border-light'
                   }`}
                 >
                   <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 overflow-hidden">

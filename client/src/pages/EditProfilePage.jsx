@@ -64,15 +64,15 @@ const EditProfilePage = () => {
           </div>
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
         </div>
-        {uploading && <p className="text-center text-sm text-gray-400">Uploading...</p>}
+        {uploading && <p className="text-center text-sm text-text-secondary">Uploading...</p>}
 
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-          <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary" />
+          <label className="block text-sm text-text-secondary mb-1">Full Name</label>
+          <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-bg-input rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary" />
         </div>
         <div>
-          <label className="block text-sm text-gray-400 mb-1">Username</label>
-          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary" />
+          <label className="block text-sm text-text-secondary mb-1">Username</label>
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-bg-input rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary" />
         </div>
         <button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary-dark text-primary font-semibold py-3 rounded-full transition-colors disabled:opacity-50">{loading ? 'Saving...' : 'Save Changes'}</button>
       </form>

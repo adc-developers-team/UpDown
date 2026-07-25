@@ -138,7 +138,7 @@ const AddFriendsPage = () => {
             className="ml-3 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
           />
           {search && (
-            <button type="button" onClick={() => setSearch('')} className="p-1 hover:bg-gray-700 rounded-full"><FiX size={16} className="text-text-muted" /></button>
+            <button type="button" onClick={() => setSearch('')} className="p-1 hover:bg-surface rounded-full"><FiX size={16} className="text-text-muted" /></button>
           )}
         </form>
       </div>
@@ -158,8 +158,8 @@ const AddFriendsPage = () => {
           <div className="space-y-3">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
-                <div className="w-12 h-12 rounded-full bg-gray-700" />
-                <div className="flex-1 space-y-2"><div className="h-4 bg-gray-700 rounded w-1/3" /><div className="h-3 bg-gray-700 rounded w-2/3" /></div>
+                <div className="w-12 h-12 rounded-full bg-surface" />
+                <div className="flex-1 space-y-2"><div className="h-4 bg-surface rounded w-1/3" /><div className="h-3 bg-surface rounded w-2/3" /></div>
               </div>
             ))}
           </div>

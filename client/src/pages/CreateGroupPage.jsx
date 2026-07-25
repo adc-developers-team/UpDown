@@ -102,7 +102,7 @@ const CreateGroupPage = () => {
           <div className="space-y-6 animate-fade-in">
             <div className="flex justify-center">
               <label className="relative group cursor-pointer">
-                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-600 group-hover:border-primary transition">
+                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-dashed border-border-light group-hover:border-primary transition">
                   {groupImage ? (
                     <img src={groupImage} alt="" className="w-full h-full object-cover" />
                   ) : (
@@ -147,7 +147,7 @@ const CreateGroupPage = () => {
               <div className="space-y-2">
                 <button
                   onClick={() => setPrivacy('private')}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'private' ? 'border-primary bg-primary/5' : 'border-border-light hover:border-gray-600'}`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'private' ? 'border-primary bg-primary/5' : 'border-border-light hover:border-border-light'}`}
                 >
                   <FiLock size={18} className={privacy === 'private' ? 'text-primary' : 'text-text-muted'} />
                   <div className="text-left">
@@ -158,7 +158,7 @@ const CreateGroupPage = () => {
                 </button>
                 <button
                   onClick={() => setPrivacy('public')}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'public' ? 'border-primary bg-primary/5' : 'border-border-light hover:border-gray-600'}`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'public' ? 'border-primary bg-primary/5' : 'border-border-light hover:border-border-light'}`}
                 >
                   <FiGlobe size={18} className={privacy === 'public' ? 'text-primary' : 'text-text-muted'} />
                   <div className="text-left">
@@ -173,7 +173,7 @@ const CreateGroupPage = () => {
             <button
               onClick={() => setStep(2)}
               disabled={!groupName.trim()}
-              className={`w-full py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${groupName.trim() ? 'bg-primary text-primary hover:bg-primary-dark' : 'bg-gray-700 text-text-muted cursor-not-allowed'}`}
+              className={`w-full py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${groupName.trim() ? 'bg-primary text-primary hover:bg-primary-dark' : 'bg-surface text-text-muted cursor-not-allowed'}`}
             >
               Next <FiChevronRight size={18} />
             </button>
@@ -214,7 +214,7 @@ const CreateGroupPage = () => {
                   <button
                     key={f._id}
                     onClick={() => toggleMember(f._id)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition border ${selected.includes(f._id) ? 'bg-primary/5 border-primary' : 'bg-surface border-border-light hover:border-gray-600'}`}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition border ${selected.includes(f._id) ? 'bg-primary/5 border-primary' : 'bg-surface border-border-light hover:border-border-light'}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                       {f.profilePic ? <img src={f.profilePic} alt="" className="w-full h-full object-cover" /> : <span className="text-sm font-bold text-primary">{f.fullName?.[0] || f.username?.[0]?.toUpperCase()}</span>}
@@ -231,13 +231,13 @@ const CreateGroupPage = () => {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-gray-800 transition flex items-center justify-center gap-2">
+              <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-bg-input transition flex items-center justify-center gap-2">
                 <FiChevronLeft size={18} /> Back
               </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={selected.length === 0}
-                className={`flex-1 py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${selected.length > 0 ? 'bg-primary text-primary hover:bg-primary-dark' : 'bg-gray-700 text-text-muted cursor-not-allowed'}`}
+                className={`flex-1 py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${selected.length > 0 ? 'bg-primary text-primary hover:bg-primary-dark' : 'bg-surface text-text-muted cursor-not-allowed'}`}
               >
                 Next <FiChevronRight size={18} />
               </button>
@@ -283,7 +283,7 @@ const CreateGroupPage = () => {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(2)} className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-gray-800 transition flex items-center justify-center gap-2">
+              <button onClick={() => setStep(2)} className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-bg-input transition flex items-center justify-center gap-2">
                 <FiChevronLeft size={18} /> Back
               </button>
               <button
@@ -310,7 +310,7 @@ const CreateGroupPage = () => {
             <div className="flex gap-3 w-full max-w-xs">
               <button
                 onClick={() => { navigator.clipboard.writeText(`https://updown-app.onrender.com/group-chat/${createdGroupId}`); alert('Invite link copied!'); }}
-                className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-bg-input transition flex items-center justify-center gap-2"
               >
                 <FiCopy size={16} /> Copy Link
               </button>

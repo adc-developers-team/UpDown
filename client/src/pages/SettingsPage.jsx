@@ -171,8 +171,8 @@ const SettingsPage = () => {
         {/* Accordion Sections – polished with soft animation */}
         <div className="space-y-3">
           <AccordionSection title="Account" icon={<FiUser size={20} className="text-primary" />} show={showAccount} setShow={setShowAccount}>
-            <Link to="/edit-profile" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Edit Profile</Link>
-            <button onClick={handleDeactivate} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-warning">Deactivate Account</button>
+            <Link to="/edit-profile" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Edit Profile</Link>
+            <button onClick={handleDeactivate} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition text-warning">Deactivate Account</button>
           </AccordionSection>
 
           <AccordionSection title="Privacy & Security" icon={<FiShield size={20} className="text-primary" />} show={showPrivacy} setShow={setShowPrivacy}>
@@ -211,12 +211,12 @@ const SettingsPage = () => {
                 ))
               )}
             </div>
-            <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger mt-2">Delete Account</button>
+            <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition text-danger mt-2">Delete Account</button>
           </AccordionSection>
 
           <AccordionSection title="Chats" icon={<FiSmartphone size={20} className="text-primary" />} show={showChat} setShow={setShowChat}>
             <Toggle label="Auto-download media" checked={autoDownload} onChange={handleAutoDownloadToggle} />
-            <button onClick={handleClearHistory} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger">Clear Chat History</button>
+            <button onClick={handleClearHistory} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition text-danger">Clear Chat History</button>
           </AccordionSection>
 
           <AccordionSection title="Calls" icon={<FiPhone size={20} className="text-primary" />} show={showCalls} setShow={setShowCalls}>
@@ -224,10 +224,10 @@ const SettingsPage = () => {
           </AccordionSection>
 
           <AccordionSection title="Help" icon={<FiHelpCircle size={20} className="text-primary" />} show={showHelp} setShow={setShowHelp}>
-            <Link to="/faq" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">FAQ</Link>
-            <Link to="/contact" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Contact Support</Link>
-            <Link to="/privacy" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Privacy Policy</Link>
-            <Link to="/terms" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Terms of Service</Link>
+            <Link to="/faq" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">FAQ</Link>
+            <Link to="/contact" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Contact Support</Link>
+            <Link to="/privacy" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Privacy Policy</Link>
+            <Link to="/terms" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Terms of Service</Link>
           </AccordionSection>
 
           <AccordionSection title="About" icon={<FiInfo size={20} className="text-primary" />} show={showAbout} setShow={setShowAbout}>
@@ -254,7 +254,7 @@ const SettingsPage = () => {
             <h2 className="text-lg font-semibold text-center">Delete Account?</h2>
             <p className="text-sm text-text-secondary text-center">This action is permanent. All your messages, friends, and data will be lost forever.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">Cancel</button>
+              <button onClick={() => setDeleteConfirm(false)} className="flex-1 py-2 bg-gray-100 dark:bg-surface rounded-full text-sm">Cancel</button>
               <button onClick={handleDeleteAccount} className="flex-1 py-2 bg-danger text-primary rounded-full text-sm font-semibold">Delete Forever</button>
             </div>
           </div>
@@ -267,7 +267,7 @@ const SettingsPage = () => {
 
 const AccordionSection = ({ title, icon, show, setShow, children }) => (
   <div className="bg-surface rounded-2xl border border-border-light shadow-1 overflow-hidden">
-    <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+    <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-bg-input/50 transition">
       {icon}
       <span className="flex-1 text-left font-medium">{title}</span>
       <span className={`text-sm text-text-secondary transition-transform duration-200 ${show ? 'rotate-180' : ''}`}>▼</span>

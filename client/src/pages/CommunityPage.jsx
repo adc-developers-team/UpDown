@@ -86,7 +86,7 @@ const CommunityPage = () => {
             rows={3}
           />
           <div className="flex items-center justify-between">
-            <button type="button" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><FiImage size={20} className="text-text-secondary" /></button>
+            <button type="button" className="p-2 hover:bg-gray-100 dark:hover:bg-surface rounded-full"><FiImage size={20} className="text-text-secondary" /></button>
             <button type="submit" disabled={!newPost.trim()} className="bg-primary text-primary px-5 py-2 rounded-full text-sm font-semibold disabled:opacity-50">Post</button>
           </div>
         </form>
