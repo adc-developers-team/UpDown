@@ -2,25 +2,15 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
+const resend = new Resend(process.env.RESEND_API_KEY);
 const generateToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
 
 const sendVerificationEmail = async (email, verifyToken) => {
   const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
-  await transporter.sendMail({
-    from: `"UpDown" <${process.env.EMAIL_USER}>`,
+  await resend.emails.send({
+    from: 'UpDown <onboarding@resend.dev>',
     to: email,
     subject: 'Verify your email address',
     html: `
@@ -49,7 +39,6 @@ const sendVerificationEmail = async (email, verifyToken) => {
       </table>
     </body>
     </html>`,
-    text: `Verify your email for UpDown: ${verificationUrl}`,
   });
 };
 
