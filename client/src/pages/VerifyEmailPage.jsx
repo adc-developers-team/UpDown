@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import BottomNav from '../components/BottomNav';
 
 const VerifyEmailPage = () => {
   const [searchParams] = useSearchParams();
@@ -12,21 +13,19 @@ const VerifyEmailPage = () => {
       axios.get(`https://updown-hms5.onrender.com/api/auth/verify-email?token=${token}`)
         .then(res => setStatus(res.data.message))
         .catch(err => setStatus(err.response?.data?.message || 'Verification failed.'));
-    } else {
-      setStatus('No token provided.');
-    }
+    } else setStatus('No token provided.');
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center">
+    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center pb-20">
       <div className="text-center">
         <p className="text-xl mb-4">{status}</p>
         {status === 'Email verified successfully! You can now login.' && (
           <Link to="/login" className="text-primary underline">Go to Login</Link>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 };
-
 export default VerifyEmailPage;
