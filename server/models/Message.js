@@ -8,12 +8,9 @@ const messageSchema = new mongoose.Schema(
     text: { type: String, default: '' },
     image: { type: String, default: '' },
     status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
-    reactions: {
-      type: Map,
-      of: [String],
-      default: {},
-    },
-    mediaType: { type: String, enum: ['text', 'image', 'video', 'audio'], default: 'text' }
+    reactions: { type: Map, of: [String], default: {} },
+    mediaType: { type: String, enum: ['text', 'image', 'video', 'audio'], default: 'text' },
+    replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null },
   },
   { timestamps: true }
 );

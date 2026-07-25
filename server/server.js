@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cloudinary = require('cloudinary').v2;
+const webpush = require('web-push');
 
 const authRoutes = require('./routes/authRoutes');
 const messageRoutes = require('./routes/messageRoutes');
@@ -18,6 +19,12 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
+webpush.setVapidDetails(
+  'mailto:updown@resend.dev',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 const app = express();
 const server = http.createServer(app);
@@ -41,11 +48,42 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/group-messages', groupMessageRoutes);
 app.use('/api/upload', uploadRoutes);
 
+app.post('/api/push/subscribe', async (req, res) => {
+  try {
+    const { subscription, userId } = req.body;
+    await User.findByIdAndUpdate(userId, { pushSubscription: subscription });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+app.delete('/api/push/unsubscribe', async (req, res) => {
+  try {
+    const { userId } = req.body;
+    await User.findByIdAndUpdate(userId, { pushSubscription: null });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.log('MongoDB connection error:', err));
 
 const onlineUsers = new Map();
+
+const sendPushNotification = async (userId, payload) => {
+  try {
+    const user = await User.findById(userId);
+    if (user && user.pushSubscription) {
+      await webpush.sendNotification(user.pushSubscription, JSON.stringify(payload));
+    }
+  } catch (err) {
+    console.error('Push error:', err);
+  }
+};
 
 io.on('connection', (socket) => {
   console.log('a user connected:', socket.id);
@@ -61,26 +99,31 @@ io.on('connection', (socket) => {
   socket.on('stop typing', ({ conversationId }) => { socket.to(conversationId).emit('user stop typing'); });
 
   socket.on('send message', async (data) => {
-    const { senderId, receiverId, text, image, mediaType } = data;
+    const { senderId, receiverId, text, image, mediaType, replyTo } = data;
     const conversationId = [senderId, receiverId].sort().join('_');
     const Message = require('./models/Message');
     let status = 'sent';
     if (onlineUsers.has(receiverId)) status = 'delivered';
     const message = await Message.create({
-      conversationId,
-      sender: senderId,
-      receiver: receiverId,
-      text: text || '',
-      image: image || '',
-      status,
-      mediaType: mediaType || 'text',
+      conversationId, sender: senderId, receiver: receiverId, text: text || '', image: image || '', status, mediaType: mediaType || 'text',
+      replyTo: replyTo || null
     });
-    const populated = await Message.findById(message._id)
-      .populate('sender', 'username profilePic')
-      .populate('receiver', 'username profilePic');
+    let populated = await Message.findById(message._id)
+      .populate('sender', 'username profilePic fullName')
+      .populate('receiver', 'username profilePic fullName')
+      .populate({
+        path: 'replyTo',
+        populate: { path: 'sender', select: 'username fullName' }
+      });
     io.to(conversationId).emit('message received', populated);
     if (onlineUsers.has(receiverId)) {
       io.to(conversationId).emit('message status update', { messageId: message._id, status: 'delivered' });
+    } else {
+      sendPushNotification(receiverId, {
+        title: populated.sender.fullName || populated.sender.username,
+        body: text || 'Sent an attachment',
+        url: `/chat/${senderId}`,
+      });
     }
   });
 
@@ -117,8 +160,8 @@ io.on('connection', (socket) => {
       message.reactions = reactions;
       await message.save();
       const populated = await Message.findById(message._id)
-        .populate('sender', 'username profilePic')
-        .populate('receiver', 'username profilePic');
+        .populate('sender', 'username profilePic fullName')
+        .populate('receiver', 'username profilePic fullName');
       io.to(conversationId).emit('message reaction updated', populated);
     } catch (err) { console.error(err); }
   });
@@ -132,19 +175,26 @@ io.on('connection', (socket) => {
     const message = await GroupMessage.create({
       group: groupId, sender: senderId, text: text || '', image: image || ''
     });
-    const populated = await GroupMessage.findById(message._id).populate('sender', 'username profilePic');
+    const populated = await GroupMessage.findById(message._id).populate('sender', 'username profilePic fullName');
     io.to(groupId).emit('group message received', populated);
   });
 
-  // Call events (unchanged)
   socket.on('call-user', ({ callerId, receiverId, signal, callType }) => {
     const receiverSocketId = onlineUsers.get(receiverId);
     if (receiverSocketId) {
       io.to(receiverSocketId).emit('incoming-call', { callerId, signal, callType });
     } else {
+      User.findById(callerId).then(caller => {
+        sendPushNotification(receiverId, {
+          title: caller.fullName || caller.username,
+          body: `Incoming ${callType === 'video' ? 'video' : 'voice'} call`,
+          url: `/chat/${callerId}`,
+        });
+      });
       socket.emit('call-failed', { message: 'User is offline' });
     }
   });
+
   socket.on('accept-call', ({ callerId, signal }) => {
     const callerSocketId = onlineUsers.get(callerId);
     if (callerSocketId) io.to(callerSocketId).emit('call-accepted', { signal });
@@ -162,6 +212,7 @@ io.on('connection', (socket) => {
     if (toSocketId) io.to(toSocketId).emit('ice-candidate', { candidate });
   });
   socket.on('set-username', (username) => { socket.userName = username; });
+
   socket.on('disconnect', async () => {
     for (let [userId, sid] of onlineUsers.entries()) {
       if (sid === socket.id) {
