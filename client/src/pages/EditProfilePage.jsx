@@ -20,17 +20,9 @@ const EditProfilePage = () => {
     setUploading(true);
     try {
       const reader = new FileReader();
-      const result = await new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      const result = await new Promise((res, rej) => { reader.onload = () => res(reader.result); reader.onerror = rej; reader.readAsDataURL(file); });
       const token = localStorage.getItem('token');
-      const { data } = await axios.post(
-        'https://updown-hms5.onrender.com/api/upload/profile-pic',
-        { image: result },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await axios.post('https://updown-hms5.onrender.com/api/upload/profile-pic', { image: result }, { headers: { Authorization: `Bearer ${token}` } });
       setProfilePic(data.profilePic);
       updateUser({ profilePic: data.profilePic });
     } catch (err) {
@@ -46,11 +38,7 @@ const EditProfilePage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const { data } = await axios.put(
-        'https://updown-hms5.onrender.com/api/auth/profile',
-        { fullName, username, profilePic },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const { data } = await axios.put('https://updown-hms5.onrender.com/api/auth/profile', { fullName, username, profilePic }, { headers: { Authorization: `Bearer ${token}` } });
       updateUser(data);
       navigate('/profile');
     } catch (err) {
@@ -63,61 +51,31 @@ const EditProfilePage = () => {
   return (
     <div className="min-h-screen bg-chat-bg text-white">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
-        <Link to="/settings" className="text-white hover:text-light-blue">
-          <FiArrowLeft size={22} />
-        </Link>
+        <Link to="/settings" className="text-white hover:text-light-blue"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Edit Profile</h2>
       </header>
 
       <form onSubmit={handleSubmit} className="px-4 py-8 space-y-6 max-w-md mx-auto">
-        {/* Avatar */}
         <div className="flex justify-center relative group cursor-pointer" onClick={() => fileInputRef.current.click()}>
           <div className="w-24 h-24 rounded-full bg-light-blue flex items-center justify-center text-3xl font-bold overflow-hidden relative">
-            {profilePic ? (
-              <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              fullName[0]?.toUpperCase() || username[0]?.toUpperCase() || '?'
-            )}
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-              <FiCamera size={24} />
-            </div>
+            {profilePic ? <img src={profilePic} alt="" className="w-full h-full object-cover" /> : (fullName[0]?.toUpperCase() || username[0]?.toUpperCase() || '?')}
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><FiCamera size={24} /></div>
           </div>
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
         </div>
         {uploading && <p className="text-center text-sm text-gray-400">Uploading...</p>}
 
-        {/* Full Name */}
         <div>
           <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-          <input
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue"
-          />
+          <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue" />
         </div>
-
-        {/* Username */}
         <div>
           <label className="block text-sm text-gray-400 mb-1">Username</label>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue"
-          />
+          <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-gray-800 rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue" />
         </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-light-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-full transition-colors disabled:opacity-50"
-        >
-          {loading ? 'Saving...' : 'Save Changes'}
-        </button>
+        <button type="submit" disabled={loading} className="w-full bg-light-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-full transition-colors disabled:opacity-50">{loading ? 'Saving...' : 'Save Changes'}</button>
       </form>
     </div>
   );
 };
-
 export default EditProfilePage;

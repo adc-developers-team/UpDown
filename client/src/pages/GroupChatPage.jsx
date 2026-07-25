@@ -6,17 +6,13 @@ import { FiArrowLeft, FiSend, FiImage } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
 const formatMessageTime = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+  const date = new Date(dateString), now = new Date();
+  const diffDays = Math.floor((now - date) / 86400000);
   const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   if (diffDays === 0) return timeStr;
   if (diffDays === 1) return 'Yesterday ' + timeStr;
-  if (diffDays < 7) {
-    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return weekdays[date.getDay()] + ' ' + timeStr;
-  }
-  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) + ' ' + timeStr;
+  if (diffDays < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()] + ' ' + timeStr;
+  return date.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'}) + ' ' + timeStr;
 };
 
 const GroupChatPage = () => {
@@ -75,23 +71,20 @@ const GroupChatPage = () => {
 
   if (!group) return <div className="h-screen bg-chat-bg flex items-center justify-center text-white">Loading...</div>;
 
-  // Ensure members is an array
   const members = Array.isArray(group.members) ? group.members : [];
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
         <Link to="/" className="text-white hover:text-light-blue"><FiArrowLeft size={22} /></Link>
-        <div className="w-10 h-10 rounded-full bg-light-blue flex items-center justify-center text-lg font-semibold">
-          {group.name[0].toUpperCase()}
-        </div>
+        <div className="w-10 h-10 rounded-full bg-light-blue flex items-center justify-center text-lg font-semibold">{group.name[0].toUpperCase()}</div>
         <div className="flex-1">
           <h2 className="font-semibold">{group.name}</h2>
-          <p className="text-xs text-gray-400">{(Array.isArray(group.members) ? group.members : []).length} members</p>
+          <p className="text-xs text-gray-400">{members.length} members</p>
         </div>
       </header>
 
-      <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-chat-bg">
+      <div className="flex-1 p-4 overflow-y-auto space-y-4">
         {typingUsers.length > 0 && <div className="text-xs text-green-400 mb-2">{typingUsers.join(', ')} typing...</div>}
         {messages.map((msg, i) => {
           const isMine = msg.sender._id === user._id;
@@ -99,7 +92,7 @@ const GroupChatPage = () => {
             <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[75%] px-4 py-2 rounded-2xl ${isMine ? 'bg-light-blue text-white rounded-br-none' : 'bg-gray-700 text-gray-100 rounded-bl-none'}`}>
                 {!isMine && <p className="text-xs text-light-blue font-medium">{msg.sender.username}</p>}
-                {msg.image && <img src={msg.image} className="rounded-lg mb-1 max-w-full" />}
+                {msg.image && <img src={msg.image} className="rounded-lg mb-1 max-w-full" alt="" />}
                 {msg.text && <p>{msg.text}</p>}
                 <span className="text-xs opacity-70">{formatMessageTime(msg.createdAt)}</span>
               </div>
@@ -109,20 +102,15 @@ const GroupChatPage = () => {
       </div>
 
       <form onSubmit={handleSend} className="p-3 bg-sidebar-bg border-t border-gray-700 flex items-center gap-2">
-        <button type="button" onClick={() => setIsImageMode(!isImageMode)} className={`w-10 h-10 rounded-full flex items-center justify-center ${isImageMode ? 'bg-light-blue text-white' : 'bg-gray-700 text-gray-400'}`}>
-          <FiImage size={20} />
-        </button>
+        <button type="button" onClick={() => setIsImageMode(!isImageMode)} className={`w-10 h-10 rounded-full flex items-center justify-center ${isImageMode ? 'bg-light-blue text-white' : 'bg-gray-700 text-gray-400'}`}><FiImage size={20} /></button>
         {isImageMode ? (
           <input type="url" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="Image URL..." className="flex-1 bg-gray-800 rounded-full px-4 py-2 outline-none text-white placeholder-gray-400" />
         ) : (
           <input type="text" value={newMsg} onChange={e => { setNewMsg(e.target.value); handleTyping(); }} placeholder="Message..." className="flex-1 bg-gray-800 rounded-full px-4 py-2 outline-none text-white placeholder-gray-400" />
         )}
-        <button type="submit" className="w-10 h-10 bg-light-blue rounded-full flex items-center justify-center hover:bg-blue-600 transition">
-          <FiSend size={18} />
-        </button>
+        <button type="submit" className="w-10 h-10 bg-light-blue rounded-full flex items-center justify-center hover:bg-blue-600 transition"><FiSend size={18} /></button>
       </form>
     </div>
   );
 };
-
 export default GroupChatPage;
