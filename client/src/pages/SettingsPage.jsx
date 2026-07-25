@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
+  FiMonitor, FiXCircle,
 import { Link, useNavigate } from 'react-router-dom';
+  FiMonitor, FiXCircle,
 import { useAuth } from '../context/AuthContext';
+  FiMonitor, FiXCircle,
 import { usePWA } from '../hooks/usePWA';
+  FiMonitor, FiXCircle,
 import { useTheme } from '../context/ThemeContext';
+  FiMonitor, FiXCircle,
 import axios from 'axios';
 import {
+  FiMonitor, FiXCircle,
   FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
   FiMoon, FiSun, FiShield, FiInfo, FiSmartphone,
   FiTrash2, FiAlertTriangle, FiDatabase, FiToggleRight,
@@ -28,15 +34,31 @@ const SettingsPage = () => {
   const [showBlocked, setShowBlocked] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [showSessions, setShowSessions] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]);
 
   useEffect(() => {
     if (user?.privacy) setPrivacy(user.privacy);
     if (user?.chatSettings) setAutoDownload(user.chatSettings.autoDownloadMedia);
     fetchBlockedUsers();
+    fetchSessions();
   }, [user]);
 
   const fetchBlockedUsers = async () => {
+  const fetchSessions = async () => {
+    try {
+      const { data } = await axios.get('https://updown-hms5.onrender.com/api/auth/sessions', config);
+      setSessions(Array.isArray(data) ? data : []);
+    } catch (err) { setSessions([]); }
+  };
+
+  const handleRemoveSession = async (sessionId) => {
+    try {
+      await axios.delete(, config);
+      setSessions(prev => prev.filter(s => s._id !== sessionId));
+    } catch (err) { alert('Failed to remove session'); }
+  };
     try {
       const { data } = await axios.get('https://updown-hms5.onrender.com/api/auth/blocked', config);
       setBlockedUsers(Array.isArray(data) ? data : []);
@@ -123,6 +145,22 @@ const SettingsPage = () => {
         {/* Theme Toggle */}
         <ToggleRow icon={dark ? <FiMoon size={20} /> : <FiSun size={20} />} title="Appearance" subtitle={dark ? 'Dark mode' : 'Light mode'} checked={dark} onChange={toggleTheme} />
 
+        {/* Active Sessions */}
+        <CollapsibleSection title="Active Sessions" icon={<FiMonitor size={20} className="text-accent" />} show={showSessions} setShow={setShowSessions}>
+          {sessions.length === 0 ? (
+            <p className="text-sm text-text-muted py-2">No active sessions</p>
+          ) : (
+            sessions.map((session, i) => (
+              <div key={session._id || i} className="flex items-center gap-3 p-3 bg-bg-input rounded-xl">
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{session.device?.substring(0, 30) || 'Unknown Device'}</p>
+                  <p className="text-xs text-text-muted">IP: {session.ip} • {new Date(session.lastActive).toLocaleString()}</p>
+                </div>
+                <button onClick={() => handleRemoveSession(session._id)} className="text-red-400 hover:text-red-300 p-1"><FiXCircle size={16} /></button>
+              </div>
+            ))
+          )}
+        </CollapsibleSection>
         {isInstallable && (
           <button onClick={installApp} className="w-full flex items-center gap-4 bg-accent hover:bg-accent-hover text-black font-semibold p-5 rounded-2xl transition-all"><FiDownload size={20} /> Install UpDown App</button>
         )}

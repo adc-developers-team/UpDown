@@ -1,5 +1,12 @@
 const mongoose = require('mongoose');
 
+const sessionSchema = new mongoose.Schema({
+  token: { type: String, required: true },
+  device: { type: String, default: 'Unknown' },
+  ip: { type: String, default: 'Unknown' },
+  lastActive: { type: Date, default: Date.now },
+}, { _id: true });
+
 const userSchema = new mongoose.Schema(
   {
     fullName: { type: String, default: '' },
@@ -22,6 +29,7 @@ const userSchema = new mongoose.Schema(
     status: { type: String, enum: ['active', 'deactivated', 'deleted'], default: 'active' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    sessions: [sessionSchema],
   },
   { timestamps: true }
 );

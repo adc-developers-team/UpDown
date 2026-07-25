@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, verifyEmail, resendVerification, refreshToken, forgotPassword, resetPassword } = require('../controllers/authController');
+const { signup, login, verifyEmail, resendVerification, refreshToken, forgotPassword, resetPassword, getSessions, removeSession, logout } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
 const Message = require('../models/Message');
@@ -13,6 +13,9 @@ router.post('/resend-verification', resendVerification);
 router.post('/refresh', refreshToken);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
+router.get('/sessions', protect, getSessions);
+router.delete('/sessions/:sessionId', protect, removeSession);
+router.post('/logout', protect, logout);
 
 // Username check
 router.get('/check-username', async (req, res) => {
