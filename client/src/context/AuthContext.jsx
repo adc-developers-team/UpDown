@@ -18,14 +18,15 @@ export const AuthProvider = ({ children }) => {
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           try {
-            const refreshToken = localStorage.getItem('token');
-            if (!refreshToken) throw new Error('No token');
+            const storedToken = localStorage.getItem('token');
+            if (!storedToken) throw new Error('No token');
             const res = await axios.post('https://updown-hms5.onrender.com/api/auth/refresh', {
-              token: refreshToken,
+              token: storedToken,
             });
             const newToken = res.data.token;
             localStorage.setItem('token', newToken);
             setToken(newToken);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
             originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
             return axios(originalRequest);
           } catch (refreshError) {
@@ -57,7 +58,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser && token) {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        if (parsed && parsed._id) {
+          setUser(parsed);
+        } else {
+          throw new Error('Invalid user data');
+        }
       }
     } catch (err) {
       localStorage.removeItem('user');
