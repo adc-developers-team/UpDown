@@ -7,6 +7,7 @@ const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const { login, signup } = useAuth();
 
   // Form states
@@ -66,15 +67,10 @@ const LoginPage = () => {
       } else {
         const res = await signup(fullName, username, email, password);
         setMessage(res?.message || 'Registration successful! Please check your email.');
-        // Clear signup form
         setFullName(''); setUsername(''); setEmail(''); setPassword(''); setConfirmPassword('');
       }
     } catch (err) {
       setMessage(err.response?.data?.message || 'Something went wrong');
-      // If error indicates not verified, offer resend option
-      if (err.response?.status === 401 && err.response?.data?.email) {
-        // Show a resend button? We'll just show message.
-      }
     } finally {
       setLoading(false);
     }
@@ -82,11 +78,15 @@ const LoginPage = () => {
 
   const handleResendVerification = async () => {
     if (!email) return alert('Please enter your email first');
+    setResending(true);
+    setMessage('');
     try {
-      await axios.post('https://updown-hms5.onrender.com/api/auth/resend-verification', { email });
-      setMessage('Verification email resent. Please check your inbox.');
+      const res = await axios.post('https://updown-hms5.onrender.com/api/auth/resend-verification', { email });
+      setMessage(res.data.message || 'Verification email resent.');
     } catch (err) {
       setMessage(err.response?.data?.message || 'Failed to resend verification email');
+    } finally {
+      setResending(false);
     }
   };
 
@@ -111,9 +111,10 @@ const LoginPage = () => {
               <button
                 type="button"
                 onClick={handleResendVerification}
-                className="ml-2 text-light-blue underline cursor-pointer"
+                disabled={resending}
+                className="ml-2 text-light-blue underline cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
               >
-                Resend
+                {resending ? <FiLoader className="animate-spin" size={14} /> : 'Resend'}
               </button>
             )}
           </div>
