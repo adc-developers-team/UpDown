@@ -1,4 +1,3 @@
-import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -6,11 +5,13 @@ import { useChat } from '../context/ChatContext';
 import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiSmile, FiMic, FiStopCircle,
-  FiPlusCircle, FiImage, FiVideo, FiMoreVertical,
-  FiSlash, FiCheckCircle, FiUserX, FiTrash, FiCornerUpLeft, FiEdit,
-  FiPhone, FiPhoneOff, FiMicOff, FiVideoOff, FiVolume2, FiSearch
+  FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff,
+  FiMicOff, FiVideoOff, FiVolume2, FiCornerUpLeft, FiEdit,
+  FiTrash, FiSlash, FiCheckCircle, FiUserX
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
+import AudioPlayer from '../engines/AudioPlayer';
+import BottomNav from '../components/BottomNav';
 
 /* ---------- helpers ---------- */
 const getLastSeenText = (d) => {
@@ -36,15 +37,6 @@ const formatMsgTime = (d) => {
   if (diffDay === 1) return 'Yesterday';
   if (diffDay < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
   return date.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
-};
-
-const formatDateDivider = (d) => {
-  const now = new Date();
-  const date = new Date(d);
-  if (now.toDateString() === date.toDateString()) return 'Today';
-  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
-  if (yesterday.toDateString() === date.toDateString()) return 'Yesterday';
-  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 };
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
@@ -111,18 +103,10 @@ const ChatRoomPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteMenuPos, setDeleteMenuPos] = useState({ x: 0, y: 0 });
-  const [showScrollBtn, setShowScrollBtn] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchIndex, setSearchIndex] = useState(0);
-  const [forwardMsg, setForwardMsg] = useState(null);
-
   const socketRef = useRef(null);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -354,7 +338,6 @@ const ChatRoomPage = () => {
         await axios.put(`https://updown-hms5.onrender.com/api/auth/block/${userId}`, {}, config);
         setIsBlocked(true);
       }
-      setShowMoreMenu(false);
     } catch (err) { alert(err.response?.data?.message || 'Action failed'); }
   };
 
@@ -490,81 +473,15 @@ const ChatRoomPage = () => {
   };
 
   if (loading) return <div className="h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
-  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-primary px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
+  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
 
   const isOnline = onlineUsers.includes(chatUser._id);
   const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
 
-  // Group messages by date for dividers
-  let currentDate = null;
-  const processedMessages = [];
-  messages.forEach((msg, i) => {
-    const msgDate = new Date(msg.createdAt).toDateString();
-    if (msgDate !== currentDate) {
-      currentDate = msgDate;
-      processedMessages.push({ type: 'divider', date: msg.createdAt, key: `div-${i}` });
-    }
-    processedMessages.push({ type: 'message', ...msg, key: msg._id || i });
-  });
-
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-20">
-      {/* Call Overlay */}
-      {(inCall || calling || incoming) && (
-        <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">
-          {incoming && callerSignal && (
-            <div className="text-center space-y-6">
-              <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center mx-auto text-4xl font-bold text-primary">
-                {chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}
-              </div>
-              <h2 className="text-2xl font-bold">{chatUser.fullName || chatUser.username}</h2>
-              <p className="text-text-secondary">{callType === 'video' ? 'Video call' : 'Voice call'}</p>
-              <div className="flex gap-6 justify-center mt-4">
-                <button onClick={rejectIncomingCall} className="bg-danger text-primary rounded-full p-5"><FiPhoneOff size={28} /></button>
-                <button onClick={acceptIncomingCall} className="bg-success text-primary rounded-full p-5"><FiPhone size={28} /></button>
-              </div>
-            </div>
-          )}
-          {(calling || inCall) && (
-            <div className="w-full h-full flex flex-col">
-              <div className="flex-1 flex items-center justify-center">
-                {callType === 'video' && (
-                  <>
-                    <video ref={remoteVideoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
-                    <video ref={localVideoRef} autoPlay playsInline muted className="absolute bottom-6 right-6 w-24 h-36 rounded-xl border-2 border-white object-cover z-10" />
-                  </>
-                )}
-                {callType === 'audio' && (
-                  <div className="text-center">
-                    <div className="w-32 h-32 rounded-full bg-primary/20 flex items-center justify-center text-5xl font-bold text-primary mx-auto mb-4">
-                      {chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}
-                    </div>
-                    <h2 className="text-xl font-semibold">{chatUser.fullName || chatUser.username}</h2>
-                    <p className="text-text-secondary mt-2">{calling ? 'Ringing...' : `${Math.floor(callDuration/60)}:${(callDuration%60).toString().padStart(2,'0')}`}</p>
-                  </div>
-                )}
-              </div>
-              <div className="bg-chat-bg/90 backdrop-blur px-6 py-5 flex items-center justify-center gap-6 rounded-t-3xl">
-                <button onClick={toggleMic} className={`p-4 rounded-full ${micMuted ? 'bg-danger text-primary' : 'bg-gray-700'}`}>
-                  {micMuted ? <FiMicOff size={22} /> : <FiMic size={22} />}
-                </button>
-                {callType === 'video' && (
-                  <button onClick={toggleVideo} className={`p-4 rounded-full ${videoOff ? 'bg-danger text-primary' : 'bg-gray-700'}`}>
-                    {videoOff ? <FiVideoOff size={22} /> : <FiVideo size={22} />}
-                  </button>
-                )}
-                <button onClick={toggleSpeaker} className={`p-4 rounded-full ${speakerOn ? 'bg-gray-700' : 'bg-primary'}`}>
-                  <FiVolume2 size={22} />
-                </button>
-                <button onClick={endCall} className="p-4 rounded-full bg-danger text-primary"><FiPhoneOff size={28} /></button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Header (Themed) (Themed) */}
-      <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light/50">
+      {/* Header */}
+      <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light">
         <Link to="/" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
           {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-lg font-bold text-primary">{chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}</span>}
@@ -575,56 +492,20 @@ const ChatRoomPage = () => {
         </div>
         <button onClick={() => startCall('audio')} className="p-2 hover:bg-gray-700 rounded-full"><FiPhone size={18} /></button>
         <button onClick={() => startCall('video')} className="p-2 hover:bg-gray-700 rounded-full"><FiVideo size={18} /></button>
-        <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:bg-gray-700 rounded-full"><FiSearch size={18} /></button>
         <div className="relative">
-          <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="p-2 hover:bg-gray-700 rounded-full"><FiMoreVertical size={18} /></button>
-          {showMoreMenu && (
-            <div className="absolute right-0 top-full mt-1 bg-surface rounded-xl shadow-2 border border-border-light py-1 z-30 w-40 text-sm">
-              <button onClick={handleBlock} className={`w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition ${isBlocked ? 'text-success' : 'text-danger'}`}>
-                {isBlocked ? <><FiCheckCircle size={14} /> Unblock User</> : <><FiSlash size={14} /> Block User</>}
-              </button>
-            </div>
-          )}
+          <button onClick={handleBlock} className="p-2 hover:bg-gray-700 rounded-full">
+            {isBlocked ? <FiCheckCircle size={18} className="text-success" /> : <FiSlash size={18} />}
+          </button>
         </div>
       </header>
 
-      {/* Search Bar */}
-      {searchOpen && (
-        <div className="bg-dark-blue px-4 py-2 flex items-center gap-2 border-b border-border-light/50">
-          <FiSearch size={16} className="text-text-muted" />
-          <input
-            type="text"
-            placeholder="Search messages..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-            className="flex-1 bg-transparent outline-none text-sm text-primary"
-            autoFocus
-          />
-          <button onClick={() => { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="text-text-muted hover:text-primary"><FiX size={18} /></button>
-        </div>
-      )}
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}>
-        {showScrollBtn && (
-          <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-primary text-primary rounded-full flex items-center justify-center shadow-lg z-10">↓</button>
-        )}
-        {processedMessages.map((item) => {
-          if (item.type === 'divider') {
-            return (
-              <div key={item.key} className="flex items-center justify-center py-2">
-                <span className="text-[11px] text-text-muted bg-sidebar-bg px-3 py-0.5 rounded-full">{formatDateDivider(item.date)}</span>
-              </div>
-            );
-          }
-          const msg = item;
+        {messages.map((msg, i) => {
           const isMine = msg.sender?._id === user._id;
           const mediaType = msg.mediaType || (msg.image ? (msg.image.match(/\.(mp4|webm|ogg)$/) ? 'video' : 'image') : 'text');
-          const hasQuoted = msg.replyTo;
-          const isForwarded = msg.forwarded;
           return (
-            <div key={msg._id || msg.key} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+            <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div
                 className={`px-4 py-2.5 rounded-2xl max-w-[80%] sm:max-w-[70%] cursor-pointer select-none ${isMine ? 'message-sent rounded-br-md' : 'message-received rounded-bl-md'} relative group`}
                 onClick={(e) => handleMessageClick(e, msg)}
@@ -634,35 +515,15 @@ const ChatRoomPage = () => {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {/* Reply preview */}
-                {hasQuoted && (
-                  <div className={`text-xs p-1.5 rounded mb-1 opacity-80 ${isMine ? 'bg-black/20' : 'bg-gray-200 dark:bg-gray-600'}`}>
-                    <span className="font-medium text-primary">{hasQuoted.sender?.fullName || hasQuoted.sender?.username || 'User'}</span>
-                    <p className="truncate">{hasQuoted.text || (hasQuoted.image ? '📷 Media' : '')}</p>
-                  </div>
-                )}
-                {/* Forward label */}
-                {isForwarded && <p className="text-[10px] text-text-muted mb-1">Forwarded</p>}
-
-                {/* Media */}
                 {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
                 {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
-                {mediaType === 'audio' mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" />mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" /> <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" />}
-
-                {/* Text */}
+                {mediaType === 'audio' && <AudioPlayer src={msg.image} />}
                 {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
-                {msg.text && msg.updatedAt && msg.createdAt !== msg.updatedAt && new Date(msg.createdAt).getTime() !== new Date(msg.updatedAt).getTime() && <span className="text-[10px] text-text-muted ml-1">(edited)</span>}
-
-                {/* Reactions */}
-                {renderReactions(msg)}
-
-                {/* Time + Ticks */}
                 <div className="flex items-center justify-end gap-1.5 mt-1.5">
                   <span className="text-[11px] opacity-70 font-medium">{formatMsgTime(msg.createdAt)}</span>
                   {renderTick(msg)}
                 </div>
-
-                {/* Reaction Picker */}
+                {renderReactions(msg)}
                 {reactionPicker === msg._id && (
                   <div className="absolute -top-14 left-0 bg-surface rounded-full px-2 py-1.5 flex gap-1.5 shadow-2 z-50" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
                     {QUICK_EMOJIS.map(e => (
@@ -670,8 +531,6 @@ const ChatRoomPage = () => {
                     ))}
                   </div>
                 )}
-
-                {/* Long press delete menu (positioned) */}
                 {deleteTarget === msg._id && (
                   <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-surface rounded-xl shadow-3 border border-border-light py-1 z-50 w-40 text-sm">
                     <button onClick={() => deleteForMe(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left"><FiUserX size={14} /> Delete for me</button>
@@ -731,9 +590,9 @@ const ChatRoomPage = () => {
           <button type="button" onClick={startRecording} className="text-gray-400 hover:text-primary p-1.5"><FiMic size={24} /></button>
         ) : null}
       </form>
+      <BottomNav />
     </div>
   );
 };
 
-      <BottomNav />
 export default ChatRoomPage;
