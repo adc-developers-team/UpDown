@@ -23,12 +23,12 @@ export const ChatProvider = ({ children }) => {
       socketRef.current.on('users online', (online) => setOnlineUsers(Array.isArray(online) ? online : []));
 
       socketRef.current.on('message received', (newMessage) => {
-        if (!document.hasFocus() || selectedUser?._id !== newMessage.sender._id) {
-          showNotification(
-            newMessage.sender.fullName || newMessage.sender.username,
-            newMessage.text || 'New message',
-            `/chat/${newMessage.sender._id}`
-          );
+        setMessages(prev => [...prev, newMessage]);
+        // Show notification if chat not focused or different user selected
+        if (!document.hasFocus() || (selectedUser?._id !== newMessage.sender._id)) {
+          const senderName = newMessage.sender?.fullName || newMessage.sender?.username || 'Unknown';
+          const messageText = newMessage.text || newMessage.mediaType || 'New message';
+          showNotification(senderName, messageText, `/chat/${newMessage.sender._id}`);
         }
       });
 
@@ -47,10 +47,6 @@ export const ChatProvider = ({ children }) => {
 
       socketRef.current?.emit('mark as read', { conversationId, userId: user._id });
 
-      socketRef.current?.on('message received', (newMessage) => {
-        setMessages(prev => [...prev, newMessage]);
-      });
-
       socketRef.current?.on('message status update', ({ messageId, status }) => {
         setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, status } : msg));
       });
@@ -63,7 +59,6 @@ export const ChatProvider = ({ children }) => {
     }
 
     return () => {
-      socketRef.current?.off('message received');
       socketRef.current?.off('message status update');
       socketRef.current?.off('messages read');
     };

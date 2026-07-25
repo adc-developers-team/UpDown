@@ -10,10 +10,25 @@ export const NotificationProvider = ({ children }) => {
     if (!('Notification' in window)) return;
     const result = await Notification.requestPermission();
     setPermission(result);
+    return result;
   };
 
   const showNotification = (title, body, url = '/') => {
-    if (permission !== 'granted') return;
+    if (!('Notification' in window)) return;
+
+    // If permission not granted, try again
+    if (Notification.permission !== 'granted') {
+      requestPermission().then((newPerm) => {
+        if (newPerm === 'granted') {
+          createNotification(title, body, url);
+        }
+      });
+    } else {
+      createNotification(title, body, url);
+    }
+  };
+
+  const createNotification = (title, body, url) => {
     const notif = new Notification(title, {
       body,
       icon: '/favicon.svg',
@@ -28,11 +43,15 @@ export const NotificationProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (Notification.permission === 'default') {
-      // ask on first load after a short delay
-      const timer = setTimeout(() => requestPermission(), 3000);
-      return () => clearTimeout(timer);
-    }
+    // Ask permission on first user interaction (click anywhere)
+    const handleClick = () => {
+      if (Notification.permission === 'default') {
+        requestPermission();
+      }
+      document.removeEventListener('click', handleClick);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
   }, []);
 
   return (
