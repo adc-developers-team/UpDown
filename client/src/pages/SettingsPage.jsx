@@ -1,11 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePWA } from '../hooks/usePWA';
+import { useTheme } from '../context/ThemeContext';
+import { FiMoon, FiSun } from 'react-icons/fi';
 import { FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload } from 'react-icons/fi';
 
 const SettingsPage = () => {
   const { user, logout } = useAuth();
   const { isInstallable, installApp } = usePWA();
+  const { dark, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -34,6 +37,13 @@ const SettingsPage = () => {
         </div>
 
         {/* Install Button (only if not installed) */}
+        <button
+          onClick={toggleTheme}
+          className="flex items-center gap-4 bg-sidebar-bg hover:bg-gray-700 w-full p-4 rounded-xl transition-colors"
+        >
+          {dark ? <FiSun size={20} className="text-yellow-400" /> : <FiMoon size={20} className="text-light-blue" />}
+          <span>{dark ? 'Light Mode' : 'Dark Mode'}</span>
+        </button>
         {isInstallable && (
           <button
             onClick={installApp}

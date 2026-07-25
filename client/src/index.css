@@ -6,6 +6,22 @@
   --color-chat-bg: #0f172a;
   --color-sidebar-bg: #1e293b;
 }
+
+/* Light mode overrides */
+.light .bg-chat-bg { background-color: #f8fafc; }
+.light .bg-dark-blue { background-color: #ffffff; }
+.light .bg-sidebar-bg { background-color: #f1f5f9; }
+.light .text-white, .light .text-gray-100 { color: #0f172a; }
+.light .border-gray-700 { border-color: #e2e8f0; }
+.light .bg-gray-800 { background-color: #e2e8f0; }
+.light .bg-gray-700 { background-color: #cbd5e1; }
+.light .bg-gray-900 { background-color: #f8fafc; }
+.light .text-gray-400 { color: #475569; }
+.light .text-gray-500 { color: #64748b; }
+.light .bg-light-blue { background-color: #2563eb; }
+.light .hover\:bg-gray-700:hover { background-color: #e2e8f0; }
+.light .hover\:bg-gray-800:hover { background-color: #cbd5e1; }
+
 @keyframes react-pop {
   0% { transform: scale(0); opacity: 0; }
   50% { transform: scale(1.3); opacity: 1; }
