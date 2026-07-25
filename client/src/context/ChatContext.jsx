@@ -51,6 +51,9 @@ export const ChatProvider = ({ children }) => {
         setMessages(prev => prev.map(msg => msg._id === messageId ? { ...msg, status } : msg));
       });
 
+      socketRef.current?.on('message pinned', (pinnedMsg) => {
+        setMessages(prev => prev.map(m => m._id === pinnedMsg._id ? pinnedMsg : m));
+      });
       socketRef.current?.on('messages read', ({ conversationId }) => {
         setMessages(prev => prev.map(msg =>
           msg.receiver?._id === user._id ? { ...msg, status: 'read' } : msg

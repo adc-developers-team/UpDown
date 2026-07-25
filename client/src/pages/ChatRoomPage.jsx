@@ -41,6 +41,8 @@ const ChatRoomPage = () => {
   const [searchingGif, setSearchingGif] = useState(false);
   const [reactingMsgId, setReactingMsgId] = useState(null);
   const [forwardMsg, setForwardMsg] = useState(null);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [showPinned, setShowPinned] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
@@ -72,6 +74,9 @@ const ChatRoomPage = () => {
     socketRef.current.on('message deleted', id => setMessages(prev => prev.filter(m => m._id !== id)));
     socketRef.current.on('message edited', (editedMsg) => setMessages(prev => prev.map(m => m._id === editedMsg._id ? editedMsg : m)));
     socketRef.current.on('message reaction updated', updated => setMessages(prev => prev.map(m => m._id === updated._id ? updated : m)));
+    socketRef.current.on('message pinned', (pinnedMsg) => {
+      setMessages(prev => prev.map(m => m._id === pinnedMsg._id ? pinnedMsg : m));
+    });
 
     socketRef.current.emit('set-username', user.username);
 

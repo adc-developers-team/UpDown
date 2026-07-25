@@ -12,6 +12,7 @@ const messageSchema = new mongoose.Schema(
     mediaType: { type: String, enum: ['text', 'image', 'video', 'audio', 'poll'], default: 'text' },
     replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null },
     pollId: { type: mongoose.Schema.Types.ObjectId, ref: 'Poll', default: null },
+    pinned: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

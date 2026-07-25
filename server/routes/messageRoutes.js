@@ -18,9 +18,7 @@ router.post('/', protect, async (req, res) => {
       replyTo: replyTo || null,
     });
     res.status(201).json(message);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 router.get('/:userId1/:userId2', async (req, res) => {
@@ -33,9 +31,7 @@ router.get('/:userId1/:userId2', async (req, res) => {
       .populate({ path: 'replyTo', populate: { path: 'sender', select: 'username fullName' } })
       .sort({ createdAt: 1 });
     res.json(messages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 router.put('/:messageId', protect, async (req, res) => {
@@ -53,9 +49,7 @@ router.put('/:messageId', protect, async (req, res) => {
       .populate('receiver', 'username profilePic fullName')
       .populate({ path: 'replyTo', populate: { path: 'sender', select: 'username fullName' } });
     res.json(populated);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 router.delete('/:messageId', protect, async (req, res) => {
@@ -67,9 +61,33 @@ router.delete('/:messageId', protect, async (req, res) => {
     }
     await Message.findByIdAndDelete(req.params.messageId);
     res.json({ message: 'Message deleted' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { res.status(500).json({ message: error.message }); }
+});
+
+// Pin / Unpin
+router.put('/:messageId/pin', protect, async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ message: 'Message not found' });
+    message.pinned = !message.pinned;
+    await message.save();
+    const populated = await Message.findById(message._id)
+      .populate('sender', 'username profilePic fullName')
+      .populate('receiver', 'username profilePic fullName');
+    res.json(populated);
+  } catch (error) { res.status(500).json({ message: error.message }); }
+});
+
+// Get pinned messages for a conversation
+router.get('/pinned/:userId1/:userId2', async (req, res) => {
+  try {
+    const { userId1, userId2 } = req.params;
+    const conversationId = [userId1, userId2].sort().join('_');
+    const pinnedMessages = await Message.find({ conversationId, pinned: true })
+      .populate('sender', 'username profilePic fullName')
+      .sort({ createdAt: -1 });
+    res.json(pinnedMessages);
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 router.get('/last-messages/:userId', async (req, res) => {
@@ -88,9 +106,7 @@ router.get('/last-messages/:userId', async (req, res) => {
       { path: 'receiver', select: 'username profilePic fullName' }
     ]);
     res.json(lastMessages);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 router.get('/unread-counts/:userId', async (req, res) => {
@@ -104,9 +120,7 @@ router.get('/unread-counts/:userId', async (req, res) => {
     const result = {};
     unreadCounts.forEach(item => { result[item._id.toString()] = item.count; });
     res.json(result);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
+  } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
 module.exports = router;
