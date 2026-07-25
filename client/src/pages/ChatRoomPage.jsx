@@ -286,7 +286,7 @@ const ChatRoomPage = () => {
           return (
             <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
               <div
-                className={`px-3 py-1.5 rounded-lg max-w-[75%] cursor-pointer select-none ${isMine ? 'message-sent rounded-br-sm' : 'message-received rounded-bl-sm'} relative group`}
+                className={`px-4 py-2.5 rounded-2xl max-w-[75%] cursor-pointer select-none ${isMine ? 'message-sent rounded-br-md' : 'message-received rounded-bl-md'} relative group`}
                 onClick={(e) => handleMessageClick(e, msg)}
                 onTouchStart={(e) => handleTouchStart(e, msg)}
                 onTouchEnd={handleTouchEnd}
@@ -294,12 +294,19 @@ const ChatRoomPage = () => {
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
               >
-                {mediaType === 'image' && <img src={msg.image} className="rounded-lg mb-1 max-w-full pointer-events-none" alt="" />}
-                {mediaType === 'video' && <video controls className="max-w-full rounded-lg mb-1 pointer-events-none" style={{maxHeight:'180px'}}><source src={msg.image} /></video>}
+                {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
+                {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
                 {mediaType === 'audio' && <AudioPlayer src={msg.image} />}
-                {msg.text && <div className="text-[13px] pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
-                <div className="flex items-center justify-end gap-1 mt-1">
-                  <span className="text-[10px] opacity-60">{formatMsgTime(msg.createdAt)}</span>
+                {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
+                <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                  <span className="text-[11px] opacity-70 font-medium">{formatMsgTime(msg.createdAt)}</span>
+                  {isMine && (
+                    <span className="text-[11px]">
+                      {msg.status === 'sent' && <span className="opacity-50">✓</span>}
+                      {msg.status === 'delivered' && <span className="opacity-70">✓✓</span>}
+                      {msg.status === 'read' && <span className="text-primary">✓✓</span>}
+                    </span>
+                  )}
                 </div>
                 {reactionPicker === msg._id && (
                   <div className="absolute -top-14 left-0 bg-surface rounded-full px-2 py-1.5 flex gap-1.5 shadow-2 z-50" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
@@ -317,7 +324,7 @@ const ChatRoomPage = () => {
 
       {/* Reply bar */}
       {replyTo && (
-        <div className="bg-sidebar-bg px-4 py-2 flex items-center gap-3 border-t border-border-light">
+        <div className="bg-sidebar-bg px-4 py-2.5 flex items-center gap-3 border-t border-border-light">
           <FiCornerUpLeft size={16} className="text-primary" />
           <div className="flex-1 text-xs text-text-secondary truncate">
             <span className="font-medium text-primary">{replyTo.sender?.fullName || replyTo.sender?.username || 'User'}</span>
@@ -344,11 +351,11 @@ const ChatRoomPage = () => {
       )}
 
       {/* Input */}
-      <form onSubmit={handleSend} className="px-3 py-2 bg-sidebar-bg border-t border-border-light flex items-center gap-3">
+      <form onSubmit={handleSend} className="px-3 py-3 bg-sidebar-bg border-t border-border-light flex items-center gap-3">
         <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageSelect} className="hidden" />
         <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSelect} className="hidden" />
-        <button type="button" onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-400 hover:text-primary p-1 relative">
-          <FiPlusCircle size={22} />
+        <button type="button" onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-400 hover:text-primary p-1.5 relative">
+          <FiPlusCircle size={24} />
           {showAttachMenu && (
             <div className="absolute bottom-full left-0 mb-2 bg-surface rounded-xl shadow-2 border border-border-light p-2 flex flex-col gap-1 z-20 text-sm">
               <button onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50"><FiImage size={16} /> Image</button>
@@ -356,15 +363,15 @@ const ChatRoomPage = () => {
             </div>
           )}
         </button>
-        <div className="flex-1 flex items-center bg-bg-input rounded-full h-11 px-4 border border-border-light focus-within:border-primary transition">
-          <input type="text" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder={isBlocked ? "You blocked this user" : "Message"} className="flex-1 bg-transparent outline-none text-sm text-white placeholder-text-muted" disabled={isBlocked} />
+        <div className="flex-1 flex items-center bg-bg-input rounded-full h-12 px-5 border border-border-light focus-within:border-primary focus-within:shadow-sm transition">
+          <input type="text" value={newMsg} onChange={e => setNewMsg(e.target.value)} placeholder={isBlocked ? "You blocked this user" : "Message"} className="flex-1 bg-transparent outline-none text-[14px] text-white placeholder-text-muted" disabled={isBlocked} />
         </div>
         {isRecording ? (
-          <button type="button" onClick={stopRecording} className="text-danger p-1 animate-pulse"><FiStopCircle size={22} /></button>
+          <button type="button" onClick={stopRecording} className="text-danger p-1.5 animate-pulse"><FiStopCircle size={24} /></button>
         ) : newMsg.trim() && !isBlocked ? (
-          <button type="submit" className="text-primary hover:text-primary-dark p-1"><FiSend size={22} /></button>
+          <button type="submit" className="text-primary hover:text-primary-dark p-1.5"><FiSend size={24} /></button>
         ) : !isBlocked ? (
-          <button type="button" onClick={startRecording} className="text-gray-400 hover:text-primary p-1"><FiMic size={22} /></button>
+          <button type="button" onClick={startRecording} className="text-gray-400 hover:text-primary p-1.5"><FiMic size={24} /></button>
         ) : null}
       </form>
     </div>
