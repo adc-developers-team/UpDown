@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
+import { useNotifications } from './NotificationContext';
 import { io } from 'socket.io-client';
 
 const ChatContext = createContext();
@@ -8,6 +9,7 @@ export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
+  const { showNotification } = useNotifications();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -19,9 +21,20 @@ export const ChatProvider = ({ children }) => {
       socketRef.current = io('https://updown-hms5.onrender.com');
       socketRef.current.emit('setup', user._id);
       socketRef.current.on('users online', (online) => setOnlineUsers(Array.isArray(online) ? online : []));
+
+      socketRef.current.on('message received', (newMessage) => {
+        if (!document.hasFocus() || selectedUser?._id !== newMessage.sender._id) {
+          showNotification(
+            newMessage.sender.fullName || newMessage.sender.username,
+            newMessage.text || 'New message',
+            `/chat/${newMessage.sender._id}`
+          );
+        }
+      });
+
       return () => socketRef.current.disconnect();
     }
-  }, [user]);
+  }, [user, selectedUser]);
 
   useEffect(() => {
     if (selectedUser && user) {
