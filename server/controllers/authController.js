@@ -17,6 +17,10 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false,
   },
+  connectionTimeout: 15000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
+  family: 4,
 });
 
 const sendVerificationEmail = async (email, verifyToken) => {
@@ -26,7 +30,32 @@ const sendVerificationEmail = async (email, verifyToken) => {
       from: `"UpDown Chat" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Verify your email - UpDown',
-      html: `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif"><table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:30px 0"><tr><td align="center"><table width="400" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05)"><tr><td style="background:#3b82f6;padding:20px;text-align:center"><span style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:1px">UPDOWN</span></td></tr><tr><td style="padding:24px 20px;color:#333;font-size:15px;line-height:1.6"><p style="margin:0 0 12px;color:#666">Click below to verify your email address and activate your account.</p><p style="margin:24px 0;text-align:center"><a href="${verificationUrl}" style="display:inline-block;padding:12px 32px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:15px">Verify Email</a></p><p style="margin:16px 0 0;font-size:12px;color:#999">Button not working? Copy and paste this link into your browser:<br><a href="${verificationUrl}" style="color:#3b82f6;word-break:break-all">${verificationUrl}</a></p></td></tr><tr><td style="background:#fafafa;padding:12px 20px;text-align:center;font-size:11px;color:#aaa">© UpDown • Secure messaging, anywhere.</td></tr></table></td></tr></table></body></html>`,
+      html: `
+      <!DOCTYPE html>
+      <html>
+      <head><meta charset="UTF-8"></head>
+      <body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:30px 0">
+          <tr><td align="center">
+            <table width="400" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.05)">
+              <tr><td style="background:#3b82f6;padding:20px;text-align:center">
+                <span style="color:#fff;font-size:22px;font-weight:bold;letter-spacing:1px">UPDOWN</span>
+              </td></tr>
+              <tr><td style="padding:24px 20px;color:#333;font-size:15px;line-height:1.6">
+                <p style="margin:0 0 12px;color:#666">Click below to verify your email address and activate your account.</p>
+                <p style="margin:24px 0;text-align:center">
+                  <a href="${verificationUrl}" style="display:inline-block;padding:12px 32px;background:#3b82f6;color:#fff;text-decoration:none;border-radius:6px;font-weight:bold;font-size:15px">Verify Email</a>
+                </p>
+                <p style="margin:16px 0 0;font-size:12px;color:#999">Button not working? Copy and paste this link into your browser:<br><a href="${verificationUrl}" style="color:#3b82f6;word-break:break-all">${verificationUrl}</a></p>
+              </td></tr>
+              <tr><td style="background:#fafafa;padding:12px 20px;text-align:center;font-size:11px;color:#aaa">
+                © UpDown • Secure messaging, anywhere.
+              </td></tr>
+            </table>
+          </td></tr>
+        </table>
+      </body>
+      </html>`,
     });
     console.log('Verification email sent to', email);
   } catch (err) {
@@ -48,7 +77,7 @@ const signup = async (req, res) => {
           await sendVerificationEmail(email, verifyToken);
           return res.status(200).json({ message: 'A verification email has been sent to your email address.' });
         } catch (emailErr) {
-          console.error('Resend email error:', emailErr);
+          console.error('Email error:', emailErr);
           return res.status(500).json({ message: 'Failed to send verification email.' });
         }
       }
@@ -70,7 +99,7 @@ const signup = async (req, res) => {
       await sendVerificationEmail(email, verifyToken);
       return res.status(201).json({ message: 'Registration successful! Please check your email.' });
     } catch (emailErr) {
-      console.error('Signup email error:', emailErr);
+      console.error('Email error:', emailErr);
       return res.status(201).json({ message: 'Account created, but verification email could not be sent.' });
     }
   } catch (error) {
