@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const { signup, login, verifyEmail } = require('../controllers/authController');
+const { signup, login, verifyEmail, sendTestEmail } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 const User = require('../models/User');
 
 router.post('/signup', signup);
 router.post('/login', login);
 router.get('/verify-email', verifyEmail);
+router.post('/test-email', protect, sendTestEmail); // protect ensures only logged-in users
 
-// Check username availability
 router.get('/check-username', async (req, res) => {
   const { username } = req.query;
   if (!username) return res.status(400).json({ message: 'Username is required' });
