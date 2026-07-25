@@ -6,6 +6,7 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
+  FiFilm,
   FiMicOff, FiVolume2, FiCornerUpLeft
 import { FiEdit } from 'react-icons/fi';
 } from 'react-icons/fi';
@@ -99,6 +100,10 @@ const ChatRoomPage = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showGifModal, setShowGifModal] = useState(false);
+  const [gifSearch, setGifSearch] = useState('');
+  const [gifResults, setGifResults] = useState([]);
+  const [searchingGif, setSearchingGif] = useState(false);
   const socketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const mediaRecorderRef = useRef(null);
