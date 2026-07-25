@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiArrowLeft, FiSettings, FiMail, FiUser } from 'react-icons/fi';
+import { FiArrowLeft, FiSettings, FiMail, FiUser, FiChevronRight } from 'react-icons/fi';
 
 const ProfilePage = () => {
   const { user } = useAuth();
@@ -24,7 +24,7 @@ const ProfilePage = () => {
       <div className="px-4 mt-4">
         <Link to="/settings" className="flex items-center gap-4 bg-sidebar-bg hover:bg-gray-700 p-4 rounded-xl transition-colors">
           <FiSettings size={20} className="text-light-blue" />
-          <span>Settings</span>
+          <span>Settings</span><FiChevronRight size={16} />
         </Link>
       </div>
     </div>

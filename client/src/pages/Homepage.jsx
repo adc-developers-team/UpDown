@@ -197,10 +197,10 @@ const Homepage = () => {
 
       {/* ===== Quick Actions ===== */}
       <div className="bg-sidebar-bg px-4 pb-3 flex gap-2 overflow-x-auto border-b border-gray-700/50">
-        <Link to="/add-friends" className="flex-shrink-0 flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full hover:bg-primary/20 transition">
+        <Link to="/add-friends" className="flex-shrink-0 flex items-center gap-1.5 bg-surface border border-border-light text-text-secondary hover:text-primary text-xs font-medium px-3 py-1.5 rounded-full hover:bg-primary/20 transition">
           <FiPlus size={14} /> New Chat
         </Link>
-        <Link to="/create-group" className="flex-shrink-0 flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded-full hover:bg-primary/20 transition">
+        <Link to="/create-group" className="flex-shrink-0 flex items-center gap-1.5 bg-surface border border-border-light text-text-secondary hover:text-primary text-xs font-medium px-3 py-1.5 rounded-full hover:bg-primary/20 transition">
           <FiUsers size={14} /> New Group
         </Link>
       </div>

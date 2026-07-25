@@ -14,7 +14,7 @@ const BottomNav = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border-light safe-area-inset-bottom z-30">
+    <nav className="fixed bottom-0 left-0 right-0 pb-safe-area bg-surface border-t border-border-light safe-area-inset-bottom z-30">
       <div className="flex items-center justify-around h-16 max-w-2xl mx-auto">
         {tabs.map(tab => {
           const active = path === tab.to || (tab.to === '/' && path.startsWith('/chat')) || (tab.to === '/add-friends' && path.startsWith('/add-friends'));
