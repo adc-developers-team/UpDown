@@ -40,6 +40,7 @@ const ChatRoomPage = () => {
   const [gifResults, setGifResults] = useState([]);
   const [searchingGif, setSearchingGif] = useState(false);
   const [reactingMsgId, setReactingMsgId] = useState(null);
+  const [forwardMsg, setForwardMsg] = useState(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
@@ -340,6 +341,7 @@ const ChatRoomPage = () => {
                 </div>
                 <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition">
                   <button onClick={() => setReplyTo(msg)} className="text-xs opacity-60 hover:opacity-100"><FiCornerUpLeft size={14} /></button>
+                  <button onClick={() => setForwardMsg(msg)} className="text-xs opacity-60 hover:opacity-100"><FiShare2 size={14} /></button>
                   <button onClick={() => setReactionPicker(reactionPicker === msg._id ? null : msg._id)} className="text-xs opacity-60 hover:opacity-100"><FiSmile size={14} /></button>
                 </div>
                 {reactionPicker === msg._id && (
@@ -396,6 +398,21 @@ const ChatRoomPage = () => {
         ) : (
           <button type="button" onClick={startRecording} className="text-gray-400 hover:text-accent p-1"><FiMic size={22} /></button>
         )}
+      {forwardMsg && (
+        <ForwardModal
+          message={forwardMsg}
+          onClose={() => setForwardMsg(null)}
+          onForward={(targetId, targetType) => {
+            socketRef.current?.emit('forward message', {
+              messageId: forwardMsg._id,
+              targetId,
+              targetType,
+              senderId: user._id,
+            });
+            setForwardMsg(null);
+          }}
+        />
+      )}
       </form>
     </div>
   );
