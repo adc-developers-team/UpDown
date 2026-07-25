@@ -7,6 +7,8 @@ import {
   FiX, FiPlus, FiCheck, FiChevronDown
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
+import VideoPlayer from '../engines/VideoPlayer';
+import MessageFormatter from '../engines/MessageFormatter';
 
 const formatMessageTime = (dateString) => {
   const date = new Date(dateString);
@@ -264,7 +266,7 @@ const GroupChatPage = () => {
                       {msg.image && (
                         <img src={msg.image} className="rounded-lg mb-0.5 max-w-full" alt="" />
                       )}
-                      {msg.text && <p className="text-sm leading-relaxed">{msg.text}</p>}
+                      {msg.text {msg.text && <p className="text-sm leading-relaxed">{msg.text}</p>}{msg.text && <p className="text-sm leading-relaxed">{msg.text}</p>} <div className="text-sm leading-relaxed"><MessageFormatter text={msg.text} /></div>}
                       <div className="flex items-center justify-end gap-1 mt-0.5">
                         <span className="text-[10px] opacity-60">{formatMessageTime(msg.createdAt)}</span>
                       </div>

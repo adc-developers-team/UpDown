@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { FiEye, FiEyeOff, FiCheck, FiX, FiLoader } from 'react-icons/fi';
+import { FormField, FormSubmit } from '../engines/FormEngine';
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -226,7 +227,7 @@ const LoginPage = () => {
             disabled={loading}
             className="w-full bg-light-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-full transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {loading && <FiLoader className="animate-spin" />}
+            </FormSubmit>
             {isLogin ? (loading ? 'Signing in...' : 'Sign In') : (loading ? 'Creating Account...' : 'Create Account')}
           </button>
         </form>

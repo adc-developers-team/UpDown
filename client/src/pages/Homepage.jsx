@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import axios from 'axios';
 import { FiSearch, FiBell, FiPlus, FiUsers, FiMessageSquare, FiChevronDown } from 'react-icons/fi';
+import SearchEngine from '../engines/SearchEngine';
 
 const formatLastMessageTime = (dateString) => {
   if (!dateString) return '';
