@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
 /* ===== UP DOWN MODERN SAAS THEME ===== */
-
-/* ----- DARK MODE (default) ----- */
 :root {
   --bg-main: #0a0a0a;
   --bg-sidebar: #0d1117;
@@ -18,8 +16,6 @@
   --btn-primary-bg: #2dd4bf;
   --btn-primary-text: #0a0a0a;
 }
-
-/* ----- LIGHT MODE ----- */
 .light {
   --bg-main: #fafbfc;
   --bg-sidebar: #ffffff;
@@ -36,7 +32,6 @@
   --btn-primary-text: #ffffff;
 }
 
-/* ----- BASE STYLES ----- */
 body {
   background-color: var(--bg-main);
   color: var(--text-primary);
@@ -46,22 +41,14 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* ----- TAILWIND THEME EXTENSION ----- */
-@theme {
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-bg-main: var(--bg-main);
-  --color-bg-sidebar: var(--bg-sidebar);
-  --color-bg-header: var(--bg-header);
-  --color-bg-card: var(--bg-card);
-  --color-bg-input: var(--bg-input);
-  --color-text-primary: var(--text-primary);
-  --color-text-secondary: var(--text-secondary);
-  --color-text-muted: var(--text-muted);
-  --color-border-color: var(--border-color);
-}
+* { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
 
-/* ----- GLOBAL OVERRIDES (Tailwind classes) ----- */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ===== GLOBAL OVERRIDES ===== */
 .bg-chat-bg { background-color: var(--bg-main) !important; }
 .bg-dark-blue { background-color: var(--bg-header) !important; }
 .bg-sidebar-bg { background-color: var(--bg-sidebar) !important; }
@@ -76,34 +63,28 @@ body {
   color: var(--btn-primary-text) !important;
 }
 
-/* ----- COMPONENT CLASSES ----- */
-.btn-accent {
-  background-color: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  font-weight: 600;
-  border-radius: 9999px;
-  padding: 10px 24px;
-  transition: all 0.2s ease;
+/* ===== MESSAGE BUBBLES ===== */
+.message-sent {
+  background-color: var(--accent) !important;
+  color: #0a0a0a !important;
+  font-weight: 500;
 }
-.btn-accent:hover { opacity: 0.9; }
-
-.search-bar {
-  background-color: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: 9999px;
-  padding: 8px 16px;
-  color: var(--text-primary);
+.light .message-sent {
+  background-color: var(--accent) !important;
+  color: white !important;
 }
-.search-bar::placeholder { color: var(--text-muted); }
-
-.card {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  padding: 20px;
+.message-received {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+.light .message-received {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
 }
 
-/* ----- ANIMATIONS ----- */
+/* ===== ANIMATIONS ===== */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -117,7 +98,14 @@ body {
 }
 .animate-react-pop { animation: react-pop 0.3s ease-out; }
 
-/* ----- SKELETON ----- */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+.animate-pulse-ring { animation: pulse-ring 2s infinite; }
+
+/* ===== SKELETON ===== */
 .skeleton {
   background: linear-gradient(90deg, var(--bg-card) 25%, var(--border-color) 50%, var(--bg-card) 75%);
   background-size: 200% 100%;
@@ -128,7 +116,7 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* ----- MISC ----- */
+/* ===== MISC ===== */
 .header-rounded { border-radius: 0 0 20px 20px; }
 .step-dot {
   width: 28px; height: 28px;
@@ -139,26 +127,3 @@ body {
 }
 .step-dot.active { border-color: var(--accent); background-color: var(--accent); color: var(--btn-primary-text); }
 .step-line { width: 2px; height: 20px; background-color: var(--border-color); }
-
-/* ===== MESSAGE BUBBLES ===== */
-.message-sent {
-  background-color: var(--accent) !important;
-  color: #0a0a0a !important;
-  font-weight: 500;
-}
-.light .message-sent {
-  background-color: var(--accent) !important;
-  color: white !important;
-  font-weight: 500;
-}
-
-.message-received {
-  background-color: var(--bg-card) !important;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-color) !important;
-}
-.light .message-received {
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-  border: 1px solid #e2e8f0 !important;
-}

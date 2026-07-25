@@ -14,6 +14,8 @@ import ImagePreview from '../engines/ImagePreview';
 import VideoPlayer from '../engines/VideoPlayer';
 import MessageFormatter from '../engines/MessageFormatter';
 import useCall from '../engines/useCall';
+import { useVirtualScroll, LazyImage } from '../engines/PerformanceEngine';
+import { encrypt, decrypt, generateKey, exportKey, importKey } from '../engines/EncryptionEngine';
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
