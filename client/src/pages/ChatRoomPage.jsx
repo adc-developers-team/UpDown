@@ -38,7 +38,6 @@ const formatMsgTime = (d) => {
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
 const isVideoLink = (url) => /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url) || /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/.test(url);
 const getYouTubeId = (url) => (url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) || [])[1] || null;
 const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -112,6 +111,44 @@ const ChatRoomPage = () => {
   const remoteVideoRef = useRef(null);
   const peerRef = useRef(null);
   const callTimerRef = useRef(null);
+  const ringtoneRef = useRef(null);          // ← ringtone
+
+  /* ---------- ringtone ---------- */
+  const playRingtone = () => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      ringtoneRef.current = ctx;
+      const beep = () => {
+        if (ctx.state === 'closed') return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.value = 800;
+        gain.gain.value = 0.12;
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.stop(ctx.currentTime + 0.6);
+      };
+      beep();
+      const interval = setInterval(() => {
+        if (ctx.state === 'closed') clearInterval(interval);
+        else beep();
+      }, 2000);
+      ctx.interval = interval;
+    } catch (e) { /* user gesture required, silent */ }
+  };
+
+  const stopRingtone = () => {
+    if (ringtoneRef.current) {
+      const ctx = ringtoneRef.current;
+      if (ctx.interval) clearInterval(ctx.interval);
+      ctx.close();
+      ringtoneRef.current = null;
+    }
+  };
 
   useEffect(() => {
     socketRef.current = io('https://updown-hms5.onrender.com');
@@ -130,22 +167,27 @@ const ChatRoomPage = () => {
       setCallerSignal({ callerId, signal });
       setCallType(callType);
       setIncoming(true);
+      playRingtone();   // ← start ringing
     });
 
     socketRef.current.on('call-accepted', ({ signal }) => {
+      stopRingtone();
       if (peerRef.current) peerRef.current.setRemoteDescription(new RTCSessionDescription(signal));
       setCalling(false); setInCall(true); startCallTimer();
     });
 
     socketRef.current.on('call-rejected', () => {
+      stopRingtone();
       setCalling(false); setInCall(false); cleanupCall(); alert('Call rejected');
     });
 
     socketRef.current.on('call-ended', () => {
+      stopRingtone();
       setInCall(false); setIncoming(false); setCalling(false); cleanupCall();
     });
 
     socketRef.current.on('call-failed', ({ message }) => {
+      stopRingtone();
       alert(message); setCalling(false);
     });
 
@@ -155,7 +197,10 @@ const ChatRoomPage = () => {
 
     socketRef.current.emit('set-username', user.username);
 
-    return () => socketRef.current.disconnect();
+    return () => {
+      stopRingtone();
+      socketRef.current.disconnect();
+    };
   }, [userId, setSelectedUser, user.username]);
 
   // call logic
@@ -181,6 +226,7 @@ const ChatRoomPage = () => {
 
   const acceptIncomingCall = async () => {
     if (!callerSignal) return;
+    stopRingtone();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callType === 'video' });
       setLocalStream(stream);
@@ -199,9 +245,26 @@ const ChatRoomPage = () => {
     }
   };
 
-  const rejectIncomingCall = () => { socketRef.current.emit('reject-call', { callerId: callerSignal.callerId }); setIncoming(false); setCallerSignal(null); };
-  const endCall = () => { if (peerRef.current) peerRef.current.close(); socketRef.current.emit('end-call', { to: userId }); cleanupCall(); setInCall(false); setCalling(false); setIncoming(false); };
-  const cleanupCall = () => { if (localStream) localStream.getTracks().forEach(t => t.stop()); setLocalStream(null); setRemoteStream(null); if (peerRef.current) { peerRef.current.close(); peerRef.current = null; } clearInterval(callTimerRef.current); setCallDuration(0); };
+  const rejectIncomingCall = () => {
+    stopRingtone();
+    socketRef.current.emit('reject-call', { callerId: callerSignal.callerId });
+    setIncoming(false); setCallerSignal(null);
+  };
+
+  const endCall = () => {
+    stopRingtone();
+    if (peerRef.current) peerRef.current.close();
+    socketRef.current.emit('end-call', { to: userId });
+    cleanupCall(); setInCall(false); setCalling(false); setIncoming(false);
+  };
+
+  const cleanupCall = () => {
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+    setLocalStream(null); setRemoteStream(null);
+    if (peerRef.current) { peerRef.current.close(); peerRef.current = null; }
+    clearInterval(callTimerRef.current); setCallDuration(0);
+  };
+
   const startCallTimer = () => { callTimerRef.current = setInterval(() => setCallDuration(p => p + 1), 1000); };
   const toggleMic = () => { if (localStream) { localStream.getAudioTracks().forEach(t => t.enabled = !t.enabled); setMicMuted(!micMuted); } };
   const toggleVideo = () => { if (localStream) { localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled); setVideoEnabled(!videoEnabled); } };
