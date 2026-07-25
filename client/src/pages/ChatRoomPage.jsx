@@ -182,10 +182,14 @@ const ChatRoomPage = () => {
   useEffect(() => {
     socketRef.current = io('https://updown-hms5.onrender.com');
     axios.get('https://updown-hms5.onrender.com/api/auth/users')
+        .catch(err => { console.error('Failed to fetch chat user:', err); setChatUser({ _id: userId, username: 'Unknown', fullName: 'User' }); });
       .then(res => {
         const found = (Array.isArray(res.data) ? res.data : []).find(u => u._id === userId);
         if (found) { setChatUser(found); setSelectedUser(found); }
-      }).catch(console.log);
+      }).catch(err => {
+      console.error('Failed to fetch chat user:', err);
+      setChatUser({ _id: userId, username: 'Unknown', fullName: 'User' });
+    });
 
     socketRef.current.on('user typing', setTypingUser);
     socketRef.current.on('user stop typing', () => setTypingUser(null));
