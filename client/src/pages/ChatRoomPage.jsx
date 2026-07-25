@@ -55,7 +55,6 @@ const renderTextWithLinks = (text) => {
     const ytId = getYouTubeId(url);
     const vimeoId = getVimeoId(url);
     const isDirectVideo = /\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url);
-
     if (ytId || vimeoId || isDirectVideo) {
       elements.push(<a key={match.index} href={url} target="_blank" rel="noopener noreferrer" className="text-blue-300 underline">{url}</a>);
       if (ytId) {
@@ -231,11 +230,7 @@ const ChatRoomPage = () => {
 
     socketRef.current.on('ice-candidate', ({ candidate }) => {
       if (peerRef.current) {
-        try {
-          peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
-        } catch (e) {
-          console.error('ICE candidate error:', e);
-        }
+        try { peerRef.current.addIceCandidate(new RTCIceCandidate(candidate)); } catch (e) { console.error('ICE candidate error:', e); }
       }
     });
 
@@ -381,9 +376,55 @@ const ChatRoomPage = () => {
   const toggleVideo = () => { if (localStream) { localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled); setVideoEnabled(!videoEnabled); } };
   const toggleSpeaker = () => setSpeakerOn(!speakerOn);
 
-  const uploadFile = async (file, type) => { /* unchanged */ };
-  const handleImageSelect = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0], 'image'); e.target.value = ''; };
-  const handleVideoSelect = (e) => { if (e.target.files[0]) uploadFile(e.target.files[0], 'video'); e.target.value = ''; };
+  const uploadFile = async (file, type) => {
+    console.log('uploadFile called with type:', type, 'file:', file.name, 'size:', file.size);
+    if (file.size > MAX_FILE_SIZE) return alert(`File too large. Max ${MAX_FILE_SIZE/1048576}MB.`);
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      const result = await new Promise((res, rej) => { reader.onload = () => res(reader.result); reader.onerror = rej; reader.readAsDataURL(file); });
+      console.log('File read as base64, length:', result.length);
+      const token = localStorage.getItem('token');
+      const endpoint = type === 'image' ? '/api/upload/image' : '/api/upload/video';
+      const field = type === 'image' ? 'image' : 'video';
+      console.log('Posting to:', endpoint);
+      const { data } = await axios.post(`https://updown-hms5.onrender.com${endpoint}`, { [field]: result }, { headers: { Authorization: `Bearer ${token}` } });
+      console.log('Upload response:', data);
+      const url = type === 'image' ? data.imageUrl : data.videoUrl;
+      const mediaType = type;
+      socketRef.current.emit('send message', {
+        senderId: user._id,
+        receiverId: userId,
+        text: '',
+        image: url,
+        mediaType: mediaType,
+        replyTo: replyTo?._id || null
+      });
+      socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') });
+      setReplyTo(null);
+    } catch (err) {
+      console.error('Upload error:', err);
+      alert(err.response?.data?.message || err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImageSelect = (e) => {
+    if (e.target.files[0]) {
+      console.log('Image file selected:', e.target.files[0]);
+      uploadFile(e.target.files[0], 'image');
+    }
+    e.target.value = '';
+  };
+
+  const handleVideoSelect = (e) => {
+    if (e.target.files[0]) {
+      console.log('Video file selected:', e.target.files[0]);
+      uploadFile(e.target.files[0], 'video');
+    }
+    e.target.value = '';
+  };
 
   const startRecording = async () => {
     try {
@@ -429,12 +470,44 @@ const ChatRoomPage = () => {
     }
   };
 
-  const deleteMsg = async (id) => { /* unchanged */ };
-  const reactToMsg = (msgId, emoji) => { /* unchanged */ };
-  const startEdit = (msg) => { /* unchanged */ };
-  const cancelEdit = () => { /* unchanged */ };
-  const submitEdit = async (msgId) => { /* unchanged */ };
-  const handleTyping = () => { /* unchanged */ };
+  const deleteMsg = async (id) => {
+    const token = localStorage.getItem('token');
+    try {
+      await axios.delete(`https://updown-hms5.onrender.com/api/messages/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const convId = [user._id, userId].sort().join('_');
+      socketRef.current?.emit('delete message', { messageId: id, conversationId: convId });
+      setMessages(prev => prev.filter(m => m._id !== id));
+    } catch (err) { alert(err.response?.data?.message || 'Delete failed'); }
+  };
+
+  const reactToMsg = (msgId, emoji) => {
+    const convId = [user._id, userId].sort().join('_');
+    socketRef.current?.emit('react to message', { messageId: msgId, emoji, userId: user._id, conversationId: convId });
+    setReactionPicker(null);
+    setReactingMsgId(msgId);
+    setTimeout(() => setReactingMsgId(null), 350);
+  };
+
+  const startEdit = (msg) => { setEditingMsgId(msg._id); setEditText(msg.text); };
+  const cancelEdit = () => { setEditingMsgId(null); setEditText(''); };
+  const submitEdit = async (msgId) => {
+    if (!editText.trim()) return;
+    const token = localStorage.getItem('token');
+    try {
+      await axios.put(`https://updown-hms5.onrender.com/api/messages/${msgId}`, { text: editText }, { headers: { Authorization: `Bearer ${token}` } });
+      const convId = [user._id, userId].sort().join('_');
+      socketRef.current?.emit('edit message', { messageId: msgId, text: editText, conversationId: convId });
+      setEditingMsgId(null); setEditText('');
+    } catch (err) { alert(err.response?.data?.message || 'Edit failed'); }
+  };
+
+  const handleTyping = () => {
+    if (!socketRef.current) return;
+    const convId = [user._id, userId].sort().join('_');
+    socketRef.current.emit('typing', { conversationId: convId, senderName: user.username });
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => socketRef.current.emit('stop typing', { conversationId: convId }), 2000);
+  };
 
   const handleSend = (e) => {
     e.preventDefault();
@@ -446,10 +519,28 @@ const ChatRoomPage = () => {
     }
   };
 
-  const renderTick = (msg) => { /* unchanged */ };
-  const renderReactions = (msg) => { /* unchanged */ };
+  const renderTick = (msg) => {
+    if (msg.sender._id !== user._id) return null;
+    switch (msg.status) {
+      case 'sent': return <span className="text-xs opacity-60 ml-1">✔</span>;
+      case 'delivered': return <span className="text-xs opacity-80 ml-1">✔✔</span>;
+      case 'read': return <span className="text-xs ml-1" style={{ color: '#3b82f6' }}>✔✔</span>;
+      default: return <span className="text-xs opacity-60 ml-1">✔</span>;
+    }
+  };
+
+  const renderReactions = (msg) => {
+    if (!msg.reactions || Object.keys(msg.reactions).length === 0) return null;
+    return <div className="flex gap-1 mt-1">{Object.entries(msg.reactions).map(([emoji, ids]) => <span key={emoji} className="text-sm bg-gray-800 rounded-full px-1.5 py-0.5">{emoji} {ids.length > 1 && ids.length}</span>)}</div>;
+  };
+
   const formatRecTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
-  const getMediaType = (url) => { /* unchanged */ };
+  const getMediaType = (url) => {
+    if (/\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url)) return 'video';
+    if (/\.(mp3|wav|aac|m4a|flac)$/i.test(url)) return 'audio';
+    if (/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url)) return 'image';
+    return 'unknown';
+  };
 
   if (!chatUser) return <div className="h-screen bg-chat-bg flex items-center justify-center text-white">Loading...</div>;
 
