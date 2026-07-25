@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import axios from 'axios';
 import { FiSearch, FiBell, FiPlus, FiUsers, FiMessageSquare, FiChevronDown } from 'react-icons/fi';
-import SearchEngine from '../engines/SearchEngine';
 
 const formatLastMessageTime = (dateString) => {
   if (!dateString) return '';
@@ -287,7 +286,7 @@ const Homepage = () => {
         </Link>
         <Link
           to="/add-friends"
-          className="w-14 h-14 bg-accent text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all animate-pulse-ring"
+          className="w-14 h-14 bg-accent text-black rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all"
           title="Add Friends"
         >
           <FiPlus size={24} />
