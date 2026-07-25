@@ -6,6 +6,7 @@ import { FiEye, FiEyeOff, FiCheck, FiX, FiLoader } from 'react-icons/fi';
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login, signup } = useAuth();
 
   // Form states
@@ -19,7 +20,7 @@ const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState(null); // true/false/null
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
   const debounceRef = useRef(null);
 
   // Username availability checker
@@ -58,6 +59,7 @@ const LoginPage = () => {
         return;
       }
     }
+    setLoading(true);
     try {
       if (isLogin) {
         await login(email, password);
@@ -69,13 +71,28 @@ const LoginPage = () => {
       }
     } catch (err) {
       setMessage(err.response?.data?.message || 'Something went wrong');
+      // If error indicates not verified, offer resend option
+      if (err.response?.status === 401 && err.response?.data?.email) {
+        // Show a resend button? We'll just show message.
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) return alert('Please enter your email first');
+    try {
+      await axios.post('https://updown-hms5.onrender.com/api/auth/resend-verification', { email });
+      setMessage('Verification email resent. Please check your inbox.');
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Failed to resend verification email');
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-chat-bg p-4">
       <div className="w-full max-w-md bg-sidebar-bg rounded-2xl shadow-xl p-8">
-        {/* Header */}
         <h2 className="text-3xl font-bold text-white text-center mb-2">
           {isLogin ? 'Welcome Back' : 'Create Account'}
         </h2>
@@ -83,19 +100,26 @@ const LoginPage = () => {
           {isLogin ? 'Sign in to your account' : 'Fill in the details to get started'}
         </p>
 
-        {/* Message */}
         {message && (
           <div className={`p-3 rounded-lg mb-4 text-sm ${
-            message.includes('successful') || message.includes('verified')
+            message.toLowerCase().includes('successful') || message.toLowerCase().includes('sent') || message.toLowerCase().includes('resent')
               ? 'bg-green-600/20 text-green-400'
               : 'bg-red-600/20 text-red-400'
           }`}>
             {message}
+            {message.includes('Please verify') && (
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                className="ml-2 text-light-blue underline cursor-pointer"
+              >
+                Resend
+              </button>
+            )}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Full Name (Signup only) */}
           {!isLogin && (
             <div>
               <label className="block text-sm text-gray-400 mb-1">Full Name</label>
@@ -109,7 +133,6 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* Email */}
           <div>
             <label className="block text-sm text-gray-400 mb-1">Email</label>
             <input
@@ -122,7 +145,6 @@ const LoginPage = () => {
             />
           </div>
 
-          {/* Username (Signup only) */}
           {!isLogin && (
             <div>
               <label className="block text-sm text-gray-400 mb-1">
@@ -154,7 +176,6 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* Password */}
           <div>
             <label className="block text-sm text-gray-400 mb-1">Password</label>
             <div className="relative">
@@ -166,17 +187,12 @@ const LoginPage = () => {
                 className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue pr-10"
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-              >
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
                 {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
               </button>
             </div>
           </div>
 
-          {/* Confirm Password (Signup only) */}
           {!isLogin && (
             <div>
               <label className="block text-sm text-gray-400 mb-1">Confirm Password</label>
@@ -191,11 +207,7 @@ const LoginPage = () => {
                   } ${confirmPassword && password === confirmPassword ? 'ring-2 ring-green-500' : ''}`}
                   required
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                >
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
                   {showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}
                 </button>
               </div>
@@ -208,27 +220,19 @@ const LoginPage = () => {
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-light-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-full transition-colors duration-200"
+            disabled={loading}
+            className="w-full bg-light-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-full transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {isLogin ? 'Sign In' : 'Create Account'}
+            {loading && <FiLoader className="animate-spin" />}
+            {isLogin ? (loading ? 'Signing in...' : 'Sign In') : (loading ? 'Creating Account...' : 'Create Account')}
           </button>
         </form>
 
-        {/* Toggle */}
         <p className="text-gray-400 text-center mt-6">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setMessage('');
-              setUsernameAvailable(null);
-            }}
-            className="text-light-blue font-medium hover:underline"
-          >
+          <button type="button" onClick={() => { setIsLogin(!isLogin); setMessage(''); setUsernameAvailable(null); }} className="text-light-blue font-medium hover:underline">
             {isLogin ? 'Sign Up' : 'Sign In'}
           </button>
         </p>

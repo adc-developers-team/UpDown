@@ -14,51 +14,41 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Test email route (added for debugging)
-const sendTestEmail = async (req, res) => {
-  try {
-    await transporter.sendMail({
-      from: `"UpDown Test" <${process.env.EMAIL_USER}>`,
-      to: req.body.email,
-      subject: 'Test email from UpDown',
-      html: '<p>If you see this, email sending works!</p>',
-    });
-    res.json({ message: 'Test email sent' });
-  } catch (error) {
-    console.error('Test email error:', error);
-    res.status(500).json({ message: 'Failed to send test email: ' + error.message });
-  }
+// Helper function to send verification email
+const sendVerificationEmail = async (email, verifyToken) => {
+  const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
+  await transporter.sendMail({
+    from: `"UpDown Chat" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: 'Verify your email - UpDown',
+    html: `<h2>Welcome to UpDown!</h2><p>Click the link below to verify your email:</p><a href="${verificationUrl}">${verificationUrl}</a>`,
+  });
 };
 
 const signup = async (req, res) => {
   const { fullName, username, email, password } = req.body;
   try {
-    // Check if user exists (any status)
+    // Check if user already exists with this email or username
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       if (!existingUser.isVerified) {
-        // User exists but not verified - resend verification email
+        // User exists but not verified – resend verification email
         const verifyToken = crypto.randomBytes(32).toString('hex');
         existingUser.verifyToken = verifyToken;
         await existingUser.save();
-        const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
         try {
-          await transporter.sendMail({
-            from: `"UpDown Chat" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Verify your email - UpDown',
-            html: `<h2>Welcome back!</h2><p>Click the link below to verify your email:</p><a href="${verificationUrl}">${verificationUrl}</a>`,
-          });
-          return res.json({ message: 'Verification email resent. Please check your inbox.' });
+          await sendVerificationEmail(email, verifyToken);
+          return res.status(200).json({ message: 'A verification email has been sent to your email address. Please check your inbox.' });
         } catch (emailErr) {
           console.error('Resend email error:', emailErr);
-          return res.status(500).json({ message: 'Failed to send verification email. Please try again.' });
+          return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
         }
       }
+      // User exists and is verified
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // New user creation
+    // New user
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const verifyToken = crypto.randomBytes(32).toString('hex');
@@ -70,26 +60,36 @@ const signup = async (req, res) => {
       verifyToken,
       isVerified: false,
     });
-    const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
     try {
-      await transporter.sendMail({
-        from: `"UpDown Chat" <${process.env.EMAIL_USER}>`,
-        to: email,
-        subject: 'Verify your email - UpDown',
-        html: `<h2>Welcome to UpDown!</h2><p>Click the link below to verify your email:</p><a href="${verificationUrl}">${verificationUrl}</a>`,
-      });
-      res.status(201).json({ message: 'Registration successful! Please check your email to verify your account.' });
+      await sendVerificationEmail(email, verifyToken);
+      return res.status(201).json({ message: 'Registration successful! Please check your email to verify your account.' });
     } catch (emailErr) {
       console.error('Signup email error:', emailErr);
-      // User created but email not sent - still allow later verification
-      res.status(201).json({ message: 'Account created but verification email failed. We will resend shortly.' });
+      // User created but email not sent – still return success but with a warning
+      return res.status(201).json({ message: 'Account created, but verification email could not be sent. You can request a new verification email later.' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// verifyEmail, login (unchanged but included for completeness)
+// Resend verification email (separate endpoint for convenience)
+const resendVerification = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'No account found with that email' });
+    if (user.isVerified) return res.status(400).json({ message: 'Account is already verified' });
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    user.verifyToken = verifyToken;
+    await user.save();
+    await sendVerificationEmail(email, verifyToken);
+    res.json({ message: 'Verification email resent. Please check your inbox.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const verifyEmail = async (req, res) => {
   const { token } = req.query;
   try {
@@ -109,7 +109,10 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
-    if (!user.isVerified) return res.status(401).json({ message: 'Please verify your email before logging in.' });
+    if (!user.isVerified) {
+      // Option to resend verification automatically or just inform
+      return res.status(401).json({ message: 'Please verify your email before logging in.', email: user.email });
+    }
     if (await bcrypt.compare(password, user.password)) {
       res.json({
         _id: user._id,
@@ -127,4 +130,4 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, verifyEmail, sendTestEmail };
+module.exports = { signup, login, verifyEmail, resendVerification };
