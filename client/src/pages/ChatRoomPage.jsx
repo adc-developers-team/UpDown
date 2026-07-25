@@ -490,7 +490,7 @@ const ChatRoomPage = () => {
   };
 
   if (loading) return <div className="h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
-  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
+  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-primary px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
 
   const isOnline = onlineUsers.includes(chatUser._id);
   const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
@@ -508,7 +508,7 @@ const ChatRoomPage = () => {
   });
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white w-full pb-20">
+    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-20">
       {/* Call Overlay */}
       {(inCall || calling || incoming) && (
         <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">
@@ -520,8 +520,8 @@ const ChatRoomPage = () => {
               <h2 className="text-2xl font-bold">{chatUser.fullName || chatUser.username}</h2>
               <p className="text-text-secondary">{callType === 'video' ? 'Video call' : 'Voice call'}</p>
               <div className="flex gap-6 justify-center mt-4">
-                <button onClick={rejectIncomingCall} className="bg-danger text-white rounded-full p-5"><FiPhoneOff size={28} /></button>
-                <button onClick={acceptIncomingCall} className="bg-success text-white rounded-full p-5"><FiPhone size={28} /></button>
+                <button onClick={rejectIncomingCall} className="bg-danger text-primary rounded-full p-5"><FiPhoneOff size={28} /></button>
+                <button onClick={acceptIncomingCall} className="bg-success text-primary rounded-full p-5"><FiPhone size={28} /></button>
               </div>
             </div>
           )}
@@ -544,28 +544,28 @@ const ChatRoomPage = () => {
                   </div>
                 )}
               </div>
-              <div className="bg-gray-900/90 backdrop-blur px-6 py-5 flex items-center justify-center gap-6 rounded-t-3xl">
-                <button onClick={toggleMic} className={`p-4 rounded-full ${micMuted ? 'bg-danger text-white' : 'bg-gray-700'}`}>
+              <div className="bg-chat-bg/90 backdrop-blur px-6 py-5 flex items-center justify-center gap-6 rounded-t-3xl">
+                <button onClick={toggleMic} className={`p-4 rounded-full ${micMuted ? 'bg-danger text-primary' : 'bg-gray-700'}`}>
                   {micMuted ? <FiMicOff size={22} /> : <FiMic size={22} />}
                 </button>
                 {callType === 'video' && (
-                  <button onClick={toggleVideo} className={`p-4 rounded-full ${videoOff ? 'bg-danger text-white' : 'bg-gray-700'}`}>
+                  <button onClick={toggleVideo} className={`p-4 rounded-full ${videoOff ? 'bg-danger text-primary' : 'bg-gray-700'}`}>
                     {videoOff ? <FiVideoOff size={22} /> : <FiVideo size={22} />}
                   </button>
                 )}
                 <button onClick={toggleSpeaker} className={`p-4 rounded-full ${speakerOn ? 'bg-gray-700' : 'bg-primary'}`}>
                   <FiVolume2 size={22} />
                 </button>
-                <button onClick={endCall} className="p-4 rounded-full bg-danger text-white"><FiPhoneOff size={28} /></button>
+                <button onClick={endCall} className="p-4 rounded-full bg-danger text-primary"><FiPhoneOff size={28} /></button>
               </div>
             </div>
           )}
         </div>
       )}
 
-      {/* Header */}
-      <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-gray-700/50">
-        <Link to="/" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
+      {/* Header (Themed) */}
+      <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light/50">
+        <Link to="/" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
           {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-lg font-bold text-primary">{chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}</span>}
         </div>
@@ -590,7 +590,7 @@ const ChatRoomPage = () => {
 
       {/* Search Bar */}
       {searchOpen && (
-        <div className="bg-dark-blue px-4 py-2 flex items-center gap-2 border-b border-gray-700/50">
+        <div className="bg-dark-blue px-4 py-2 flex items-center gap-2 border-b border-border-light/50">
           <FiSearch size={16} className="text-text-muted" />
           <input
             type="text"
@@ -598,17 +598,17 @@ const ChatRoomPage = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-            className="flex-1 bg-transparent outline-none text-sm text-white"
+            className="flex-1 bg-transparent outline-none text-sm text-primary"
             autoFocus
           />
-          <button onClick={() => { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="text-text-muted hover:text-white"><FiX size={18} /></button>
+          <button onClick={() => { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="text-text-muted hover:text-primary"><FiX size={18} /></button>
         </div>
       )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}>
         {showScrollBtn && (
-          <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg z-10">↓</button>
+          <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-primary text-primary rounded-full flex items-center justify-center shadow-lg z-10">↓</button>
         )}
         {processedMessages.map((item) => {
           if (item.type === 'divider') {
@@ -693,7 +693,7 @@ const ChatRoomPage = () => {
             <span className="font-medium text-primary">{replyTo.sender?.fullName || replyTo.sender?.username || 'User'}</span>
             <span className="ml-1">{replyTo.text || 'Media'}</span>
           </div>
-          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white p-1">✕</button>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-primary p-1">✕</button>
         </div>
       )}
 
@@ -716,7 +716,7 @@ const ChatRoomPage = () => {
             value={newMsg}
             onChange={(e) => setNewMsg(e.target.value)}
             placeholder={isBlocked ? "You blocked this user" : "Message"}
-            className="flex-1 bg-transparent outline-none text-[14px] text-white placeholder-text-muted"
+            className="flex-1 bg-transparent outline-none text-[14px] text-primary placeholder-text-muted"
             disabled={isBlocked}
           />
           <button type="button" onClick={() => setReactionPicker('composer')} className="text-gray-400 hover:text-primary p-1">

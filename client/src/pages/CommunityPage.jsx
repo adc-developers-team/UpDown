@@ -70,8 +70,8 @@ const CommunityPage = () => {
   if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white pb-16">
-      <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
+    <div className="min-h-screen bg-chat-bg text-primary pb-16">
+      <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20">
         <h2 className="text-xl font-bold"><span className="text-primary">UpDown</span> Community</h2>
       </header>
 
@@ -82,12 +82,12 @@ const CommunityPage = () => {
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="What's on your mind?"
-            className="w-full bg-transparent outline-none text-sm text-white placeholder-text-muted resize-none"
+            className="w-full bg-transparent outline-none text-sm text-primary placeholder-text-muted resize-none"
             rows={3}
           />
           <div className="flex items-center justify-between">
             <button type="button" className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><FiImage size={20} className="text-text-secondary" /></button>
-            <button type="submit" disabled={!newPost.trim()} className="bg-primary text-white px-5 py-2 rounded-full text-sm font-semibold disabled:opacity-50">Post</button>
+            <button type="submit" disabled={!newPost.trim()} className="bg-primary text-primary px-5 py-2 rounded-full text-sm font-semibold disabled:opacity-50">Post</button>
           </div>
         </form>
 
@@ -101,7 +101,7 @@ const CommunityPage = () => {
           ) : (
             posts.map(post => (
               <div key={post._id} className="bg-surface rounded-2xl border border-border-light shadow-1 overflow-hidden">
-                {/* Post Header */}
+                {/* Post Header (Themed) */}
                 <div className="flex items-center gap-3 p-4 pb-2">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                     {post.author?.profilePic ? <img src={post.author.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-lg font-bold text-primary">{post.author?.fullName?.[0] || post.author?.username?.[0]?.toUpperCase()}</span>}

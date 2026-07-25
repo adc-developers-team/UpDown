@@ -78,14 +78,14 @@ const GroupChatPage = () => {
     }
   };
 
-  if (!group) return <div className="h-screen bg-chat-bg flex items-center justify-center text-white">Loading...</div>;
+  if (!group) return <div className="h-screen bg-chat-bg flex items-center justify-center text-primary">Loading...</div>;
 
   const members = Array.isArray(group.members) ? group.members : [];
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white pb-20">
-      <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
-        <Link to="/" className="text-white hover:text-primary"><FiArrowLeft size={22} /></Link>
+    <div className="h-screen flex flex-col bg-chat-bg text-primary pb-20">
+      <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light">
+        <Link to="/" className="text-primary hover:text-primary"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
           <span className="text-lg font-bold text-primary">{group.name[0].toUpperCase()}</span>
         </div>
@@ -113,10 +113,10 @@ const GroupChatPage = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSend} className="p-3 bg-sidebar-bg border-t border-gray-700 flex items-center gap-3">
-        <button type="button" onClick={() => setIsImageMode(!isImageMode)} className={`w-10 h-10 rounded-full flex items-center justify-center ${isImageMode ? 'bg-primary text-white' : 'bg-gray-700 text-gray-400'}`}><FiImage size={20} /></button>
-        <div className="flex-1 flex items-center bg-bg-input rounded-full h-11 px-4 border border-gray-700 focus-within:border-primary transition">
-          <input type="text" value={newMsg} onChange={e => { setNewMsg(e.target.value); handleTyping(); }} placeholder="Message" className="flex-1 bg-transparent outline-none text-sm text-white placeholder-text-muted" />
+      <form onSubmit={handleSend} className="p-3 bg-sidebar-bg border-t border-border-light flex items-center gap-3">
+        <button type="button" onClick={() => setIsImageMode(!isImageMode)} className={`w-10 h-10 rounded-full flex items-center justify-center ${isImageMode ? 'bg-primary text-primary' : 'bg-gray-700 text-gray-400'}`}><FiImage size={20} /></button>
+        <div className="flex-1 flex items-center bg-bg-input rounded-full h-11 px-4 border border-border-light focus-within:border-primary transition">
+          <input type="text" value={newMsg} onChange={e => { setNewMsg(e.target.value); handleTyping(); }} placeholder="Message" className="flex-1 bg-transparent outline-none text-sm text-primary placeholder-text-muted" />
         </div>
         {newMsg.trim() ? (
           <button type="submit" className="text-primary p-1"><FiSend size={22} /></button>

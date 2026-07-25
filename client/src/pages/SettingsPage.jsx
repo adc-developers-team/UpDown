@@ -123,9 +123,9 @@ const SettingsPage = () => {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white pb-20">
-      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
-        <Link to="/profile" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
+    <div className="min-h-screen bg-chat-bg text-primary pb-20">
+      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20">
+        <Link to="/profile" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Settings</h2>
       </header>
 
@@ -163,7 +163,7 @@ const SettingsPage = () => {
 
         {/* Install PWA */}
         {isInstallable && (
-          <button onClick={installApp} className="w-full flex items-center gap-4 bg-primary text-white font-semibold p-4 rounded-2xl hover:bg-primary-dark transition-all shadow-2">
+          <button onClick={installApp} className="w-full flex items-center gap-4 bg-primary text-primary font-semibold p-4 rounded-2xl hover:bg-primary-dark transition-all shadow-2">
             <FiDownload size={20} /> Install UpDown App
           </button>
         )}
@@ -255,7 +255,7 @@ const SettingsPage = () => {
             <p className="text-sm text-text-secondary text-center">This action is permanent. All your messages, friends, and data will be lost forever.</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirm(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">Cancel</button>
-              <button onClick={handleDeleteAccount} className="flex-1 py-2 bg-danger text-white rounded-full text-sm font-semibold">Delete Forever</button>
+              <button onClick={handleDeleteAccount} className="flex-1 py-2 bg-danger text-primary rounded-full text-sm font-semibold">Delete Forever</button>
             </div>
           </div>
         </div>

@@ -74,11 +74,11 @@ const CreateGroupPage = () => {
   const selectedFriends = friends.filter(f => selected.includes(f._id));
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white pb-20">
-      {/* Header */}
-      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
+    <div className="min-h-screen bg-chat-bg text-primary pb-20">
+      {/* Header (Themed) */}
+      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20">
         {step < 4 ? (
-          <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/')} className="text-white hover:text-primary p-1">
+          <button onClick={() => step > 1 ? setStep(step - 1) : navigate('/')} className="text-primary hover:text-primary p-1">
             <FiArrowLeft size={22} />
           </button>
         ) : (
@@ -125,7 +125,7 @@ const CreateGroupPage = () => {
                 placeholder="Enter group name"
                 value={groupName}
                 onChange={e => setGroupName(e.target.value.slice(0, MAX_NAME))}
-                className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-gray-700 focus:border-primary transition"
+                className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary transition"
               />
             </div>
 
@@ -138,7 +138,7 @@ const CreateGroupPage = () => {
                 value={groupDesc}
                 onChange={e => setGroupDesc(e.target.value.slice(0, MAX_DESC))}
                 rows={3}
-                className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-gray-700 focus:border-primary transition resize-none"
+                className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary transition resize-none"
               />
             </div>
 
@@ -147,7 +147,7 @@ const CreateGroupPage = () => {
               <div className="space-y-2">
                 <button
                   onClick={() => setPrivacy('private')}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'private' ? 'border-primary bg-primary/5' : 'border-gray-700 hover:border-gray-600'}`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'private' ? 'border-primary bg-primary/5' : 'border-border-light hover:border-gray-600'}`}
                 >
                   <FiLock size={18} className={privacy === 'private' ? 'text-primary' : 'text-text-muted'} />
                   <div className="text-left">
@@ -158,7 +158,7 @@ const CreateGroupPage = () => {
                 </button>
                 <button
                   onClick={() => setPrivacy('public')}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'public' ? 'border-primary bg-primary/5' : 'border-gray-700 hover:border-gray-600'}`}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl border transition ${privacy === 'public' ? 'border-primary bg-primary/5' : 'border-border-light hover:border-gray-600'}`}
                 >
                   <FiGlobe size={18} className={privacy === 'public' ? 'text-primary' : 'text-text-muted'} />
                   <div className="text-left">
@@ -173,7 +173,7 @@ const CreateGroupPage = () => {
             <button
               onClick={() => setStep(2)}
               disabled={!groupName.trim()}
-              className={`w-full py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${groupName.trim() ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-gray-700 text-text-muted cursor-not-allowed'}`}
+              className={`w-full py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${groupName.trim() ? 'bg-primary text-primary hover:bg-primary-dark' : 'bg-gray-700 text-text-muted cursor-not-allowed'}`}
             >
               Next <FiChevronRight size={18} />
             </button>
@@ -183,14 +183,14 @@ const CreateGroupPage = () => {
         {/* Step 2: Add Members */}
         {step === 2 && (
           <div className="space-y-4 animate-fade-in">
-            <div className="bg-bg-input rounded-xl px-3 py-2 border border-gray-700 flex items-center gap-2">
+            <div className="bg-bg-input rounded-xl px-3 py-2 border border-border-light flex items-center gap-2">
               <FiSearch size={16} className="text-text-muted" />
               <input
                 type="text"
                 placeholder="Search friends..."
                 value={searchMember}
                 onChange={e => setSearchMember(e.target.value)}
-                className="w-full bg-transparent outline-none text-sm text-white placeholder-text-muted"
+                className="w-full bg-transparent outline-none text-sm text-primary placeholder-text-muted"
               />
             </div>
 
@@ -223,7 +223,7 @@ const CreateGroupPage = () => {
                       <p className="text-sm font-medium truncate">{f.fullName || f.username}</p>
                     </div>
                     <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition ${selected.includes(f._id) ? 'bg-primary border-primary' : 'border-gray-500'}`}>
-                      {selected.includes(f._id) && <FiCheck size={12} className="text-white" />}
+                      {selected.includes(f._id) && <FiCheck size={12} className="text-primary" />}
                     </div>
                   </button>
                 ))
@@ -231,13 +231,13 @@ const CreateGroupPage = () => {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-full font-semibold border border-gray-700 hover:bg-gray-800 transition flex items-center justify-center gap-2">
+              <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-gray-800 transition flex items-center justify-center gap-2">
                 <FiChevronLeft size={18} /> Back
               </button>
               <button
                 onClick={() => setStep(3)}
                 disabled={selected.length === 0}
-                className={`flex-1 py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${selected.length > 0 ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-gray-700 text-text-muted cursor-not-allowed'}`}
+                className={`flex-1 py-3 rounded-full font-semibold transition flex items-center justify-center gap-2 ${selected.length > 0 ? 'bg-primary text-primary hover:bg-primary-dark' : 'bg-gray-700 text-text-muted cursor-not-allowed'}`}
               >
                 Next <FiChevronRight size={18} />
               </button>
@@ -253,7 +253,7 @@ const CreateGroupPage = () => {
 
               <div>
                 <label className="text-xs text-text-secondary mb-1 block">Who can send messages?</label>
-                <select value={whoCanSend} onChange={e => setWhoCanSend(e.target.value)} className="w-full bg-bg-input rounded-lg px-3 py-2 outline-none text-sm border border-gray-700">
+                <select value={whoCanSend} onChange={e => setWhoCanSend(e.target.value)} className="w-full bg-bg-input rounded-lg px-3 py-2 outline-none text-sm border border-border-light">
                   <option value="everyone">Everyone</option>
                   <option value="admins">Admins Only</option>
                 </select>
@@ -261,7 +261,7 @@ const CreateGroupPage = () => {
 
               <div>
                 <label className="text-xs text-text-secondary mb-1 block">Who can edit group info?</label>
-                <select value={whoCanEdit} onChange={e => setWhoCanEdit(e.target.value)} className="w-full bg-bg-input rounded-lg px-3 py-2 outline-none text-sm border border-gray-700">
+                <select value={whoCanEdit} onChange={e => setWhoCanEdit(e.target.value)} className="w-full bg-bg-input rounded-lg px-3 py-2 outline-none text-sm border border-border-light">
                   <option value="admins">Admins</option>
                   <option value="everyone">Everyone</option>
                 </select>
@@ -283,13 +283,13 @@ const CreateGroupPage = () => {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(2)} className="flex-1 py-3 rounded-full font-semibold border border-gray-700 hover:bg-gray-800 transition flex items-center justify-center gap-2">
+              <button onClick={() => setStep(2)} className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-gray-800 transition flex items-center justify-center gap-2">
                 <FiChevronLeft size={18} /> Back
               </button>
               <button
                 onClick={handleCreate}
                 disabled={creating}
-                className="flex-1 py-3 rounded-full font-semibold bg-primary text-white hover:bg-primary-dark transition flex items-center justify-center gap-2 disabled:opacity-50"
+                className="flex-1 py-3 rounded-full font-semibold bg-primary text-primary hover:bg-primary-dark transition flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {creating ? 'Creating...' : 'Create Group'}
               </button>
@@ -310,13 +310,13 @@ const CreateGroupPage = () => {
             <div className="flex gap-3 w-full max-w-xs">
               <button
                 onClick={() => { navigator.clipboard.writeText(`https://updown-app.onrender.com/group-chat/${createdGroupId}`); alert('Invite link copied!'); }}
-                className="flex-1 py-3 rounded-full font-semibold border border-gray-700 hover:bg-gray-800 transition flex items-center justify-center gap-2"
+                className="flex-1 py-3 rounded-full font-semibold border border-border-light hover:bg-gray-800 transition flex items-center justify-center gap-2"
               >
                 <FiCopy size={16} /> Copy Link
               </button>
               <button
                 onClick={() => navigate(`/group-chat/${createdGroupId}`)}
-                className="flex-1 py-3 rounded-full font-semibold bg-primary text-white hover:bg-primary-dark transition"
+                className="flex-1 py-3 rounded-full font-semibold bg-primary text-primary hover:bg-primary-dark transition"
               >
                 Open Group
               </button>

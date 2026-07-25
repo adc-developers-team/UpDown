@@ -45,10 +45,10 @@ const NotificationsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex flex-col pb-20">
-      {/* Header */}
-      <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700 sticky top-0 z-20">
-        <Link to="/" className="text-white hover:text-accent p-1">
+    <div className="min-h-screen bg-chat-bg text-primary flex flex-col pb-20">
+      {/* Header (Themed) */}
+      <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light sticky top-0 z-20">
+        <Link to="/" className="text-primary hover:text-accent p-1">
           <FiArrowLeft size={22} />
         </Link>
         <h2 className="font-semibold text-lg">Notifications</h2>
@@ -78,7 +78,7 @@ const NotificationsPage = () => {
             <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mb-4">
               <FiBell size={36} className="text-accent/60" />
             </div>
-            <p className="text-lg font-semibold text-white mb-1">No notifications</p>
+            <p className="text-lg font-semibold text-primary mb-1">No notifications</p>
             <p className="text-sm text-center">You're all caught up!</p>
           </div>
         ) : (
@@ -91,7 +91,7 @@ const NotificationsPage = () => {
                 <div
                   key={request._id}
                   className={`flex items-center gap-4 bg-sidebar-bg p-4 rounded-2xl border transition-all ${
-                    isConfirmingThis ? 'border-accent ring-1 ring-accent' : 'border-gray-700 hover:border-gray-600'
+                    isConfirmingThis ? 'border-accent ring-1 ring-accent' : 'border-border-light hover:border-gray-600'
                   }`}
                 >
                   <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0 overflow-hidden">

@@ -22,7 +22,7 @@ const VerifyEmailPage = () => {
       <div className="text-center">
         <p className="text-xl mb-4">{status}</p>
         {status === 'Email verified successfully! You can now login.' && (
-          <Link to="/login" className="text-light-blue underline">Go to Login</Link>
+          <Link to="/login" className="text-primary underline">Go to Login</Link>
         )}
       </div>
     </div>

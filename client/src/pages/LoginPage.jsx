@@ -61,16 +61,16 @@ const LoginPage = () => {
         <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
             <div><label className="block text-sm text-gray-400 mb-1">Full Name</label>
-              <input type="text" placeholder="John Doe" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue" />
+              <input type="text" placeholder="John Doe" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary" />
             </div>
           )}
           <div><label className="block text-sm text-gray-400 mb-1">Email</label>
-            <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue" required />
+            <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary" required />
           </div>
           {!isLogin && (
             <div><label className="block text-sm text-gray-400 mb-1">Username <span className="text-gray-500 text-xs">(helps friends find you)</span></label>
               <div className="relative">
-                <input type="text" placeholder="john_doe" value={username} onChange={e => setUsername(e.target.value)} className={`w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue pr-10 ${usernameAvailable === false && username.length > 0 ? 'ring-2 ring-red-500' : ''} ${usernameAvailable === true ? 'ring-2 ring-green-500' : ''}`} required />
+                <input type="text" placeholder="john_doe" value={username} onChange={e => setUsername(e.target.value)} className={`w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary pr-10 ${usernameAvailable === false && username.length > 0 ? 'ring-2 ring-red-500' : ''} ${usernameAvailable === true ? 'ring-2 ring-green-500' : ''}`} required />
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {checkingUsername && <FiLoader className="animate-spin text-gray-400" />}
                   {!checkingUsername && usernameAvailable === true && <FiCheck className="text-green-400" />}
@@ -83,28 +83,28 @@ const LoginPage = () => {
           )}
           <div><label className="block text-sm text-gray-400 mb-1">Password</label>
             <div className="relative">
-              <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue pr-10" required />
+              <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary pr-10" required />
               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">{showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
             </div>
           </div>
           {!isLogin && (
             <div><label className="block text-sm text-gray-400 mb-1">Confirm Password</label>
               <div className="relative">
-                <input type={showConfirm ? 'text' : 'password'} placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-light-blue pr-10 ${confirmPassword && password !== confirmPassword ? 'ring-2 ring-red-500' : ''} ${confirmPassword && password === confirmPassword ? 'ring-2 ring-green-500' : ''}`} required />
+                <input type={showConfirm ? 'text' : 'password'} placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`w-full bg-gray-800 text-white rounded-lg px-4 py-3 outline-none focus:ring-2 ring-primary pr-10 ${confirmPassword && password !== confirmPassword ? 'ring-2 ring-red-500' : ''} ${confirmPassword && password === confirmPassword ? 'ring-2 ring-green-500' : ''}`} required />
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">{showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
               </div>
               {confirmPassword && password !== confirmPassword && <p className="text-red-400 text-xs mt-1">Passwords do not match</p>}
               {confirmPassword && password === confirmPassword && <p className="text-green-400 text-xs mt-1">Passwords match</p>}
             </div>
           )}
-          <button type="submit" disabled={loading} className="w-full bg-light-blue hover:bg-blue-600 text-white font-semibold py-3 rounded-full transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2">
+          <button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary-dark text-white font-semibold py-3 rounded-full transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <FiLoader className="animate-spin" />}
             {isLogin ? (loading ? 'Signing in...' : 'Sign In') : (loading ? 'Creating Account...' : 'Create Account')}
           </button>
         </form>
         <p className="text-gray-400 text-center mt-6">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => { setIsLogin(!isLogin); setMessage(''); setUsernameAvailable(null); }} className="text-light-blue font-medium hover:underline">
+          <button type="button" onClick={() => { setIsLogin(!isLogin); setMessage(''); setUsernameAvailable(null); }} className="text-primary font-medium hover:underline">
             {isLogin ? 'Sign Up' : 'Sign In'}
           </button>
         </p>

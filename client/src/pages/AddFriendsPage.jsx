@@ -119,23 +119,23 @@ const AddFriendsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex flex-col pb-16">
-      {/* Header */}
-      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
-        <Link to="/" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
+    <div className="min-h-screen bg-chat-bg text-primary flex flex-col pb-16">
+      {/* Header (Themed) */}
+      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20">
+        <Link to="/" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Add Friends</h2>
       </header>
 
       {/* Search Bar */}
       <div className="px-4 py-3 bg-sidebar-bg">
-        <form onSubmit={handleSearch} className="flex items-center bg-bg-input rounded-full h-12 px-4 border border-gray-700/50 focus-within:border-primary focus-within:shadow-md transition">
+        <form onSubmit={handleSearch} className="flex items-center bg-bg-input rounded-full h-12 px-4 border border-border-light/50 focus-within:border-primary focus-within:shadow-md transition">
           <FiSearch className="text-text-muted flex-shrink-0" size={18} />
           <input
             type="text"
             placeholder="Search by name, username or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="ml-3 bg-transparent outline-none flex-1 text-sm text-white placeholder-text-muted"
+            className="ml-3 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
           />
           {search && (
             <button type="button" onClick={() => setSearch('')} className="p-1 hover:bg-gray-700 rounded-full"><FiX size={16} className="text-text-muted" /></button>
@@ -144,9 +144,9 @@ const AddFriendsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-sidebar-bg border-b border-gray-700/50 overflow-x-auto">
+      <div className="flex bg-sidebar-bg border-b border-border-light/50 overflow-x-auto">
         {['all', 'requests', 'sent', 'suggested'].map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`px-4 py-3 text-sm font-medium capitalize whitespace-nowrap border-b-2 transition-colors ${tab === t ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-white'}`}>
+          <button key={t} onClick={() => setTab(t)} className={`px-4 py-3 text-sm font-medium capitalize whitespace-nowrap border-b-2 transition-colors ${tab === t ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-primary'}`}>
             {t === 'all' ? 'Search' : t === 'requests' ? `Requests (${receivedRequests.length})` : t === 'sent' ? `Sent (${sentRequests.length})` : 'Suggested'}
           </button>
         ))}
@@ -172,7 +172,7 @@ const AddFriendsPage = () => {
               <div className="space-y-2">
                 <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Recent Searches</p>
                 {recentSearches.map((term, i) => (
-                  <button key={i} onClick={() => { setSearch(term); addRecentSearch(term); }} className="flex items-center gap-2 text-sm text-text-secondary hover:text-white transition w-full">
+                  <button key={i} onClick={() => { setSearch(term); addRecentSearch(term); }} className="flex items-center gap-2 text-sm text-text-secondary hover:text-primary transition w-full">
                     <FiClock size={14} /> {term}
                   </button>
                 ))}
@@ -252,7 +252,7 @@ const UserCard = ({ user: u, status, onAdd, onAccept, onDecline, onCancel }) => 
         </div>
       )}
       {status === 'none' && (
-        <button onClick={onAdd} className="flex items-center gap-1 px-3 py-1.5 bg-primary text-white rounded-full text-xs font-medium hover:bg-primary-dark transition"><FiUserPlus size={14} /> Add</button>
+        <button onClick={onAdd} className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary rounded-full text-xs font-medium hover:bg-primary-dark transition"><FiUserPlus size={14} /> Add</button>
       )}
     </div>
   </div>
