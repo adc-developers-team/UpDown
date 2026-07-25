@@ -147,7 +147,7 @@ const SettingsPage = () => {
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${dark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-indigo-400/10 text-indigo-400'}`}>
               {dark ? <FiMoon size={20} /> : <FiSun size={20} />}
             </div>
-            <div><h3 className="font-medium">Appearance</h3><p className="text-sm text-text-secondary">{dark ? 'Dark' : 'Light'}</p></div>
+            <div><h3 className="font-medium">Appearance</h3><p className="text-sm text-text-secondary">{dark ? 'Dark Mode' : 'Light Mode'}</p></div>
           </div>
           <button onClick={toggleTheme} className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${dark ? 'bg-primary' : 'bg-gray-300'}`}>
             <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm transform transition-transform ${dark ? 'translate-x-6' : 'translate-x-1'}`}>
