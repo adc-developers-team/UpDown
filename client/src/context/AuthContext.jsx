@@ -9,6 +9,40 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [loading, setLoading] = useState(true);
 
+  // Axios interceptor for auto token refresh
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          try {
+            const refreshToken = localStorage.getItem('token');
+            if (!refreshToken) throw new Error('No token');
+            const res = await axios.post('https://updown-hms5.onrender.com/api/auth/refresh', {
+              token: refreshToken,
+            });
+            const newToken = res.data.token;
+            localStorage.setItem('token', newToken);
+            setToken(newToken);
+            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+            return axios(originalRequest);
+          } catch (refreshError) {
+            setUser(null);
+            setToken('');
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
+
   useEffect(() => {
     if (token) {
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
@@ -23,15 +57,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedUser = localStorage.getItem('user');
       if (storedUser && token) {
-        const parsed = JSON.parse(storedUser);
-        if (parsed && parsed._id) {
-          setUser(parsed);
-        } else {
-          throw new Error('Invalid user data');
-        }
+        setUser(JSON.parse(storedUser));
       }
     } catch (err) {
-      console.error('Failed to parse stored user:', err);
       localStorage.removeItem('user');
       setToken('');
     } finally {
