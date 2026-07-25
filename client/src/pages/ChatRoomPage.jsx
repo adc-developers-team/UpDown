@@ -563,7 +563,7 @@ const ChatRoomPage = () => {
         </div>
       )}
 
-      {/* Header (Themed) */}
+      {/* Header (Themed) (Themed) */}
       <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light/50">
         <Link to="/" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
