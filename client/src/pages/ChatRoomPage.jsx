@@ -7,7 +7,7 @@ import {
   FiArrowLeft, FiSend, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiMoreVertical,
   FiSlash, FiCheckCircle, FiUserX, FiTrash, FiCornerUpLeft, FiEdit,
-  FiPhone, FiPhoneOff, FiMicOff, FiVideoOff, FiVolume2
+  FiPhone, FiPhoneOff, FiMicOff, FiVideoOff, FiVolume2, FiSearch
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 import AudioPlayer from '../engines/AudioPlayer';
@@ -36,6 +36,15 @@ const formatMsgTime = (d) => {
   if (diffDay === 1) return 'Yesterday';
   if (diffDay < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
   return date.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+};
+
+const formatDateDivider = (d) => {
+  const now = new Date();
+  const date = new Date(d);
+  if (now.toDateString() === date.toDateString()) return 'Today';
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+  if (yesterday.toDateString() === date.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 };
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
@@ -107,6 +116,13 @@ const ChatRoomPage = () => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteMenuPos, setDeleteMenuPos] = useState({ x: 0, y: 0 });
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchIndex, setSearchIndex] = useState(0);
+  const [forwardMsg, setForwardMsg] = useState(null);
+
   const socketRef = useRef(null);
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
@@ -444,11 +460,52 @@ const ChatRoomPage = () => {
     if (newMsg.trim()) { sendMessage(newMsg, replyTo?._id); setNewMsg(''); setReplyTo(null); }
   };
 
+  const renderTick = (msg) => {
+    if (msg.sender?._id !== user._id) return null;
+    switch (msg.status) {
+      case 'sent': return <span className="text-[10px] opacity-60 ml-0.5">✔</span>;
+      case 'delivered': return <span className="text-[10px] opacity-80 ml-0.5">✔✔</span>;
+      case 'read': return <span className="text-[10px] text-primary ml-0.5">✔✔</span>;
+      default: return <span className="text-[10px] opacity-40 ml-0.5">🕒</span>;
+    }
+  };
+
+  const renderReactions = (msg) => {
+    if (!msg.reactions || Object.keys(msg.reactions).length === 0) return null;
+    return (
+      <div className="flex gap-1 mt-1 flex-wrap">
+        {Object.entries(msg.reactions).map(([emoji, ids]) => (
+          <span key={emoji} className="text-xs bg-black/20 rounded-full px-1.5 py-0.5">{emoji} {ids.length > 1 && <span className="text-[10px]">{ids.length}</span>}</span>
+        ))}
+      </div>
+    );
+  };
+
+  const formatRecTime = (s) => `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+  const getMediaType = (url) => {
+    if (/\.(mp4|webm|ogg|mov|avi|mkv)$/i.test(url)) return 'video';
+    if (/\.(mp3|wav|aac|m4a|flac)$/i.test(url)) return 'audio';
+    if (/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(url)) return 'image';
+    return 'unknown';
+  };
+
   if (loading) return <div className="h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
   if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
 
   const isOnline = onlineUsers.includes(chatUser._id);
   const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
+
+  // Group messages by date for dividers
+  let currentDate = null;
+  const processedMessages = [];
+  messages.forEach((msg, i) => {
+    const msgDate = new Date(msg.createdAt).toDateString();
+    if (msgDate !== currentDate) {
+      currentDate = msgDate;
+      processedMessages.push({ type: 'divider', date: msg.createdAt, key: `div-${i}` });
+    }
+    processedMessages.push({ type: 'message', ...msg, key: msg._id || i });
+  });
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white w-full">
@@ -518,6 +575,7 @@ const ChatRoomPage = () => {
         </div>
         <button onClick={() => startCall('audio')} className="p-2 hover:bg-gray-700 rounded-full"><FiPhone size={18} /></button>
         <button onClick={() => startCall('video')} className="p-2 hover:bg-gray-700 rounded-full"><FiVideo size={18} /></button>
+        <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:bg-gray-700 rounded-full"><FiSearch size={18} /></button>
         <div className="relative">
           <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="p-2 hover:bg-gray-700 rounded-full"><FiMoreVertical size={18} /></button>
           {showMoreMenu && (
@@ -530,7 +588,149 @@ const ChatRoomPage = () => {
         </div>
       </header>
 
-      {/* Rest of the component (messages, input) unchanged, use same as last working version */}
+      {/* Search Bar */}
+      {searchOpen && (
+        <div className="bg-dark-blue px-4 py-2 flex items-center gap-2 border-b border-gray-700/50">
+          <FiSearch size={16} className="text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search messages..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            className="flex-1 bg-transparent outline-none text-sm text-white"
+            autoFocus
+          />
+          <button onClick={() => { setSearchOpen(false); setSearchQuery(''); setSearchResults([]); }} className="text-text-muted hover:text-white"><FiX size={18} /></button>
+        </div>
+      )}
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-3" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"60\" height=\"60\" viewBox=\"0 0 60 60\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%23ffffff\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')" }}>
+        {showScrollBtn && (
+          <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center shadow-lg z-10">↓</button>
+        )}
+        {processedMessages.map((item) => {
+          if (item.type === 'divider') {
+            return (
+              <div key={item.key} className="flex items-center justify-center py-2">
+                <span className="text-[11px] text-text-muted bg-sidebar-bg px-3 py-0.5 rounded-full">{formatDateDivider(item.date)}</span>
+              </div>
+            );
+          }
+          const msg = item;
+          const isMine = msg.sender?._id === user._id;
+          const mediaType = msg.mediaType || (msg.image ? (msg.image.match(/\.(mp4|webm|ogg)$/) ? 'video' : 'image') : 'text');
+          const hasQuoted = msg.replyTo;
+          const isForwarded = msg.forwarded;
+          return (
+            <div key={msg._id || msg.key} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+              <div
+                className={`px-4 py-2.5 rounded-2xl max-w-[80%] sm:max-w-[70%] cursor-pointer select-none ${isMine ? 'message-sent rounded-br-md' : 'message-received rounded-bl-md'} relative group`}
+                onClick={(e) => handleMessageClick(e, msg)}
+                onTouchStart={(e) => handleTouchStart(e, msg)}
+                onTouchEnd={handleTouchEnd}
+                onMouseDown={(e) => handleMouseDown(e, msg)}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {/* Reply preview */}
+                {hasQuoted && (
+                  <div className={`text-xs p-1.5 rounded mb-1 opacity-80 ${isMine ? 'bg-black/20' : 'bg-gray-200 dark:bg-gray-600'}`}>
+                    <span className="font-medium text-primary">{hasQuoted.sender?.fullName || hasQuoted.sender?.username || 'User'}</span>
+                    <p className="truncate">{hasQuoted.text || (hasQuoted.image ? '📷 Media' : '')}</p>
+                  </div>
+                )}
+                {/* Forward label */}
+                {isForwarded && <p className="text-[10px] text-text-muted mb-1">Forwarded</p>}
+
+                {/* Media */}
+                {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
+                {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
+                {mediaType === 'audio' && <AudioPlayer src={msg.image} />}
+
+                {/* Text */}
+                {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
+                {msg.text && msg.updatedAt && msg.createdAt !== msg.updatedAt && new Date(msg.createdAt).getTime() !== new Date(msg.updatedAt).getTime() && <span className="text-[10px] text-text-muted ml-1">(edited)</span>}
+
+                {/* Reactions */}
+                {renderReactions(msg)}
+
+                {/* Time + Ticks */}
+                <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                  <span className="text-[11px] opacity-70 font-medium">{formatMsgTime(msg.createdAt)}</span>
+                  {renderTick(msg)}
+                </div>
+
+                {/* Reaction Picker */}
+                {reactionPicker === msg._id && (
+                  <div className="absolute -top-14 left-0 bg-surface rounded-full px-2 py-1.5 flex gap-1.5 shadow-2 z-50" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
+                    {QUICK_EMOJIS.map(e => (
+                      <button key={e} onClick={() => reactToMsg(e)} className="hover:scale-125 transition-transform text-lg">{e}</button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Long press delete menu (positioned) */}
+                {deleteTarget === msg._id && (
+                  <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-surface rounded-xl shadow-3 border border-border-light py-1 z-50 w-40 text-sm">
+                    <button onClick={() => deleteForMe(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left"><FiUserX size={14} /> Delete for me</button>
+                    {isMine && <button onClick={() => deleteForEveryone(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left text-danger"><FiTrash size={14} /> Delete for everyone</button>}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Reply bar */}
+      {replyTo && (
+        <div className="bg-sidebar-bg px-4 py-2 flex items-center gap-3 border-t border-border-light">
+          <FiCornerUpLeft size={16} className="text-primary" />
+          <div className="flex-1 text-xs text-text-secondary truncate">
+            <span className="font-medium text-primary">{replyTo.sender?.fullName || replyTo.sender?.username || 'User'}</span>
+            <span className="ml-1">{replyTo.text || 'Media'}</span>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white p-1">✕</button>
+        </div>
+      )}
+
+      {/* Composer */}
+      <form onSubmit={handleSend} className="px-3 py-3 bg-sidebar-bg border-t border-border-light flex items-center gap-3">
+        <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageSelect} className="hidden" />
+        <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSelect} className="hidden" />
+        <button type="button" onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-400 hover:text-primary p-1.5 relative">
+          <FiPlusCircle size={24} />
+          {showAttachMenu && (
+            <div className="absolute bottom-full left-0 mb-2 bg-surface rounded-xl shadow-2 border border-border-light p-2 flex flex-col gap-1 z-20 text-sm">
+              <button onClick={() => { imageInputRef.current?.click(); setShowAttachMenu(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50"><FiImage size={16} /> Image</button>
+              <button onClick={() => { videoInputRef.current?.click(); setShowAttachMenu(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-gray-50"><FiVideo size={16} /> Video</button>
+            </div>
+          )}
+        </button>
+        <div className="flex-1 flex items-center bg-bg-input rounded-full h-12 px-5 border border-border-light focus-within:border-primary focus-within:shadow-sm transition">
+          <input
+            type="text"
+            value={newMsg}
+            onChange={(e) => setNewMsg(e.target.value)}
+            placeholder={isBlocked ? "You blocked this user" : "Message"}
+            className="flex-1 bg-transparent outline-none text-[14px] text-white placeholder-text-muted"
+            disabled={isBlocked}
+          />
+          <button type="button" onClick={() => setReactionPicker('composer')} className="text-gray-400 hover:text-primary p-1">
+            <FiSmile size={20} />
+          </button>
+        </div>
+        {isRecording ? (
+          <button type="button" onClick={stopRecording} className="text-danger p-1.5 animate-pulse"><FiStopCircle size={24} /></button>
+        ) : newMsg.trim() && !isBlocked ? (
+          <button type="submit" className="text-primary hover:text-primary-dark p-1.5"><FiSend size={24} /></button>
+        ) : !isBlocked ? (
+          <button type="button" onClick={startRecording} className="text-gray-400 hover:text-primary p-1.5"><FiMic size={24} /></button>
+        ) : null}
+      </form>
     </div>
   );
 };
