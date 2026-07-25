@@ -513,7 +513,7 @@ import { FiEdit } from 'react-icons/fi';
                 </div>
                 {reactionPicker === msg._id && (
                   <div className="absolute bottom-8 left-0 bg-gray-800 rounded-full px-2 py-1 flex gap-1 shadow-lg z-10 text-sm">
-                    {QUICK_EMOJIS.map(e => <button key={e} className={} onClick={() => reactToMsg(msg._id, e)} className="hover:scale-125 transition-transform">{e}</button>)}
+                    {QUICK_EMOJIS.map(e => <button key={e} onClick={() => reactToMsg(msg._id, e)} className="hover:scale-125 transition-transform">{e}</button>)}
                   </div>
                 )}
               </div>
