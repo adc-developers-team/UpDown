@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
-@theme {
-  --color-dark-blue: #1e3a5f;
-  --color-light-blue: #3b82f6;
-  --color-chat-bg: #0f172a;
-  --color-sidebar-bg: #1e293b;
+/* ===== MODERN PROFESSIONAL THEME ===== */
+:root {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+  --bg-main: #0f172a;
+  --bg-sidebar: #1e293b;
+  --bg-header: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #334155;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
 }
 
-/* Light mode overrides */
-.light .bg-chat-bg { background-color: #f8fafc; }
-.light .bg-dark-blue { background-color: #ffffff; }
-.light .bg-sidebar-bg { background-color: #f1f5f9; }
-.light .text-white, .light .text-gray-100 { color: #0f172a; }
-.light .border-gray-700 { border-color: #e2e8f0; }
-.light .bg-gray-800 { background-color: #e2e8f0; }
-.light .bg-gray-700 { background-color: #cbd5e1; }
-.light .bg-gray-900 { background-color: #f8fafc; }
-.light .text-gray-400 { color: #475569; }
-.light .text-gray-500 { color: #64748b; }
-.light .bg-light-blue { background-color: #2563eb; }
-.light .hover\:bg-gray-700:hover { background-color: #e2e8f0; }
-.light .hover\:bg-gray-800:hover { background-color: #cbd5e1; }
+/* Light mode */
+.light {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+  --bg-main: #f8fafc;
+  --bg-sidebar: #ffffff;
+  --bg-header: #ffffff;
+  --bg-card: #ffffff;
+  --bg-input: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+}
+
+/* Base styles */
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Message bubbles */
+.message-sent {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+.message-received {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 4px;
+}
+
+/* Input field focus */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+/* Button hover effects */
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white;
+  transition: all 0.2s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Card styles */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+.card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Avatar glow for online users */
+.avatar-online {
+  box-shadow: 0 0 0 3px var(--bg-sidebar), 0 0 0 5px var(--success);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.3s ease-out; }
 
 @keyframes react-pop {
   0% { transform: scale(0); opacity: 0; }
@@ -28,3 +115,21 @@
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-react-pop { animation: react-pop 0.3s ease-out; }
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+.animate-pulse-ring { animation: pulse-ring 2s infinite; }
+
+/* Loading skeleton */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--border-color) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
