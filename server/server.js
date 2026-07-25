@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const cloudinary = require('cloudinary').v2;
 const webpush = require('web-push');
 
@@ -39,6 +40,20 @@ const io = new Server(server, { cors: { origin: allowedOrigins, methods: ['GET',
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: allowedOrigins }));
+n// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  message: { message: 'Too many requests, please try again later.' }
+});
+app.use('/api/', apiLimiter);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: 'Too many authentication attempts, please try again later.' }
+});
+app.use('/api/auth/', authLimiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
