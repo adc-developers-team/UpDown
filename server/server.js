@@ -114,6 +114,10 @@ io.on('connection', (socket) => {
       .populate({
         path: 'replyTo',
         populate: { path: 'sender', select: 'username fullName' }
+      })
+      .populate({
+        path: 'replyTo',
+        populate: { path: 'sender', select: 'username fullName' }
       });
     io.to(conversationId).emit('message received', populated);
     if (onlineUsers.has(receiverId)) {
@@ -159,9 +163,13 @@ io.on('connection', (socket) => {
       }
       message.reactions = reactions;
       await message.save();
-      const populated = await Message.findById(message._id)
+      let populated = await Message.findById(message._id)
         .populate('sender', 'username profilePic fullName')
-        .populate('receiver', 'username profilePic fullName');
+        .populate('receiver', 'username profilePic fullName')
+      .populate({
+        path: 'replyTo',
+        populate: { path: 'sender', select: 'username fullName' }
+      });
       io.to(conversationId).emit('message reaction updated', populated);
     } catch (err) { console.error(err); }
   });

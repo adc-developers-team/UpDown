@@ -6,7 +6,7 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiTrash2, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff, FiVideoOff,
-  FiMicOff, FiVolume2
+  FiMicOff, FiVolume2, FiCornerUpLeft
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
@@ -91,6 +91,7 @@ const ChatRoomPage = () => {
   const [typingUser, setTypingUser] = useState(null);
   const [reactionPicker, setReactionPicker] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
@@ -355,7 +356,7 @@ const ChatRoomPage = () => {
 
   const handleSend = (e) => {
     e.preventDefault();
-    if (newMsg.trim()) { sendMessage(newMsg); setNewMsg(''); socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') }); }
+    if (newMsg.trim()) { sendMessage(newMsg, replyTo?._id); setReplyTo(null); setNewMsg(''); socketRef.current?.emit('stop typing', { conversationId: [user._id, userId].sort().join('_') }); }
   };
 
   const renderTick = (msg) => {
@@ -477,6 +478,7 @@ const ChatRoomPage = () => {
                   <button onClick={() => setReactionPicker(reactionPicker === msg._id ? null : msg._id)} className="text-xs opacity-50 hover:opacity-100"><FiSmile size={12} /></button>
                   <span className="text-xs opacity-70">{formatMsgTime(msg.createdAt)}</span>
                   {renderTick(msg)}
+                  <button onClick={() => setReplyTo(msg)} className="text-xs opacity-50 hover:opacity-100"><FiCornerUpLeft size={12} /></button>
                 </div>
                 {reactionPicker === msg._id && (
                   <div className="absolute bottom-8 left-0 bg-gray-800 rounded-full px-2 py-1 flex gap-1 shadow-lg z-10 text-sm">
@@ -502,11 +504,31 @@ const ChatRoomPage = () => {
             </div>
           )}
         </div>
+      {replyTo && (
+        <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
+          <FiCornerUpLeft size={14} className="text-light-blue" />
+          <div className="flex-1 text-xs text-gray-300 truncate">
+            Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
+            <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+      )}
         {isRecording ? (
           <button type="button" onClick={stopRecording} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-red-600 flex items-center justify-center"><FiStopCircle size={18} /></button>
         ) : (
           <button type="button" onClick={startRecording} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-700 text-gray-400 flex items-center justify-center"><FiMic size={18} /></button>
         )}
+      {replyTo && (
+        <div className="bg-gray-800 px-3 py-2 flex items-center gap-2 border-t border-gray-700">
+          <FiCornerUpLeft size={14} className="text-light-blue" />
+          <div className="flex-1 text-xs text-gray-300 truncate">
+            Replying to {replyTo.sender?.fullName || replyTo.sender?.username || 'User'}:
+            <span className="text-gray-400 ml-1">{replyTo.text || 'Media'}</span>
+          </div>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white">✕</button>
+        </div>
+      )}
         {isRecording ? (
           <div className="flex-1 bg-gray-800 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 flex items-center text-red-400 text-xs sm:text-sm"><span className="animate-pulse">● Recording {formatRecTime(recordingTime)}</span></div>
         ) : (

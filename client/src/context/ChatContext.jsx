@@ -64,10 +64,11 @@ export const ChatProvider = ({ children }) => {
     };
   }, [selectedUser, user]);
 
-  const sendMessage = (text) => {
+  const sendMessage = (text, replyToId = null) => {
     if (socketRef.current && selectedUser) {
       socketRef.current.emit('send message', {
         senderId: user._id,
+        replyTo: replyToId,
         receiverId: selectedUser._id,
         text,
       });
