@@ -12,9 +12,11 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  tls: {
+    rejectUnauthorized: false,
+  },
 });
 
-// Helper function to send verification email
 const sendVerificationEmail = async (email, verifyToken) => {
   const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verifyToken}`;
   await transporter.sendMail({
@@ -22,17 +24,21 @@ const sendVerificationEmail = async (email, verifyToken) => {
     to: email,
     subject: 'Verify your email - UpDown',
     html: `<h2>Welcome to UpDown!</h2><p>Click the link below to verify your email:</p><a href="${verificationUrl}">${verificationUrl}</a>`,
+    text: `Welcome to UpDown! Copy and paste this link to verify your email: ${verificationUrl}`,
+    headers: {
+      'X-Priority': '3',
+      'X-MSMail-Priority': 'Normal',
+      'Importance': 'Normal',
+    },
   });
 };
 
 const signup = async (req, res) => {
   const { fullName, username, email, password } = req.body;
   try {
-    // Check if user already exists with this email or username
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       if (!existingUser.isVerified) {
-        // User exists but not verified – resend verification email
         const verifyToken = crypto.randomBytes(32).toString('hex');
         existingUser.verifyToken = verifyToken;
         await existingUser.save();
@@ -44,11 +50,9 @@ const signup = async (req, res) => {
           return res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
         }
       }
-      // User exists and is verified
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // New user
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
     const verifyToken = crypto.randomBytes(32).toString('hex');
@@ -65,15 +69,13 @@ const signup = async (req, res) => {
       return res.status(201).json({ message: 'Registration successful! Please check your email to verify your account.' });
     } catch (emailErr) {
       console.error('Signup email error:', emailErr);
-      // User created but email not sent – still return success but with a warning
-      return res.status(201).json({ message: 'Account created, but verification email could not be sent. You can request a new verification email later.' });
+      return res.status(201).json({ message: 'Account created, but verification email could not be sent. Please contact support.' });
     }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// Resend verification email (separate endpoint for convenience)
 const resendVerification = async (req, res) => {
   const { email } = req.body;
   try {
@@ -83,8 +85,13 @@ const resendVerification = async (req, res) => {
     const verifyToken = crypto.randomBytes(32).toString('hex');
     user.verifyToken = verifyToken;
     await user.save();
-    await sendVerificationEmail(email, verifyToken);
-    res.json({ message: 'Verification email resent. Please check your inbox.' });
+    try {
+      await sendVerificationEmail(email, verifyToken);
+      res.json({ message: 'Verification email resent. Please check your inbox.' });
+    } catch (emailErr) {
+      console.error('Resend email error:', emailErr);
+      res.status(500).json({ message: 'Failed to send verification email. Please try again later.' });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -110,7 +117,6 @@ const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
     if (!user.isVerified) {
-      // Option to resend verification automatically or just inform
       return res.status(401).json({ message: 'Please verify your email before logging in.', email: user.email });
     }
     if (await bcrypt.compare(password, user.password)) {
