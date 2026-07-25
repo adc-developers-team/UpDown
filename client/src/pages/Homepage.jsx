@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -132,7 +133,7 @@ const Homepage = () => {
   const onlineCount = safeUsers.filter(u => onlineUsers.includes(u._id)).length;
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white w-full">
+    <div className="h-screen flex flex-col bg-chat-bg text-white w-full pb-16">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-warning/20 text-warning text-xs text-center py-1.5 flex items-center justify-center gap-2">
@@ -327,4 +328,5 @@ const Homepage = () => {
   );
 };
 
+      <BottomNav />
 export default Homepage;

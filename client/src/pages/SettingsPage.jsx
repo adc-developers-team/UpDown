@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -130,7 +131,7 @@ const SettingsPage = () => {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white">
+    <div className="min-h-screen bg-chat-bg text-white pb-16">
       {/* Header */}
       <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
         <Link to="/profile" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
@@ -333,4 +334,5 @@ const ActiveSessions = ({ sessions, onRemove }) => (
   </div>
 );
 
+    <BottomNav />
 export default SettingsPage;

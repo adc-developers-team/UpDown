@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -118,7 +119,7 @@ const AddFriendsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex flex-col">
+    <div className="min-h-screen bg-chat-bg text-white flex flex-col pb-16">
       {/* Header */}
       <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
         <Link to="/" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
@@ -265,4 +266,5 @@ const EmptyState = ({ icon, title, subtitle }) => (
   </div>
 );
 
+    <BottomNav />
 export default AddFriendsPage;

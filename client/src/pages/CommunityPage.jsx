@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
@@ -69,7 +70,7 @@ const CommunityPage = () => {
   if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white">
+    <div className="min-h-screen bg-chat-bg text-white pb-16">
       <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
         <h2 className="text-xl font-bold"><span className="text-primary">UpDown</span> Community</h2>
       </header>
@@ -165,4 +166,5 @@ const CommunityPage = () => {
   );
 };
 
+    <BottomNav />
 export default CommunityPage;
