@@ -26,7 +26,7 @@ const AddFriendsPage = () => {
           axios.get('https://updown-hms5.onrender.com/api/friends/requests/received', config),
         ]);
         const usersExceptMe = (Array.isArray(usersRes.data) ? usersRes.data : []).filter(u => u._id !== user._id);
-        setAllUsers(usersExceptMe);
+        setAllUsers(Array.isArray(usersExceptMe) ? usersExceptMe : []);
         setFriends(Array.isArray(friendsRes.data) ? friendsRes.data.map(f => f._id) : []);
         setSentRequests(Array.isArray(sentRes.data) ? sentRes.data.map(r => r._id) : []);
         setReceivedRequests(Array.isArray(recvRes.data) ? recvRes.data.map(r => r._id) : []);

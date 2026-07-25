@@ -87,7 +87,7 @@ const GroupChatPage = () => {
         </div>
         <div className="flex-1">
           <h2 className="font-semibold">{group.name}</h2>
-          <p className="text-xs text-gray-400">{members.length} members</p>
+          <p className="text-xs text-gray-400">{(Array.isArray(group.members) ? group.members : []).length} members</p>
         </div>
       </header>
 

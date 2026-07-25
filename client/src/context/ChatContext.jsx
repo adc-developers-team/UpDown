@@ -8,7 +8,7 @@ export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
-  const [users, setUsers] = useState([]); // always array
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);

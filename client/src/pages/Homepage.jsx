@@ -107,7 +107,6 @@ const Homepage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-white w-full">
-      {/* Header */}
       <header className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 bg-dark-blue border-b border-gray-700">
         <h1 className="text-lg sm:text-xl font-bold">UpDown</h1>
         <div className="flex items-center gap-3 sm:gap-5">
@@ -124,13 +123,11 @@ const Homepage = () => {
         </div>
       </header>
 
-      {/* Tabs */}
       <div className="flex bg-sidebar-bg border-b border-gray-700 text-sm sm:text-base">
         <button onClick={() => setActiveTab('chats')} className={`flex-1 py-2 font-medium ${activeTab === 'chats' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-400'}`}>Chats</button>
         <button onClick={() => setActiveTab('groups')} className={`flex-1 py-2 font-medium ${activeTab === 'groups' ? 'border-b-2 border-light-blue text-light-blue' : 'text-gray-400'}`}>Groups</button>
       </div>
 
-      {/* Search */}
       <div className="px-3 sm:px-4 py-2 bg-sidebar-bg">
         <div className="flex items-center bg-gray-800 rounded-full px-3 py-1.5 sm:px-4 sm:py-2">
           <FiSearch className="text-gray-400 text-sm sm:text-base" />
@@ -138,9 +135,8 @@ const Homepage = () => {
         </div>
       </div>
 
-      {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {activeTab === 'chats' && filteredUsers.map(u => {
+        {filteredUsers.map(u => {
           const lastMsg = lastMessages[u._id];
           const unread = unreadCounts[u._id] || 0;
           return (
@@ -165,21 +161,23 @@ const Homepage = () => {
           );
         })}
 
-        {activeTab === 'groups' && filteredGroups.map(g => (
-          <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-800 border-b border-gray-800/50">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-light-blue flex items-center justify-center text-sm sm:text-lg font-semibold">{g.name?.[0]?.toUpperCase()}</div>
-            <div className="flex-1">
-              <h3 className="font-medium text-sm sm:text-base">{g.name}</h3>
-              <p className="text-xs sm:text-sm text-gray-400">{g.members?.length || 0} members</p>
-            </div>
-          </Link>
-        ))}
+        {filteredGroups.map(g => {
+          const members = Array.isArray(g.members) ? g.members : [];
+          return (
+            <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-3 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-800 border-b border-gray-800/50">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-light-blue flex items-center justify-center text-sm sm:text-lg font-semibold">{g.name?.[0]?.toUpperCase()}</div>
+              <div className="flex-1">
+                <h3 className="font-medium text-sm sm:text-base">{g.name}</h3>
+                <p className="text-xs sm:text-sm text-gray-400">{members.length} members</p>
+              </div>
+            </Link>
+          );
+        })}
 
-        {activeTab === 'chats' && filteredUsers.length === 0 && <div className="text-center text-gray-500 mt-10 text-sm">No chats found</div>}
-        {activeTab === 'groups' && filteredGroups.length === 0 && <div className="text-center text-gray-500 mt-10 text-sm">No groups found</div>}
+        {filteredUsers.length === 0 && activeTab === 'chats' && <div className="text-center text-gray-500 mt-10 text-sm">No chats found</div>}
+        {filteredGroups.length === 0 && activeTab === 'groups' && <div className="text-center text-gray-500 mt-10 text-sm">No groups found</div>}
       </div>
 
-      {/* Floating Buttons */}
       <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 flex flex-col gap-2 sm:gap-3">
         <Link to="/add-friends" className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><FiPlus size={20} /></Link>
         <Link to="/create-group" className="w-10 h-10 sm:w-12 sm:h-12 bg-light-blue rounded-full flex items-center justify-center shadow-xl hover:scale-105 transition"><FiUsers size={20} /></Link>
