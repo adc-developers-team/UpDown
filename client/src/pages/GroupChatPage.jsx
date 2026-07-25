@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -82,7 +83,7 @@ const GroupChatPage = () => {
   const members = Array.isArray(group.members) ? group.members : [];
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white">
+    <div className="h-screen flex flex-col bg-chat-bg text-white pb-20">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
         <Link to="/" className="text-white hover:text-primary"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -127,4 +128,5 @@ const GroupChatPage = () => {
   );
 };
 
+      <BottomNav />
 export default GroupChatPage;

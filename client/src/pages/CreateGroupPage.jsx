@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -73,7 +74,7 @@ const CreateGroupPage = () => {
   const selectedFriends = friends.filter(f => selected.includes(f._id));
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white">
+    <div className="min-h-screen bg-chat-bg text-white pb-20">
       {/* Header */}
       <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-gray-700/50 sticky top-0 z-20">
         {step < 4 ? (
@@ -327,4 +328,5 @@ const CreateGroupPage = () => {
   );
 };
 
+    <BottomNav />
 export default CreateGroupPage;

@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -507,7 +508,7 @@ const ChatRoomPage = () => {
   });
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white w-full">
+    <div className="h-screen flex flex-col bg-chat-bg text-white w-full pb-20">
       {/* Call Overlay */}
       {(inCall || calling || incoming) && (
         <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">
@@ -734,4 +735,5 @@ const ChatRoomPage = () => {
   );
 };
 
+      <BottomNav />
 export default ChatRoomPage;

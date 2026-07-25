@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -49,7 +50,7 @@ const EditProfilePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white">
+    <div className="min-h-screen bg-chat-bg text-white pb-20">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700">
         <Link to="/settings" className="text-white hover:text-light-blue"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Edit Profile</h2>
@@ -78,4 +79,5 @@ const EditProfilePage = () => {
     </div>
   );
 };
+    <BottomNav />
 export default EditProfilePage;

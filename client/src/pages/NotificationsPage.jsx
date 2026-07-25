@@ -1,3 +1,4 @@
+import BottomNav from '../components/BottomNav';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -44,7 +45,7 @@ const NotificationsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex flex-col">
+    <div className="min-h-screen bg-chat-bg text-white flex flex-col pb-20">
       {/* Header */}
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-gray-700 sticky top-0 z-20">
         <Link to="/" className="text-white hover:text-accent p-1">
@@ -154,4 +155,5 @@ const NotificationsPage = () => {
   );
 };
 
+    <BottomNav />
 export default NotificationsPage;
