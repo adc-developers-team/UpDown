@@ -90,6 +90,7 @@ const ChatRoomPage = () => {
   const [chatUser, setChatUser] = useState(null);
   const [typingUser, setTypingUser] = useState(null);
   const [reactionPicker, setReactionPicker] = useState(null);
+  const [reactingMsgId, setReactingMsgId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -344,6 +345,7 @@ const ChatRoomPage = () => {
     const convId = [user._id, userId].sort().join('_');
     socketRef.current?.emit('react to message', { messageId: msgId, emoji, userId: user._id, conversationId: convId });
     setReactionPicker(null);
+      setReactingMsgId(msgId); setTimeout(() => setReactingMsgId(null), 350);
   };
 
   const handleTyping = () => {
@@ -462,6 +464,11 @@ const ChatRoomPage = () => {
 
       {/* Messages */}
       <div className="flex-1 p-3 sm:p-4 overflow-y-auto space-y-3 sm:space-y-4">
+      {showScrollBtn && (
+        <button onClick={scrollToBottom} className="absolute bottom-20 right-4 w-10 h-10 bg-light-blue rounded-full flex items-center justify-center shadow-lg z-10">
+          ↓
+        </button>
+      )}
         {messages.map((msg, i) => {
           const isMine = msg.sender._id === user._id;
           const mediaType = msg.mediaType || (msg.image ? getMediaType(msg.image) : 'text');
@@ -482,7 +489,7 @@ const ChatRoomPage = () => {
                 </div>
                 {reactionPicker === msg._id && (
                   <div className="absolute bottom-8 left-0 bg-gray-800 rounded-full px-2 py-1 flex gap-1 shadow-lg z-10 text-sm">
-                    {QUICK_EMOJIS.map(e => <button key={e} onClick={() => reactToMsg(msg._id, e)} className="hover:scale-125 transition-transform">{e}</button>)}
+                    {QUICK_EMOJIS.map(e => <button key={e} className={} onClick={() => reactToMsg(msg._id, e)} className="hover:scale-125 transition-transform">{e}</button>)}
                   </div>
                 )}
               </div>
