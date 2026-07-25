@@ -3,17 +3,17 @@ const http = require('http');
 const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
 const cloudinary = require('cloudinary').v2;
 const webpush = require('web-push');
+const rateLimit = require('express-rate-limit');
 
 const authRoutes = require('./routes/authRoutes');
 const messageRoutes = require('./routes/messageRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const groupMessageRoutes = require('./routes/groupMessageRoutes');
-const pollRoutes = require('./routes/pollRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const pollRoutes = require('./routes/pollRoutes');
 const User = require('./models/User');
 
 cloudinary.config({
@@ -40,7 +40,10 @@ const io = new Server(server, { cors: { origin: allowedOrigins, methods: ['GET',
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({ origin: allowedOrigins }));
-n// Rate limiting
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -54,16 +57,14 @@ const authLimiter = rateLimit({
   message: { message: 'Too many authentication attempts, please try again later.' }
 });
 app.use('/api/auth/', authLimiter);
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/group-messages', groupMessageRoutes);
-app.use('/api/polls', pollRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/polls', pollRoutes);
 
 app.post('/api/push/subscribe', async (req, res) => {
   try {
@@ -131,10 +132,6 @@ io.on('connection', (socket) => {
       .populate({
         path: 'replyTo',
         populate: { path: 'sender', select: 'username fullName' }
-      })
-      .populate({
-        path: 'replyTo',
-        populate: { path: 'sender', select: 'username fullName' }
       });
     io.to(conversationId).emit('message received', populated);
     if (onlineUsers.has(receiverId)) {
@@ -155,6 +152,21 @@ io.on('connection', (socket) => {
       { $set: { status: 'read' } }
     );
     io.to(conversationId).emit('messages read', { conversationId, reader: userId });
+  });
+
+  socket.on('edit message', async ({ messageId, text, conversationId }) => {
+    try {
+      const Message = require('./models/Message');
+      const message = await Message.findById(messageId);
+      if (!message) return;
+      message.text = text;
+      await message.save();
+      const populated = await Message.findById(message._id)
+        .populate('sender', 'username profilePic fullName')
+        .populate('receiver', 'username profilePic fullName')
+        .populate({ path: 'replyTo', populate: { path: 'sender', select: 'username fullName' } });
+      io.to(conversationId).emit('message edited', populated);
+    } catch (err) { console.error(err); }
   });
 
   socket.on('delete message', async ({ messageId, conversationId }) => {
@@ -180,13 +192,9 @@ io.on('connection', (socket) => {
       }
       message.reactions = reactions;
       await message.save();
-      let populated = await Message.findById(message._id)
+      const populated = await Message.findById(message._id)
         .populate('sender', 'username profilePic fullName')
-        .populate('receiver', 'username profilePic fullName')
-      .populate({
-        path: 'replyTo',
-        populate: { path: 'sender', select: 'username fullName' }
-      });
+        .populate('receiver', 'username profilePic fullName');
       io.to(conversationId).emit('message reaction updated', populated);
     } catch (err) { console.error(err); }
   });
@@ -202,6 +210,45 @@ io.on('connection', (socket) => {
     });
     const populated = await GroupMessage.findById(message._id).populate('sender', 'username profilePic fullName');
     io.to(groupId).emit('group message received', populated);
+  });
+
+  // Poll events
+  socket.on('create poll', async (data) => {
+    const { groupId, question, options, senderId } = data;
+    const Poll = require('./models/Poll');
+    const poll = await Poll.create({
+      question,
+      options: options.map(opt => ({ text: opt, votes: [] })),
+      group: groupId,
+      creator: senderId,
+    });
+    const populated = await Poll.findById(poll._id).populate('creator', 'username fullName');
+    io.to(groupId).emit('new poll', populated);
+  });
+
+  socket.on('vote poll', async (data) => {
+    const { pollId, optionIndex, userId, groupId } = data;
+    const Poll = require('./models/Poll');
+    const poll = await Poll.findById(pollId);
+    if (!poll || poll.status !== 'active') return;
+    poll.options.forEach(opt => opt.votes = opt.votes.filter(v => v.toString() !== userId));
+    if (optionIndex >= 0 && optionIndex < poll.options.length) {
+      poll.options[optionIndex].votes.push(userId);
+    }
+    await poll.save();
+    const populated = await Poll.findById(pollId).populate('creator', 'username fullName');
+    io.to(groupId).emit('poll updated', populated);
+  });
+
+  socket.on('close poll', async (data) => {
+    const { pollId, groupId, userId } = data;
+    const Poll = require('./models/Poll');
+    const poll = await Poll.findById(pollId);
+    if (!poll || poll.creator.toString() !== userId) return;
+    poll.status = 'closed';
+    await poll.save();
+    const populated = await Poll.findById(pollId).populate('creator', 'username fullName');
+    io.to(groupId).emit('poll updated', populated);
   });
 
   socket.on('call-user', ({ callerId, receiverId, signal, callType }) => {
