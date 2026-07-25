@@ -11,6 +11,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const groupRoutes = require('./routes/groupRoutes');
 const groupMessageRoutes = require('./routes/groupMessageRoutes');
+const pollRoutes = require('./routes/pollRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const User = require('./models/User');
 
@@ -46,6 +47,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/group-messages', groupMessageRoutes);
+app.use('/api/polls', pollRoutes);
 app.use('/api/upload', uploadRoutes);
 
 app.post('/api/push/subscribe', async (req, res) => {

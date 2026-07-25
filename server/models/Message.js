@@ -9,8 +9,9 @@ const messageSchema = new mongoose.Schema(
     image: { type: String, default: '' },
     status: { type: String, enum: ['sent', 'delivered', 'read'], default: 'sent' },
     reactions: { type: Map, of: [String], default: {} },
-    mediaType: { type: String, enum: ['text', 'image', 'video', 'audio'], default: 'text' },
+    mediaType: { type: String, enum: ['text', 'image', 'video', 'audio', 'poll'], default: 'text' },
     replyTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Message', default: null },
+    pollId: { type: mongoose.Schema.Types.ObjectId, ref: 'Poll', default: null },
   },
   { timestamps: true }
 );
