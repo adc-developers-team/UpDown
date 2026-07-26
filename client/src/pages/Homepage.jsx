@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { FiSearch, FiBell, FiPlus, FiMessageSquare, FiX, FiRefreshCw, FiWifiOff } from 'react-icons/fi';
+import { FiSearch, FiBell, FiPlus, FiMessageSquare, FiX, FiRefreshCw, FiWifiOff } , FiImage } , FiImage } from 'react-icons/fi';
 import BottomNav from '../components/BottomNav';
 import FeedFilter from '../components/home/FeedFilter';
 import PostCard from '../components/home/PostCard';
