@@ -1,4 +1,5 @@
 @import "tailwindcss";
+
 :root {
   --bg-main: #F6F8FC; --bg-surface: #FFFFFF; --bg-sidebar: #F8FAFC; --bg-header: #FFFFFF;
   --bg-input: #F1F5F9; --text-primary: #111827; --text-secondary: #6B7280; --text-muted: #9CA3AF;
@@ -22,15 +23,19 @@ body {
 .bg-dark-blue { background: var(--bg-header) !important; border-bottom: 1px solid var(--border-light) !important }
 .bg-sidebar-bg { background: var(--bg-sidebar) !important }
 .bg-surface { background: var(--bg-surface) !important }
-.bg-gray-800, .bg-bg-input { background: var(--bg-input) !important }
+.bg-bg-input { background: var(--bg-input) !important }
 .bg-gray-700 { background: var(--bg-surface) !important }
+.bg-gray-800 { background: var(--bg-input) !important }
 .border-gray-700, .border-border-light { border-color: var(--border-light) !important }
 .text-gray-400, .text-text-secondary { color: var(--text-secondary) !important }
 .text-gray-500, .text-text-muted { color: var(--text-muted) !important }
-.text-white, .text-gray-100, .text-primary { color: var(--text-primary) !important }
-.text-accent, .text-primary-accent { color: var(--primary) !important }
-.bg-accent, .bg-primary { background: var(--primary) !important; color: #fff !important }
-.hover\:bg-accent-hover:hover, .hover\:bg-primary-dark:hover { background: var(--primary-dark) !important }
+.text-white, .text-gray-100 { color: var(--text-primary) !important }
+.text-primary { color: var(--primary) !important }
+.text-accent { color: var(--primary) !important }
+.bg-primary { background: var(--primary) !important; color: #fff !important }
+.bg-accent { background: var(--primary) !important; color: #fff !important }
+.hover\:bg-primary-dark:hover { background: var(--primary-dark) !important }
+.hover\:bg-accent-hover:hover { background: var(--primary-dark) !important }
 .message-sent { background: var(--primary) !important; color: #fff !important }
 .message-received { background: var(--bg-surface) !important; color: var(--text-primary) !important; border: 1px solid var(--border-light) !important }
 .animate-fade-in { animation: fadeIn var(--transition-base) ease-out }
