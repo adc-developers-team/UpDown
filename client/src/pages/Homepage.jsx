@@ -7,7 +7,7 @@ import {
 } from 'react-icons/fi';
 import BottomNav from '../components/BottomNav';
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 const API = 'https://updown-hms5.onrender.com';
 
 const Homepage = () => {
@@ -20,6 +20,7 @@ const Homepage = () => {
   const [loading, setLoading] = useState(true);
   const [posting, setPosting] = useState(false);
   const [commentText, setCommentText] = useState({});
+  const [showComments, setShowComments] = useState({});
   const [expandedComments, setExpandedComments] = useState({});
   const [viewerImage, setViewerImage] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -48,7 +49,7 @@ const Homepage = () => {
     fetchPosts();
   }, [fetchPosts]);
 
-  // Simple pull-to-refresh
+  // Pull to refresh
   useEffect(() => {
     const el = feedRef.current;
     if (!el) return;
@@ -120,12 +121,8 @@ const Homepage = () => {
     let video = '';
 
     try {
-      if (newImage) {
-        imageUrl = await uploadImage(newImage);
-      }
-      if (newVideoUrl.trim()) {
-        video = newVideoUrl.trim();
-      }
+      if (newImage) imageUrl = await uploadImage(newImage);
+      if (newVideoUrl.trim()) video = newVideoUrl.trim();
 
       await axios.post(`${API}/api/posts`, {
         text: newText.trim(),
@@ -145,7 +142,6 @@ const Homepage = () => {
   };
 
   const handleLike = async (postId) => {
-    // Optimistic update
     setPosts((prev) =>
       prev.map((p) => {
         if (p._id !== postId) return p;
@@ -162,7 +158,6 @@ const Homepage = () => {
     try {
       await axios.put(`\( {API}/api/posts/ \){postId}/like`, {}, config);
     } catch {
-      // Revert on failure
       fetchPosts();
     }
   };
@@ -174,6 +169,8 @@ const Homepage = () => {
     try {
       await axios.post(`\( {API}/api/posts/ \){postId}/comment`, { text }, config);
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
+      // Keep comments open after posting
+      setShowComments((prev) => ({ ...prev, [postId]: true }));
       fetchPosts();
     } catch {
       alert('Failed to comment');
@@ -222,13 +219,20 @@ const Homepage = () => {
   };
 
   const toggleComments = (postId) => {
-    setExpandedComments((prev) => ({
+    setShowComments((prev) => ({
       ...prev,
       [postId]: !prev[postId],
     }));
     if (commentText[postId] === undefined) {
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
     }
+  };
+
+  const toggleExpandComments = (postId) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
   };
 
   if (loading) {
@@ -269,7 +273,6 @@ const Homepage = () => {
           onClick={() => fetchPosts(true)}
           disabled={refreshing}
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-          aria-label="Refresh feed"
         >
           <FiRefreshCw
             size={20}
@@ -303,7 +306,6 @@ const Homepage = () => {
             />
           </div>
 
-          {/* Image Preview */}
           {imagePreview && (
             <div className="relative mx-4 mb-3">
               <img
@@ -324,12 +326,7 @@ const Homepage = () => {
           <div className="px-4 pb-3 flex items-center gap-2">
             <label className="cursor-pointer p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition">
               <FiImage size={20} className="text-text-secondary" />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
+              <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
             </label>
 
             <div className="flex-1 flex items-center bg-bg-input rounded-full px-3 py-2 border border-border-light focus-within:border-primary transition">
@@ -354,7 +351,7 @@ const Homepage = () => {
               <button
                 type="submit"
                 disabled={posting}
-                className="w-full bg-primary text-white py-2.5 rounded-full font-semibold hover:bg-primary-dark transition disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-primary text-white py-2.5 rounded-full font-semibold hover:bg-primary-dark transition disabled:opacity-60"
               >
                 {posting ? 'Posting...' : 'Post'}
               </button>
@@ -374,8 +371,9 @@ const Homepage = () => {
               const isLiked = post.likes?.includes(user._id);
               const youtubeId = getYouTubeId(post.video);
               const comments = post.comments || [];
-              const showAllComments = expandedComments[post._id];
-              const visibleComments = showAllComments ? comments : comments.slice(-2);
+              const isCommentsOpen = showComments[post._id];
+              const isExpanded = expandedComments[post._id];
+              const visibleComments = isExpanded ? comments : comments.slice(0, 2);
 
               return (
                 <article
@@ -386,11 +384,7 @@ const Homepage = () => {
                   <div className="flex items-center gap-3 p-4 pb-2">
                     <div className="w-10 h-10 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center flex-shrink-0">
                       {post.author?.profilePic ? (
-                        <img
-                          src={post.author.profilePic}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
+                        <img src={post.author.profilePic} alt="" className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-sm font-bold text-primary">
                           {post.author?.fullName?.[0] || post.author?.username?.[0]?.toUpperCase()}
@@ -413,12 +407,12 @@ const Homepage = () => {
                           <FiMoreHorizontal size={18} />
                         </button>
                         {menuOpen === post._id && (
-                          <div className="absolute right-0 top-8 bg-surface border border-border-light rounded-xl shadow-lg py-1 z-10 min-w-[120px]">
+                          <div className="absolute right-0 top-8 bg-surface border border-border-light rounded-xl shadow-lg py-1 z-10 min-w-[130px]">
                             <button
                               onClick={() => handleDeletePost(post._id)}
-                              className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-gray-50 dark:hover:bg-gray-800"
+                              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-gray-50 dark:hover:bg-gray-800"
                             >
-                              <FiTrash2 size={14} /> Delete
+                              <FiTrash2 size={14} /> Delete post
                             </button>
                           </div>
                         )}
@@ -471,86 +465,144 @@ const Homepage = () => {
                     )}
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-1 px-2 py-1 border-t border-border-light">
+                  {/* Stats line (Facebook style) */}
+                  {(post.likes?.length > 0 || comments.length > 0) && (
+                    <div className="px-4 pb-2 flex items-center justify-between text-xs text-text-secondary">
+                      <div className="flex items-center gap-1">
+                        {post.likes?.length > 0 && (
+                          <span className="flex items-center gap-1">
+                            <span className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
+                              <FiHeart size={9} className="text-white fill-current" />
+                            </span>
+                            {post.likes.length}
+                          </span>
+                        )}
+                      </div>
+                      {comments.length > 0 && (
+                        <button
+                          onClick={() => toggleComments(post._id)}
+                          className="hover:underline"
+                        >
+                          {comments.length} comment{comments.length !== 1 ? 's' : ''}
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action buttons */}
+                  <div className="flex items-center border-t border-border-light">
                     <button
                       onClick={() => handleLike(post._id)}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition ${
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition ${
                         isLiked
                           ? 'text-red-500'
-                          : 'text-text-secondary hover:text-red-500 hover:bg-gray-50 dark:hover:bg-gray-800'
+                          : 'text-text-secondary hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
                       <FiHeart size={18} className={isLiked ? 'fill-current' : ''} />
-                      <span>{post.likes?.length || 0}</span>
+                      Like
                     </button>
 
                     <button
                       onClick={() => toggleComments(post._id)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-text-secondary hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                     >
                       <FiMessageSquare size={18} />
-                      <span>{comments.length}</span>
+                      Comment
                     </button>
 
                     <button
                       onClick={() => handleShare(post._id)}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-text-secondary hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium text-text-secondary hover:bg-gray-50 dark:hover:bg-gray-800 transition"
                     >
                       <FiShare2 size={18} />
+                      Share
                     </button>
                   </div>
 
-                  {/* Comments */}
-                  {(commentText[post._id] !== undefined || comments.length > 0) && (
-                    <div className="px-4 pb-4 space-y-2 border-t border-border-light pt-3">
-                      {comments.length > 2 && !showAllComments && (
-                        <button
-                          onClick={() => toggleComments(post._id)}
-                          className="text-xs text-primary font-medium"
-                        >
-                          View all {comments.length} comments
-                        </button>
-                      )}
+                  {/* Comments Section (Facebook style) */}
+                  {isCommentsOpen && (
+                    <div className="border-t border-border-light bg-gray-50/50 dark:bg-gray-900/20">
+                      {/* Existing comments */}
+                      {comments.length > 0 && (
+                        <div className="px-4 pt-3 space-y-3">
+                          {comments.length > 2 && !isExpanded && (
+                            <button
+                              onClick={() => toggleExpandComments(post._id)}
+                              className="text-sm font-medium text-text-secondary hover:underline"
+                            >
+                              View all {comments.length} comments
+                            </button>
+                          )}
 
-                      {visibleComments.map((c) => (
-                        <div key={c._id} className="flex gap-2 text-sm">
-                          <span className="font-semibold text-primary flex-shrink-0">
-                            {c.author?.fullName || c.author?.username}
-                          </span>
-                          <span className="text-text-secondary break-words">{c.text}</span>
+                          {visibleComments.map((c) => (
+                            <div key={c._id} className="flex gap-2.5">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                                {c.author?.profilePic ? (
+                                  <img src={c.author.profilePic} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-xs font-bold text-primary">
+                                    {c.author?.fullName?.[0] || c.author?.username?.[0]?.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-3 py-2 inline-block max-w-full">
+                                  <p className="text-sm font-semibold text-primary">
+                                    {c.author?.fullName || c.author?.username}
+                                  </p>
+                                  <p className="text-sm text-primary/90 break-words">{c.text}</p>
+                                </div>
+                                <p className="text-[11px] text-text-muted mt-1 ml-1">
+                                  {formatTime(c.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+
+                          {isExpanded && comments.length > 2 && (
+                            <button
+                              onClick={() => toggleExpandComments(post._id)}
+                              className="text-sm text-text-muted hover:underline"
+                            >
+                              Show less
+                            </button>
+                          )}
                         </div>
-                      ))}
-
-                      {showAllComments && comments.length > 2 && (
-                        <button
-                          onClick={() => toggleComments(post._id)}
-                          className="text-xs text-text-muted"
-                        >
-                          Show less
-                        </button>
                       )}
 
-                      <div className="flex items-center gap-2 pt-1">
-                        <input
-                          type="text"
-                          placeholder="Write a comment..."
-                          value={commentText[post._id] || ''}
-                          onChange={(e) =>
-                            setCommentText((prev) => ({ ...prev, [post._id]: e.target.value }))
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleComment(post._id);
-                          }}
-                          className="flex-1 bg-bg-input rounded-full px-4 py-2 text-sm outline-none border border-border-light focus:border-primary transition"
-                        />
-                        <button
-                          onClick={() => handleComment(post._id)}
-                          disabled={!commentText[post._id]?.trim()}
-                          className="p-2 text-primary disabled:opacity-40"
-                        >
-                          <FiSend size={18} />
-                        </button>
+                      {/* Comment input */}
+                      <div className="px-4 py-3 flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex-shrink-0 overflow-hidden flex items-center justify-center">
+                          {user?.profilePic ? (
+                            <img src={user.profilePic} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-bold text-primary">
+                              {user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex-1 flex items-center bg-white dark:bg-gray-800 rounded-full border border-border-light overflow-hidden">
+                          <input
+                            type="text"
+                            placeholder="Write a comment..."
+                            value={commentText[post._id] || ''}
+                            onChange={(e) =>
+                              setCommentText((prev) => ({ ...prev, [post._id]: e.target.value }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleComment(post._id);
+                            }}
+                            className="flex-1 bg-transparent px-4 py-2.5 text-sm outline-none text-primary placeholder-text-muted"
+                          />
+                          <button
+                            onClick={() => handleComment(post._id)}
+                            disabled={!commentText[post._id]?.trim()}
+                            className="pr-3 text-primary disabled:opacity-40"
+                          >
+                            <FiSend size={18} />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -561,7 +613,7 @@ const Homepage = () => {
         </div>
       </div>
 
-      {/* Fullscreen Image Viewer */}
+      {/* Fullscreen Image */}
       {viewerImage && (
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center"
