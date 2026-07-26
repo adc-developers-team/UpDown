@@ -112,6 +112,7 @@ const ChatRoomPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [replyTo, setReplyTo] = useState(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
