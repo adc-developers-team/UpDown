@@ -6,15 +6,15 @@ const Comment = require('../models/Comment');
 
 // Create post
 router.post('/', protect, async (req, res) => {
-  const { text, image, hashtags } = req.body;
+  const { text, image, video, hashtags } = req.body;
   try {
-    const post = await Post.create({ author: req.user._id, text, image, hashtags });
+    const post = await Post.create({ author: req.user._id, text, image: image || '', video: video || '', hashtags });
     const populated = await post.populate('author', 'username fullName profilePic');
     res.status(201).json(populated);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
 
-// Get posts (feed)
+// Get posts
 router.get('/', protect, async (req, res) => {
   try {
     const posts = await Post.find()
