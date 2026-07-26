@@ -36,7 +36,7 @@ const AudioPlayer = ({ src }) => {
   };
 
   return (
-    <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2 w-full max-w-xs">
+    <div className="flex items-center gap-2 bg-bg-input rounded-lg px-3 py-2 w-full max-w-xs">
       <button onClick={togglePlay} className="text-accent hover:text-accent-hover">
         {isPlaying ? <FiPause size={16} /> : <FiPlay size={16} />}
       </button>

@@ -18,13 +18,13 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center p-4 pb-20 pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary flex items-center justify-center p-4 pb-20 pb-20">
       <div className="w-full max-w-md bg-surface rounded-2xl shadow-2 p-8">
         <h2 className="text-2xl font-bold text-center mb-6">Forgot Password</h2>
         {message && <div className={`p-3 rounded-xl mb-4 text-sm ${message.includes('sent') ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{message}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-border-light focus:border-primary" />
-          <button type="submit" disabled={loading} className="w-full bg-primary text-white py-3 rounded-full font-semibold hover:bg-primary-dark transition">{loading ? 'Sending...' : 'Send Reset Link'}</button>
+          <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} required className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" />
+          <button type="submit" disabled={loading} className="w-full bg-primary text-primary py-3 rounded-full font-semibold hover:bg-primary-dark transition">{loading ? 'Sending...' : 'Send Reset Link'}</button>
         </form>
         <p className="text-text-secondary text-center mt-4 text-sm"><Link to="/login" className="text-primary hover:underline">Back to Login</Link></p>
       </div>

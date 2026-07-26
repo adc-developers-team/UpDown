@@ -33,7 +33,7 @@ const LazyImage = ({ src, alt, className }) => {
   }, [src]);
   return (
     <div ref={imgRef} className={className}>
-      {loaded ? <img src={src} alt={alt} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gray-700 animate-pulse" />}
+      {loaded ? <img src={src} alt={alt} className="w-full h-full object-cover" /> : <div className="w-full h-full bg-surface animate-pulse" />}
     </div>
   );
 };

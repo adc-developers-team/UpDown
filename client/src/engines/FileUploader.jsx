@@ -22,7 +22,7 @@ const FileUploader = ({ onUpload, accept = '*', maxSize = 10 * 1024 * 1024 }) =>
 
   return (
     <div className="space-y-2">
-      <div className="border-2 border-dashed border-gray-600 rounded-xl p-4 text-center hover:border-accent transition cursor-pointer" onClick={() => inputRef.current.click()}>
+      <div className="border-2 border-dashed border-border-light rounded-xl p-4 text-center hover:border-accent transition cursor-pointer" onClick={() => inputRef.current.click()}>
         <FiUploadCloud size={24} className="mx-auto text-text-muted mb-1" />
         <p className="text-sm text-text-muted">Drop files or click to upload</p>
         <input ref={inputRef} type="file" accept={accept} multiple onChange={handleFiles} className="hidden" />
@@ -30,7 +30,7 @@ const FileUploader = ({ onUpload, accept = '*', maxSize = 10 * 1024 * 1024 }) =>
       {files.length > 0 && (
         <div className="space-y-1">
           {files.map((file, i) => (
-            <div key={i} className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
+            <div key={i} className="flex items-center gap-2 bg-bg-input rounded-lg px-3 py-2">
               <FiFile size={14} className="text-text-secondary" />
               <span className="text-sm flex-1 truncate">{file.name}</span>
               <span className="text-xs text-text-muted">{(file.size / 1024).toFixed(1)}KB</span>

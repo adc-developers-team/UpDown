@@ -25,14 +25,14 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center p-4 pb-20 pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary flex items-center justify-center p-4 pb-20 pb-20">
       <div className="w-full max-w-md bg-surface rounded-2xl shadow-2 p-8">
         <h2 className="text-2xl font-bold text-center mb-6">Reset Password</h2>
         {message && <div className={`p-3 rounded-xl mb-4 text-sm ${message.includes('success') ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{message}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-border-light focus:border-primary" />
-          <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-border-light focus:border-primary" />
-          <button type="submit" disabled={loading} className="w-full bg-primary text-white py-3 rounded-full font-semibold hover:bg-primary-dark transition">{loading ? 'Resetting...' : 'Reset Password'}</button>
+          <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" />
+          <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" />
+          <button type="submit" disabled={loading} className="w-full bg-primary text-primary py-3 rounded-full font-semibold hover:bg-primary-dark transition">{loading ? 'Resetting...' : 'Reset Password'}</button>
         </form>
       </div>
       <BottomNav />

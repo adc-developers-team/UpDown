@@ -31,7 +31,7 @@ const SearchEngine = ({ data = [], searchFields = ['name', 'email'], onResults, 
         value={query}
         onChange={e => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-bg-input rounded-full px-4 py-2 outline-none text-white border border-gray-700 focus:border-accent transition text-sm"
+        className="w-full bg-bg-input rounded-full px-4 py-2 outline-none text-primary border border-border-light focus:border-accent transition text-sm"
       />
       {query && (
         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted">

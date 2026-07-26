@@ -10,7 +10,7 @@ export const FormField = ({ label, type = 'text', value, onChange, error, placeh
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border transition ${error ? 'border-red-500' : 'border-gray-700 focus:border-accent'} disabled:opacity-50`}
+      className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border transition ${error ? 'border-red-500' : 'border-border-light focus:border-accent'} disabled:opacity-50`}
     />
     {error && <p className="text-xs text-red-400">{error}</p>}
   </div>

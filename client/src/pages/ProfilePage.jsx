@@ -6,9 +6,9 @@ import BottomNav from '../components/BottomNav';
 const ProfilePage = () => {
   const { user } = useAuth();
   return (
-    <div className="min-h-screen bg-chat-bg text-white pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary pb-20">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light">
-        <Link to="/" className="text-white hover:text-primary"><FiArrowLeft size={22} /></Link>
+        <Link to="/" className="text-primary hover:text-primary"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Profile</h2>
       </header>
       <div className="flex flex-col items-center pt-10 pb-6 px-4">
@@ -20,7 +20,7 @@ const ProfilePage = () => {
         <p className="text-text-secondary text-sm flex items-center gap-1"><FiMail size={14} /> {user?.email}</p>
       </div>
       <div className="px-4 mt-4">
-        <Link to="/settings" className="flex items-center gap-4 bg-surface hover:bg-gray-700 p-4 rounded-xl transition-colors">
+        <Link to="/settings" className="flex items-center gap-4 bg-surface hover:bg-surface p-4 rounded-xl transition-colors">
           <FiSettings size={20} className="text-primary" /><span>Settings</span><FiChevronRight size={16} className="ml-auto" />
         </Link>
       </div>

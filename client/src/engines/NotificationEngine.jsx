@@ -18,7 +18,7 @@ const NotificationEngine = ({ notifications = [], onDismiss }) => {
       {notifications.map((notif, i) => {
         const Icon = icons[notif.type] || FiBell;
         return (
-          <div key={i} className={`flex items-start gap-3 p-3 rounded-xl shadow-lg border ${notif.type === 'success' ? 'bg-green-600/20 border-green-600 text-green-400' : notif.type === 'warning' ? 'bg-yellow-600/20 border-yellow-600 text-yellow-400' : 'bg-blue-600/20 border-blue-600 text-blue-400'} animate-fade-in`}>
+          <div key={i} className={`flex items-start gap-3 p-3 rounded-xl shadow-lg border ${notif.type === 'success' ? 'bg-green-600/20 border-green-600 text-green-400' : notif.type === 'warning' ? 'bg-yellow-600/20 border-yellow-600 text-yellow-400' : 'bg-primary-dark/20 border-blue-600 text-primary'} animate-fade-in`}>
             <Icon size={18} className="mt-0.5 flex-shrink-0" />
             <div className="flex-1 text-sm">
               <p className="font-medium">{notif.title}</p>

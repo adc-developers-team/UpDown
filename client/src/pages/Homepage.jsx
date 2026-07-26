@@ -130,7 +130,7 @@ const Homepage = () => {
   if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center pb-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white pb-20 pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary pb-20 pb-20">
       <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
         <h2 className="text-xl font-bold"><span className="text-primary">UpDown</span> Community</h2>
       </header>
@@ -146,7 +146,7 @@ const Homepage = () => {
             rows={3}
           />
           <div className="flex items-center gap-2">
-            <label className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+            <label className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-surface rounded-full">
               <FiImage size={20} className="text-text-secondary" />
               <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
             </label>
@@ -163,7 +163,7 @@ const Homepage = () => {
             </div>
           </div>
           {(newText || newImage || newVideoUrl) && (
-            <button type="submit" className="w-full bg-primary text-white py-2 rounded-full font-semibold hover:bg-primary-dark transition">
+            <button type="submit" className="w-full bg-primary text-primary py-2 rounded-full font-semibold hover:bg-primary-dark transition">
               Post
             </button>
           )}
@@ -207,7 +207,7 @@ const Homepage = () => {
                         <div className="cursor-pointer" onClick={() => window.open(post.video, '_blank')}>
                           <img src={`https://img.youtube.com/vi/${getYouTubeId(post.video)}/0.jpg`} className="w-full" alt="" />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <FiVideo size={40} className="text-white" />
+                            <FiVideo size={40} className="text-primary" />
                           </div>
                         </div>
                       ) : (
@@ -265,7 +265,7 @@ const Homepage = () => {
       {viewerImage && (
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center" onClick={() => setViewerImage(null)}>
           <img src={viewerImage} className="max-h-full max-w-full object-contain" alt="" />
-          <button className="absolute top-4 right-4 text-white p-2" onClick={() => setViewerImage(null)}><FiX size={28} /></button>
+          <button className="absolute top-4 right-4 text-primary p-2" onClick={() => setViewerImage(null)}><FiX size={28} /></button>
         </div>
       )}
 

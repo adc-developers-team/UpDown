@@ -52,18 +52,18 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center p-4 pb-20 pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary flex items-center justify-center p-4 pb-20 pb-20">
       <div className="w-full max-w-md bg-surface rounded-2xl shadow-2 p-8">
         <h2 className="text-2xl font-bold text-center mb-6">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
         {message && <div className={`p-3 rounded-xl mb-4 text-sm ${message.includes('successfully') || message.includes('created') ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{message}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
-            <input type="text" placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-border-light focus:border-primary" />
+            <input type="text" placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" />
           )}
-          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-border-light focus:border-primary" required />
+          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" required />
           {!isLogin && (
             <div className="relative">
-              <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border pr-10 ${usernameAvailable === false && username.length > 0 ? 'border-danger' : usernameAvailable === true ? 'border-success' : 'border-border-light focus:border-primary'}`} required />
+              <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border pr-10 ${usernameAvailable === false && username.length > 0 ? 'border-danger' : usernameAvailable === true ? 'border-success' : 'border-border-light focus:border-primary'}`} required />
               <div className="absolute right-3 top-3">
                 {checkingUsername && <FiLoader className="animate-spin text-text-muted" />}
                 {!checkingUsername && usernameAvailable === true && <FiCheck className="text-success" />}
@@ -72,16 +72,16 @@ const LoginPage = () => {
             </div>
           )}
           <div className="relative">
-            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border border-border-light focus:border-primary pr-10" required />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-text-muted hover:text-white">{showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
+            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary pr-10" required />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-text-muted hover:text-primary">{showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
           </div>
           {!isLogin && (
             <div className="relative">
-              <input type={showConfirm ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-white border pr-10 ${confirmPassword && password !== confirmPassword ? 'border-danger' : confirmPassword && password === confirmPassword ? 'border-success' : 'border-border-light focus:border-primary'}`} required />
-              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-3 text-text-muted hover:text-white">{showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
+              <input type={showConfirm ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border pr-10 ${confirmPassword && password !== confirmPassword ? 'border-danger' : confirmPassword && password === confirmPassword ? 'border-success' : 'border-border-light focus:border-primary'}`} required />
+              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-3 text-text-muted hover:text-primary">{showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
             </div>
           )}
-          <button type="submit" disabled={loading} className="w-full bg-primary text-white py-3 rounded-full font-semibold hover:bg-primary-dark transition disabled:opacity-50 flex items-center justify-center gap-2">
+          <button type="submit" disabled={loading} className="w-full bg-primary text-primary py-3 rounded-full font-semibold hover:bg-primary-dark transition disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <FiLoader className="animate-spin" />}
             {isLogin ? (loading ? 'Signing in...' : 'Sign In') : (loading ? 'Creating Account...' : 'Create Account')}
           </button>

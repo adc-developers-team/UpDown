@@ -472,7 +472,7 @@ const ChatRoomPage = () => {
   };
 
   if (loading) return <div className="h-screen bg-chat-bg flex items-center justify-center pb-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
-  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center pb-20"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
+  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center pb-20"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-primary px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
 
   const isOnline = onlineUsers.includes(chatUser._id);
   const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
@@ -489,10 +489,10 @@ const ChatRoomPage = () => {
           <h2 className="font-semibold text-[15px] truncate">{chatUser.fullName || chatUser.username}</h2>
           <p className={`text-xs ${isOnline ? 'text-success' : 'text-text-secondary'}`}>{typingUser ? `${typingUser} is typing...` : statusText}</p>
         </div>
-        <button onClick={() => startCall('audio')} className="p-2 hover:bg-gray-700 rounded-full"><FiPhone size={18} /></button>
-        <button onClick={() => startCall('video')} className="p-2 hover:bg-gray-700 rounded-full"><FiVideo size={18} /></button>
+        <button onClick={() => startCall('audio')} className="p-2 hover:bg-surface rounded-full"><FiPhone size={18} /></button>
+        <button onClick={() => startCall('video')} className="p-2 hover:bg-surface rounded-full"><FiVideo size={18} /></button>
         <div className="relative">
-          <button onClick={handleBlock} className="p-2 hover:bg-gray-700 rounded-full">
+          <button onClick={handleBlock} className="p-2 hover:bg-surface rounded-full">
             {isBlocked ? <FiCheckCircle size={18} className="text-success" /> : <FiSlash size={18} />}
           </button>
         </div>
@@ -551,7 +551,7 @@ const ChatRoomPage = () => {
             <span className="font-medium text-primary">{replyTo.sender?.fullName || replyTo.sender?.username || 'User'}</span>
             <span className="ml-1">{replyTo.text || 'Media'}</span>
           </div>
-          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-primary p-1">✕</button>
+          <button onClick={() => setReplyTo(null)} className="text-text-secondary hover:text-primary p-1">✕</button>
         </div>
       )}
 
@@ -559,7 +559,7 @@ const ChatRoomPage = () => {
       <form onSubmit={handleSend} className="px-3 py-3 bg-sidebar-bg border-t border-border-light flex items-center gap-3">
         <input type="file" accept="image/*" ref={imageInputRef} onChange={handleImageSelect} className="hidden" />
         <input type="file" accept="video/*" ref={videoInputRef} onChange={handleVideoSelect} className="hidden" />
-        <button type="button" onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-gray-400 hover:text-primary p-1.5 relative">
+        <button type="button" onClick={() => setShowAttachMenu(!showAttachMenu)} className="text-text-secondary hover:text-primary p-1.5 relative">
           <FiPlusCircle size={24} />
           {showAttachMenu && (
             <div className="absolute bottom-full left-0 mb-2 bg-surface rounded-xl shadow-2 border border-border-light p-2 flex flex-col gap-1 z-20 text-sm">
@@ -577,7 +577,7 @@ const ChatRoomPage = () => {
             className="flex-1 bg-transparent outline-none text-[14px] text-primary placeholder-text-muted"
             disabled={isBlocked}
           />
-          <button type="button" onClick={() => setReactionPicker('composer')} className="text-gray-400 hover:text-primary p-1">
+          <button type="button" onClick={() => setReactionPicker('composer')} className="text-text-secondary hover:text-primary p-1">
             <FiSmile size={20} />
           </button>
         </div>
@@ -586,7 +586,7 @@ const ChatRoomPage = () => {
         ) : newMsg.trim() && !isBlocked ? (
           <button type="submit" className="text-primary hover:text-primary-dark p-1.5"><FiSend size={24} /></button>
         ) : !isBlocked ? (
-          <button type="button" onClick={startRecording} className="text-gray-400 hover:text-primary p-1.5"><FiMic size={24} /></button>
+          <button type="button" onClick={startRecording} className="text-text-secondary hover:text-primary p-1.5"><FiMic size={24} /></button>
         ) : null}
       </form>
       <BottomNav />

@@ -119,7 +119,7 @@ const ChatsPage = () => {
   const onlineCount = safeUsers.filter(u => onlineUsers.includes(u._id)).length;
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white w-full pb-16">
+    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-16">
       {/* Offline Banner */}
       {isOffline && (
         <div className="bg-warning/20 text-warning text-xs text-center py-1.5 flex items-center justify-center gap-2">
@@ -170,10 +170,10 @@ const ChatsPage = () => {
             placeholder="Search chats, groups..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="ml-3 bg-transparent outline-none flex-1 text-sm text-white placeholder-text-muted"
+            className="ml-3 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="p-1 hover:bg-gray-700 rounded-full"><FiX size={14} className="text-text-muted" /></button>
+            <button onClick={() => setSearch('')} className="p-1 hover:bg-surface rounded-full"><FiX size={14} className="text-text-muted" /></button>
           )}
         </div>
       </div>
@@ -183,7 +183,7 @@ const ChatsPage = () => {
         <button
           onClick={() => setActiveTab('chats')}
           className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'chats' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-white hover:bg-gray-800'
+            activeTab === 'chats' ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-bg-input'
           }`}
         >
           Chats
@@ -191,7 +191,7 @@ const ChatsPage = () => {
         <button
           onClick={() => setActiveTab('groups')}
           className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'groups' ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-white hover:bg-gray-800'
+            activeTab === 'groups' ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-bg-input'
           }`}
         >
           Groups
@@ -204,10 +204,10 @@ const ChatsPage = () => {
           <div className="space-y-1 p-2">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="flex items-center gap-4 p-4 animate-pulse">
-                <div className="w-14 h-14 rounded-full bg-gray-700" />
+                <div className="w-14 h-14 rounded-full bg-surface" />
                 <div className="flex-1 space-y-2.5">
-                  <div className="h-4 bg-gray-700 rounded w-1/3" />
-                  <div className="h-3.5 bg-gray-700 rounded w-2/3" />
+                  <div className="h-4 bg-surface rounded w-1/3" />
+                  <div className="h-3.5 bg-surface rounded w-2/3" />
                 </div>
               </div>
             ))}
@@ -218,9 +218,9 @@ const ChatsPage = () => {
               <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
                 <FiMessageSquare size={40} className="text-primary/50" />
               </div>
-              <p className="text-xl font-semibold text-white mb-2">No chats yet</p>
+              <p className="text-xl font-semibold text-primary mb-2">No chats yet</p>
               <p className="text-sm mb-6">Start your first conversation</p>
-              <Link to="/add-friends" className="bg-primary text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Find Friends</Link>
+              <Link to="/add-friends" className="bg-primary text-primary px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Find Friends</Link>
             </div>
           ) : (
             <div className="divide-y divide-gray-800/30">
@@ -231,7 +231,7 @@ const ChatsPage = () => {
                   <Link
                     key={u._id}
                     to={`/chat/${u._id}`}
-                    className="flex items-center gap-4 px-4 py-3.5 hover:bg-gray-800/20 transition-colors active:scale-[0.99]"
+                    className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]"
                   >
                     <div className="relative flex-shrink-0">
                       <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/10">
@@ -246,7 +246,7 @@ const ChatsPage = () => {
                       </div>
                       <div className="flex items-center gap-1.5 mt-1">
                         <p className="text-[13px] text-text-secondary truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Media' : '')) : 'No messages yet'}</p>
-                        {unread > 0 && <span className="flex-shrink-0 w-5 h-5 bg-primary rounded-full text-[10px] flex items-center justify-center font-bold text-white">{unread > 99 ? '99+' : unread}</span>}
+                        {unread > 0 && <span className="flex-shrink-0 w-5 h-5 bg-primary rounded-full text-[10px] flex items-center justify-center font-bold text-primary">{unread > 99 ? '99+' : unread}</span>}
                       </div>
                     </div>
                   </Link>
@@ -259,16 +259,16 @@ const ChatsPage = () => {
             <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
               <FiUsers size={40} className="text-primary/50" />
             </div>
-            <p className="text-xl font-semibold text-white mb-2">No groups yet</p>
+            <p className="text-xl font-semibold text-primary mb-2">No groups yet</p>
             <p className="text-sm mb-6">Create a group to chat together</p>
-            <Link to="/create-group" className="bg-primary text-white px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Create Group</Link>
+            <Link to="/create-group" className="bg-primary text-primary px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Create Group</Link>
           </div>
         ) : (
           <div className="divide-y divide-gray-800/30">
             {filteredGroups.map(g => {
               const members = Array.isArray(g.members) ? g.members : [];
               return (
-                <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-gray-800/20 transition-colors active:scale-[0.99]">
+                <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]">
                   <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/10">
                     <span className="text-xl font-bold text-primary">{g.name?.[0]?.toUpperCase()}</span>
                   </div>
@@ -286,7 +286,7 @@ const ChatsPage = () => {
       {/* Single FAB for new chat */}
       <Link
         to="/add-friends"
-        className="absolute bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-3 hover:scale-105 active:scale-95 transition-all z-10"
+        className="absolute bottom-20 right-6 w-14 h-14 bg-primary text-primary rounded-full flex items-center justify-center shadow-3 hover:scale-105 active:scale-95 transition-all z-10"
         title="New Chat"
       >
         <FiPlus size={26} />

@@ -114,14 +114,14 @@ const GroupChatPage = () => {
       </div>
 
       <form onSubmit={handleSend} className="p-3 bg-sidebar-bg border-t border-border-light flex items-center gap-3">
-        <button type="button" onClick={() => setIsImageMode(!isImageMode)} className={`w-10 h-10 rounded-full flex items-center justify-center ${isImageMode ? 'bg-primary text-primary' : 'bg-gray-700 text-gray-400'}`}><FiImage size={20} /></button>
+        <button type="button" onClick={() => setIsImageMode(!isImageMode)} className={`w-10 h-10 rounded-full flex items-center justify-center ${isImageMode ? 'bg-primary text-primary' : 'bg-surface text-text-secondary'}`}><FiImage size={20} /></button>
         <div className="flex-1 flex items-center bg-bg-input rounded-full h-11 px-4 border border-border-light focus-within:border-primary transition">
           <input type="text" value={newMsg} onChange={e => { setNewMsg(e.target.value); handleTyping(); }} placeholder="Message" className="flex-1 bg-transparent outline-none text-sm text-primary placeholder-text-muted" />
         </div>
         {newMsg.trim() ? (
           <button type="submit" className="text-primary p-1"><FiSend size={22} /></button>
         ) : (
-          <button type="button" className="text-gray-400 hover:text-primary p-1"><FiSmile size={22} /></button>
+          <button type="button" className="text-text-secondary hover:text-primary p-1"><FiSmile size={22} /></button>
         )}
       </form>
     </div>

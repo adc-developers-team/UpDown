@@ -34,16 +34,16 @@ const ForwardModal = ({ message, onClose, onForward }) => {
       <div className="bg-sidebar-bg rounded-2xl p-4 w-full max-w-md max-h-[80vh] overflow-y-auto space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Forward Message</h3>
-          <button onClick={onClose} className="text-gray-400 hover:text-white"><FiX size={18} /></button>
+          <button onClick={onClose} className="text-text-secondary hover:text-primary"><FiX size={18} /></button>
         </div>
-        <div className="flex items-center bg-bg-input rounded-full px-3 py-1.5 border border-gray-700">
+        <div className="flex items-center bg-bg-input rounded-full px-3 py-1.5 border border-border-light">
           <FiSearch size={14} className="text-text-muted" />
           <input
             type="text"
             placeholder="Search chats or groups..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="ml-2 bg-transparent outline-none flex-1 text-sm text-white placeholder-text-muted"
+            className="ml-2 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
           />
         </div>
         {loading ? (
@@ -54,7 +54,7 @@ const ForwardModal = ({ message, onClose, onForward }) => {
               <div>
                 <p className="text-xs text-text-muted mb-1">Friends</p>
                 {filteredFriends.map(f => (
-                  <button key={f._id} onClick={() => onForward(f._id, 'user')} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition text-left">
+                  <button key={f._id} onClick={() => onForward(f._id, 'user')} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bg-input transition text-left">
                     <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center"><span className="text-xs font-bold text-accent">{f.fullName?.[0] || f.username?.[0]?.toUpperCase()}</span></div>
                     <span className="text-sm">{f.fullName || f.username}</span>
                   </button>
@@ -65,7 +65,7 @@ const ForwardModal = ({ message, onClose, onForward }) => {
               <div>
                 <p className="text-xs text-text-muted mb-1">Groups</p>
                 {filteredGroups.map(g => (
-                  <button key={g._id} onClick={() => onForward(g._id, 'group')} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-800 transition text-left">
+                  <button key={g._id} onClick={() => onForward(g._id, 'group')} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bg-input transition text-left">
                     <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center"><span className="text-xs font-bold text-accent">{g.name?.[0]?.toUpperCase()}</span></div>
                     <span className="text-sm">{g.name}</span>
                   </button>

@@ -17,7 +17,7 @@ const VerifyEmailPage = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center pb-20 pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary flex items-center justify-center pb-20 pb-20">
       <div className="text-center">
         <p className="text-xl mb-4">{status}</p>
         {status === 'Email verified successfully! You can now login.' && (
