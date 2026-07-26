@@ -8,7 +8,7 @@ import {
   FiPlus, FiImage, FiVideo, FiPhone, FiVideo as FiVideoCall,
   FiMicOff, FiVideoOff, FiVolume2, FiCornerUpLeft,
   FiTrash2, FiSlash, FiCheckCircle, FiMoreVertical
-} , FiImage } , FiImage } from 'react-icons/fi';
+} from 'react-icons/fi';
 import { io } from 'socket.io-client';
 
 const API = 'https://updown-hms5.onrender.com';
