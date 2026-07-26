@@ -3,12 +3,18 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
 import axios from 'axios';
-import { FiSearch, FiBell, FiPlus, FiUsers, FiMessageSquare, FiX, FiRefreshCw, FiWifiOff } from 'react-icons/fi';
+import {
+  FiSearch, FiBell, FiPlus, FiUsers, FiMessageSquare,
+  FiX, FiRefreshCw, FiWifiOff
+} from 'react-icons/fi';
 import BottomNav from '../components/BottomNav';
+
+const API = 'https://updown-hms5.onrender.com';
 
 const formatLastMessageTime = (dateString) => {
   if (!dateString) return '';
-  const date = new Date(dateString), now = new Date();
+  const date = new Date(dateString);
+  const now = new Date();
   const diffSec = Math.floor((now - date) / 1000);
   if (diffSec < 60) return 'Just now';
   const diffMin = Math.floor(diffSec / 60);
@@ -17,8 +23,10 @@ const formatLastMessageTime = (dateString) => {
   if (diffHr < 24) return `${diffHr}h`;
   const diffDays = Math.floor(diffHr / 24);
   if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
-  return date.toLocaleDateString('en-US',{day:'numeric',month:'short'});
+  if (diffDays < 7) {
+    return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
+  }
+  return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
 };
 
 const ChatsPage = () => {
@@ -41,57 +49,71 @@ const ChatsPage = () => {
     setRefreshing(true);
     try {
       const [friendsRes, groupsRes] = await Promise.all([
-        axios.get('https://updown-hms5.onrender.com/api/friends', config),
-        axios.get('https://updown-hms5.onrender.com/api/groups', config)
+        axios.get(`${API}/api/friends`, config),
+        axios.get(`${API}/api/groups`, config),
       ]);
       setUsers(Array.isArray(friendsRes.data) ? friendsRes.data : []);
       setGroups(Array.isArray(groupsRes.data) ? groupsRes.data : []);
-    } catch (err) {
-      setUsers([]); setGroups([]);
+    } catch {
+      setUsers([]);
+      setGroups([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [user._id]);
+  }, [user?._id]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
+  // Pending friend requests
   useEffect(() => {
     const fetchPending = async () => {
       try {
-        const { data } = await axios.get('https://updown-hms5.onrender.com/api/friends/requests/received', config);
+        const { data } = await axios.get(`${API}/api/friends/requests/received`, config);
         setPendingCount(Array.isArray(data) ? data.length : 0);
-      } catch (err) { setPendingCount(0); }
+      } catch {
+        setPendingCount(0);
+      }
     };
     fetchPending();
-    const interval = setInterval(fetchPending, 10000);
+    const interval = setInterval(fetchPending, 15000);
     return () => clearInterval(interval);
   }, []);
 
+  // Last messages + unread counts
   useEffect(() => {
     const fetchMessageData = async () => {
       try {
         const [lastRes, unreadRes] = await Promise.all([
-          axios.get(`https://updown-hms5.onrender.com/api/messages/last-messages/${user._id}`, config),
-          axios.get(`https://updown-hms5.onrender.com/api/messages/unread-counts/${user._id}`, config)
+          axios.get(`\( {API}/api/messages/last-messages/ \){user._id}`, config),
+          axios.get(`\( {API}/api/messages/unread-counts/ \){user._id}`, config),
         ]);
+
         const map = {};
         if (Array.isArray(lastRes.data)) {
-          lastRes.data.forEach(msg => {
-            const ids = msg.conversationId.split('_');
-            const other = ids.find(id => id !== user._id);
+          lastRes.data.forEach((msg) => {
+            const ids = msg.conversationId?.split('_') || [];
+            const other = ids.find((id) => id !== user._id);
             if (other) map[other] = msg;
           });
         }
         setLastMessages(map);
         setUnreadCounts(unreadRes.data || {});
-      } catch (err) {}
+      } catch {
+        // silent
+      }
     };
-    fetchMessageData();
-    const interval = setInterval(fetchMessageData, 5000);
-    return () => clearInterval(interval);
-  }, [user._id]);
 
+    if (user?._id) {
+      fetchMessageData();
+      const interval = setInterval(fetchMessageData, 8000);
+      return () => clearInterval(interval);
+    }
+  }, [user?._id]);
+
+  // Online / Offline detection
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -104,57 +126,85 @@ const ChatsPage = () => {
   }, []);
 
   const safeUsers = Array.isArray(users) ? users : [];
-  const filteredUsers = safeUsers.filter(u => {
-    const name = (u.fullName || u.username || '').toLowerCase();
-    const keyword = search.toLowerCase();
-    return name.includes(keyword);
-  });
   const safeGroups = Array.isArray(groups) ? groups : [];
-  const filteredGroups = safeGroups.filter(g => {
+
+  // Filter + Sort chats by latest message
+  const filteredUsers = safeUsers
+    .filter((u) => {
+      const name = (u.fullName || u.username || '').toLowerCase();
+      return name.includes(search.toLowerCase());
+    })
+    .sort((a, b) => {
+      const timeA = lastMessages[a._id]?.createdAt
+        ? new Date(lastMessages[a._id].createdAt).getTime()
+        : 0;
+      const timeB = lastMessages[b._id]?.createdAt
+        ? new Date(lastMessages[b._id].createdAt).getTime()
+        : 0;
+      return timeB - timeA;
+    });
+
+  const filteredGroups = safeGroups.filter((g) => {
     const name = (g.name || '').toLowerCase();
-    const keyword = search.toLowerCase();
-    return name.includes(keyword);
+    return name.includes(search.toLowerCase());
   });
 
-  const onlineCount = safeUsers.filter(u => onlineUsers.includes(u._id)).length;
+  const onlineCount = safeUsers.filter((u) => onlineUsers.includes(u._id)).length;
 
   return (
     <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-16">
       {/* Offline Banner */}
       {isOffline && (
-        <div className="bg-warning/20 text-warning text-xs text-center py-1.5 flex items-center justify-center gap-2">
-          <FiWifiOff size={14} /> You are offline. Messages will sync when connected.
+        <div className="bg-amber-500/15 text-amber-600 dark:text-amber-400 text-xs text-center py-2 flex items-center justify-center gap-2">
+          <FiWifiOff size={14} />
+          You are offline. Messages will sync when connected.
         </div>
       )}
 
       {/* Header */}
-      <header className="h-16 sm:h-[72px] flex items-center justify-between px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
+      <header className="h-16 sm:h-[72px] flex items-center justify-between px-4 bg-surface border-b border-border-light sticky top-0 z-20">
         <div>
-          <h1 className="text-xl sm:text-[22px] font-extrabold tracking-tight">
+          <h1 className="text-xl sm:text-[22px] font-bold tracking-tight">
             <span className="text-primary">Up</span>Down
           </h1>
           <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
             {onlineCount > 0 ? `${onlineCount} friends online` : 'No friends online'}
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={fetchData} className="p-1.5 hover:bg-primary/10 rounded-full transition" title="Refresh">
-            <FiRefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchData}
+            disabled={refreshing}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            title="Refresh"
+          >
+            <FiRefreshCw
+              size={20}
+              className={`text-text-secondary ${refreshing ? 'animate-spin' : ''}`}
+            />
           </button>
-          <Link to="/notifications" className="relative p-1.5 hover:bg-primary/10 rounded-full transition">
-            <FiBell size={20} />
+
+          <Link
+            to="/notifications"
+            className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          >
+            <FiBell size={20} className="text-text-secondary" />
             {pendingCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 bg-danger rounded-full text-[10px] flex items-center justify-center font-bold ring-2 ring-dark-blue">
+              <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-danger rounded-full text-[10px] flex items-center justify-center font-bold text-white">
                 {pendingCount > 9 ? '9+' : pendingCount}
               </span>
             )}
           </Link>
-          <Link to="/profile" className="p-0.5">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 hover:ring-primary transition">
+
+          <Link to="/profile" className="ml-1">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 hover:ring-primary/40 transition">
               {user?.profilePic ? (
                 <img src={user.profilePic} className="w-full h-full object-cover" alt="" />
               ) : (
-                <span className="text-sm font-bold text-primary">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>
+                <span className="text-sm font-bold text-primary">
+                  {user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}
+                </span>
               )}
             </div>
           </Link>
@@ -162,9 +212,9 @@ const ChatsPage = () => {
       </header>
 
       {/* Search */}
-      <div className="px-4 py-2 bg-sidebar-bg border-b border-border-light">
-        <div className="flex items-center bg-bg-input rounded-full h-10 px-4 border border-border-light focus-within:border-primary transition">
-          <FiSearch className="text-text-muted flex-shrink-0" size={16} />
+      <div className="px-4 py-3 bg-surface border-b border-border-light">
+        <div className="flex items-center bg-bg-input rounded-full h-11 px-4 border border-border-light focus-within:border-primary transition">
+          <FiSearch className="text-text-muted flex-shrink-0" size={18} />
           <input
             type="text"
             placeholder="Search chats, groups..."
@@ -173,80 +223,123 @@ const ChatsPage = () => {
             className="ml-3 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
           />
           {search && (
-            <button onClick={() => setSearch('')} className="p-1 hover:bg-surface rounded-full"><FiX size={14} className="text-text-muted" /></button>
+            <button
+              onClick={() => setSearch('')}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
+            >
+              <FiX size={16} className="text-text-muted" />
+            </button>
           )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-sidebar-bg border-b border-border-light px-4 gap-2 py-1.5">
+      <div className="flex bg-surface border-b border-border-light px-4 gap-2 py-2">
         <button
           onClick={() => setActiveTab('chats')}
-          className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'chats' ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-bg-input'
+          className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${
+            activeTab === 'chats'
+              ? 'bg-primary text-white shadow-md'
+              : 'text-text-secondary hover:text-primary hover:bg-bg-input'
           }`}
         >
           Chats
         </button>
         <button
           onClick={() => setActiveTab('groups')}
-          className={`flex-1 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-            activeTab === 'groups' ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-bg-input'
+          className={`flex-1 py-2.5 rounded-full text-sm font-semibold transition-all ${
+            activeTab === 'groups'
+              ? 'bg-primary text-white shadow-md'
+              : 'text-text-secondary hover:text-primary hover:bg-bg-input'
           }`}
         >
           Groups
         </button>
       </div>
 
-      {/* Chat List */}
+      {/* List */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="space-y-1 p-2">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 animate-pulse">
-                <div className="w-14 h-14 rounded-full bg-surface" />
+          <div className="space-y-1 p-3">
+            {[...Array(7)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 p-3 animate-pulse">
+                <div className="w-14 h-14 rounded-full bg-gray-200 dark:bg-gray-700" />
                 <div className="flex-1 space-y-2.5">
-                  <div className="h-4 bg-surface rounded w-1/3" />
-                  <div className="h-3.5 bg-surface rounded w-2/3" />
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3" />
+                  <div className="h-3.5 bg-gray-200 dark:bg-gray-700 rounded w-2/3" />
                 </div>
               </div>
             ))}
           </div>
         ) : activeTab === 'chats' ? (
           filteredUsers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-text-muted px-4 text-center">
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                <FiMessageSquare size={40} className="text-primary/50" />
+            <div className="flex flex-col items-center justify-center h-full text-text-muted px-6 text-center py-16">
+              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+                <FiMessageSquare size={36} className="text-primary/50" />
               </div>
-              <p className="text-xl font-semibold text-primary mb-2">No chats yet</p>
+              <p className="text-lg font-semibold text-primary mb-1">No chats yet</p>
               <p className="text-sm mb-6">Start your first conversation</p>
-              <Link to="/add-friends" className="bg-primary text-primary px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Find Friends</Link>
+              <Link
+                to="/add-friends"
+                className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-md"
+              >
+                Find Friends
+              </Link>
             </div>
           ) : (
-            <div className="divide-y divide-gray-800/30">
-              {filteredUsers.map(u => {
+            <div className="divide-y divide-border-light">
+              {filteredUsers.map((u) => {
                 const lastMsg = lastMessages[u._id];
                 const unread = unreadCounts[u._id] || 0;
+                const isOnline = onlineUsers.includes(u._id);
+
                 return (
                   <Link
                     key={u._id}
                     to={`/chat/${u._id}`}
-                    className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]"
+                    className="flex items-center gap-3.5 px-4 py-3.5 hover:bg-bg-input/40 active:bg-bg-input/60 transition-colors"
                   >
                     <div className="relative flex-shrink-0">
-                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/10">
-                        {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xl font-bold text-primary">{u.fullName?.[0] || u.username[0].toUpperCase()}</span>}
+                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                        {u.profilePic ? (
+                          <img
+                            src={u.profilePic}
+                            className="w-full h-full object-cover"
+                            alt=""
+                          />
+                        ) : (
+                          <span className="text-xl font-bold text-primary">
+                            {u.fullName?.[0] || u.username?.[0]?.toUpperCase()}
+                          </span>
+                        )}
                       </div>
-                      {onlineUsers.includes(u._id) && <span className="online-dot" />}
+                      {isOnline && (
+                        <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-surface rounded-full" />
+                      )}
                     </div>
+
                     <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline">
-                        <h3 className="font-semibold text-[15px] truncate">{u.fullName || u.username}</h3>
-                        {lastMsg && <span className="text-xs text-text-muted ml-2 flex-shrink-0 font-medium">{formatLastMessageTime(lastMsg.createdAt)}</span>}
+                      <div className="flex justify-between items-baseline gap-2">
+                        <h3 className="font-semibold text-[15px] truncate">
+                          {u.fullName || u.username}
+                        </h3>
+                        {lastMsg && (
+                          <span className="text-xs text-text-muted flex-shrink-0 font-medium">
+                            {formatLastMessageTime(lastMsg.createdAt)}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <p className="text-[13px] text-text-secondary truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Media' : '')) : 'No messages yet'}</p>
-                        {unread > 0 && <span className="flex-shrink-0 w-5 h-5 bg-primary rounded-full text-[10px] flex items-center justify-center font-bold text-primary">{unread > 99 ? '99+' : unread}</span>}
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-[13px] text-text-secondary truncate flex-1">
+                          {lastMsg
+                            ? lastMsg.text || (lastMsg.image ? 'Media' : 'Attachment')
+                            : 'No messages yet'}
+                        </p>
+                        {unread > 0 && (
+                          <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-primary rounded-full text-[11px] flex items-center justify-center font-bold text-white">
+                            {unread > 99 ? '99+' : unread}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </Link>
@@ -255,26 +348,39 @@ const ChatsPage = () => {
             </div>
           )
         ) : filteredGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-muted px-4 text-center">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-              <FiUsers size={40} className="text-primary/50" />
+          <div className="flex flex-col items-center justify-center h-full text-text-muted px-6 text-center py-16">
+            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+              <FiUsers size={36} className="text-primary/50" />
             </div>
-            <p className="text-xl font-semibold text-primary mb-2">No groups yet</p>
+            <p className="text-lg font-semibold text-primary mb-1">No groups yet</p>
             <p className="text-sm mb-6">Create a group to chat together</p>
-            <Link to="/create-group" className="bg-primary text-primary px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Create Group</Link>
+            <Link
+              to="/create-group"
+              className="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-md"
+            >
+              Create Group
+            </Link>
           </div>
         ) : (
-          <div className="divide-y divide-gray-800/30">
-            {filteredGroups.map(g => {
+          <div className="divide-y divide-border-light">
+            {filteredGroups.map((g) => {
               const members = Array.isArray(g.members) ? g.members : [];
               return (
-                <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/10">
-                    <span className="text-xl font-bold text-primary">{g.name?.[0]?.toUpperCase()}</span>
+                <Link
+                  key={g._id}
+                  to={`/group-chat/${g._id}`}
+                  className="flex items-center gap-3.5 px-4 py-3.5 hover:bg-bg-input/40 active:bg-bg-input/60 transition-colors"
+                >
+                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl font-bold text-primary">
+                      {g.name?.[0]?.toUpperCase()}
+                    </span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-[15px] truncate">{g.name}</h3>
-                    <p className="text-[13px] text-text-secondary mt-1">{members.length} members</p>
+                    <p className="text-[13px] text-text-secondary mt-1">
+                      {members.length} member{members.length !== 1 ? 's' : ''}
+                    </p>
                   </div>
                 </Link>
               );
@@ -283,14 +389,15 @@ const ChatsPage = () => {
         )}
       </div>
 
-      {/* Single FAB for new chat */}
+      {/* FAB */}
       <Link
-        to="/add-friends"
-        className="absolute bottom-20 right-6 w-14 h-14 bg-primary text-primary rounded-full flex items-center justify-center shadow-3 hover:scale-105 active:scale-95 transition-all z-10"
-        title="New Chat"
+        to={activeTab === 'groups' ? '/create-group' : '/add-friends'}
+        className="absolute bottom-20 right-5 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all z-10"
+        title={activeTab === 'groups' ? 'Create Group' : 'New Chat'}
       >
         <FiPlus size={26} />
       </Link>
+
       <BottomNav />
     </div>
   );
