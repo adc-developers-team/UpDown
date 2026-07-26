@@ -3,21 +3,22 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import {
   FiHeart, FiMessageSquare, FiShare2, FiSend, FiImage, FiX, FiMoreHorizontal,
-  FiVideo, FiLink, FiMaximize, FiChevronLeft, FiChevronRight
+  FiVideo, FiMaximize
 } from 'react-icons/fi';
 import BottomNav from '../components/BottomNav';
+import CommentSheet from '../components/CommentSheet';
 
-const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 
 const Homepage = () => {
   const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [newText, setNewText] = useState('');
-  const [newImage, setNewImage] = useState(null); // file object
+  const [newImage, setNewImage] = useState(null);
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [loading, setLoading] = useState(true);
-  const [commentText, setCommentText] = useState({});
-  const [viewerImage, setViewerImage] = useState(null); // full screen image
+  const [viewerImage, setViewerImage] = useState(null);
+  const [commentSheetPostId, setCommentSheetPostId] = useState(null);
 
   const token = localStorage.getItem('token');
   const config = { headers: { Authorization: `Bearer ${token}` } };
@@ -54,48 +55,23 @@ const Homepage = () => {
     let imageUrl = '';
     let video = '';
     if (newImage) {
-      try {
-        imageUrl = await uploadImage(newImage);
-      } catch (err) { alert('Image upload failed'); return; }
+      try { imageUrl = await uploadImage(newImage); } catch (err) { alert('Image upload failed'); return; }
     }
-    if (newVideoUrl.trim()) {
-      video = newVideoUrl.trim();
-    }
+    if (newVideoUrl.trim()) video = newVideoUrl.trim();
     try {
-      await axios.post('https://updown-hms5.onrender.com/api/posts', {
-        text: newText,
-        image: imageUrl,
-        video: video,
-      }, config);
-      setNewText('');
-      setNewImage(null);
-      setNewVideoUrl('');
+      await axios.post('https://updown-hms5.onrender.com/api/posts', { text: newText, image: imageUrl, video: video }, config);
+      setNewText(''); setNewImage(null); setNewVideoUrl('');
       fetchPosts();
     } catch (err) { alert('Failed to create post'); }
   };
 
   const handleLike = async (postId) => {
-    try {
-      await axios.put(`https://updown-hms5.onrender.com/api/posts/${postId}/like`, {}, config);
-      fetchPosts();
-    } catch (err) {}
-  };
-
-  const handleComment = async (postId, text) => {
-    if (!text.trim()) return;
-    try {
-      await axios.post(`https://updown-hms5.onrender.com/api/posts/${postId}/comment`, { text }, config);
-      setCommentText(prev => ({ ...prev, [postId]: '' }));
-      fetchPosts();
-    } catch (err) {}
+    try { await axios.put(`https://updown-hms5.onrender.com/api/posts/${postId}/like`, {}, config); fetchPosts(); } catch (err) {}
   };
 
   const handleDeletePost = async (postId) => {
     if (!confirm('Delete this post?')) return;
-    try {
-      await axios.delete(`https://updown-hms5.onrender.com/api/posts/${postId}`, config);
-      fetchPosts();
-    } catch (err) { alert('Failed to delete'); }
+    try { await axios.delete(`https://updown-hms5.onrender.com/api/posts/${postId}`, config); fetchPosts(); } catch (err) { alert('Failed to delete'); }
   };
 
   const handleShare = (postId) => {
@@ -103,8 +79,7 @@ const Homepage = () => {
     if (navigator.share) {
       navigator.share({ title: 'Check this post', url });
     } else {
-      navigator.clipboard.writeText(url);
-      alert('Link copied!');
+      navigator.clipboard.writeText(url); alert('Link copied!');
     }
   };
 
@@ -118,19 +93,21 @@ const Homepage = () => {
     return `${Math.floor(hrs / 24)}d ago`;
   };
 
-  const isVideoUrl = (url) => {
-    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|.*\.mp4)/i.test(url);
-  };
+  const isVideoUrl = (url) => /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|.*\.mp4)/i.test(url);
 
   const getYouTubeId = (url) => {
     const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
     return match ? match[1] : null;
   };
 
-  if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center pb-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
+  if (loading) return (
+    <div className="min-h-screen bg-chat-bg flex items-center justify-center">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-chat-bg text-primary pb-20 pb-20">
+    <div className="min-h-screen bg-chat-bg text-white pb-20">
       <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
         <h2 className="text-xl font-bold"><span className="text-primary">UpDown</span> Community</h2>
       </header>
@@ -146,26 +123,18 @@ const Homepage = () => {
             rows={3}
           />
           <div className="flex items-center gap-2">
-            <label className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-surface rounded-full">
+            <label className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
               <FiImage size={20} className="text-text-secondary" />
               <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
             </label>
             <div className="flex-1 flex items-center bg-bg-input rounded-full px-3 py-1 border border-border-light">
               <FiVideo size={16} className="text-text-secondary mr-2" />
-              <input
-                type="text"
-                placeholder="Video link (YouTube, Vimeo, MP4)"
-                value={newVideoUrl}
-                onChange={(e) => setNewVideoUrl(e.target.value)}
-                className="bg-transparent outline-none text-sm text-primary flex-1 placeholder-text-muted"
-              />
+              <input type="text" placeholder="Video link (YouTube, Vimeo, MP4)" value={newVideoUrl} onChange={(e) => setNewVideoUrl(e.target.value)} className="bg-transparent outline-none text-sm text-primary flex-1 placeholder-text-muted" />
               {newVideoUrl && <button type="button" onClick={() => setNewVideoUrl('')} className="p-1"><FiX size={14} className="text-text-muted" /></button>}
             </div>
           </div>
           {(newText || newImage || newVideoUrl) && (
-            <button type="submit" className="w-full bg-primary text-primary py-2 rounded-full font-semibold hover:bg-primary-dark transition">
-              Post
-            </button>
+            <button type="submit" className="w-full bg-primary text-white py-2 rounded-full font-semibold hover:bg-primary-dark transition">Post</button>
           )}
         </form>
 
@@ -194,29 +163,19 @@ const Homepage = () => {
                 <div className="px-4 pb-3 space-y-2">
                   {post.text && <p className="text-sm leading-relaxed">{post.text}</p>}
                   {post.image && !post.video && (
-                    <img
-                      src={post.image}
-                      className="rounded-xl w-full cursor-pointer"
-                      onClick={() => setViewerImage(post.image)}
-                      alt=""
-                    />
+                    <img src={post.image} className="rounded-xl w-full cursor-pointer" onClick={() => setViewerImage(post.image)} alt="" />
                   )}
                   {post.video && (
                     <div className="relative rounded-xl overflow-hidden bg-black">
                       {getYouTubeId(post.video) ? (
                         <div className="cursor-pointer" onClick={() => window.open(post.video, '_blank')}>
                           <img src={`https://img.youtube.com/vi/${getYouTubeId(post.video)}/0.jpg`} className="w-full" alt="" />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                            <FiVideo size={40} className="text-primary" />
-                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30"><FiVideo size={40} className="text-white" /></div>
                         </div>
                       ) : (
                         <div className="p-4 flex items-center gap-3 cursor-pointer" onClick={() => window.open(post.video, '_blank')}>
                           <FiVideo size={24} className="text-primary" />
-                          <div>
-                            <p className="text-sm font-medium">Watch video</p>
-                            <p className="text-xs text-text-secondary truncate">{post.video}</p>
-                          </div>
+                          <div><p className="text-sm font-medium">Watch video</p><p className="text-xs text-text-secondary truncate">{post.video}</p></div>
                         </div>
                       )}
                     </div>
@@ -227,7 +186,7 @@ const Homepage = () => {
                     <FiHeart size={16} className={post.likes?.includes(user._id) ? 'fill-current' : ''} />
                     <span>{post.likes?.length || 0}</span>
                   </button>
-                  <button onClick={() => setCommentText(prev => ({ ...prev, [post._id]: prev[post._id] === undefined ? '' : prev[post._id] }))} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition">
+                  <button onClick={() => setCommentSheetPostId(post._id)} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition">
                     <FiMessageSquare size={16} />
                     <span>{post.comments?.length || 0}</span>
                   </button>
@@ -235,26 +194,6 @@ const Homepage = () => {
                     <FiShare2 size={16} />
                   </button>
                 </div>
-                {commentText[post._id] !== undefined && (
-                  <div className="px-4 pb-3 space-y-2">
-                    {post.comments?.slice(-3).map(comment => (
-                      <div key={comment._id} className="flex items-start gap-2 text-sm">
-                        <span className="font-semibold text-primary">{comment.author?.fullName || comment.author?.username}</span>
-                        <span className="text-text-secondary">{comment.text}</span>
-                      </div>
-                    ))}
-                    <div className="flex items-center gap-2 mt-2">
-                      <input
-                        type="text"
-                        placeholder="Write a comment..."
-                        value={commentText[post._id] || ''}
-                        onChange={(e) => setCommentText(prev => ({ ...prev, [post._id]: e.target.value }))}
-                        className="flex-1 bg-bg-input rounded-full px-3 py-1.5 text-sm outline-none border border-border-light focus:border-primary"
-                      />
-                      <button onClick={() => handleComment(post._id, commentText[post._id])} className="text-primary p-1"><FiSend size={16} /></button>
-                    </div>
-                  </div>
-                )}
               </div>
             ))
           )}
@@ -265,8 +204,13 @@ const Homepage = () => {
       {viewerImage && (
         <div className="fixed inset-0 z-50 bg-black flex items-center justify-center" onClick={() => setViewerImage(null)}>
           <img src={viewerImage} className="max-h-full max-w-full object-contain" alt="" />
-          <button className="absolute top-4 right-4 text-primary p-2" onClick={() => setViewerImage(null)}><FiX size={28} /></button>
+          <button className="absolute top-4 right-4 text-white p-2" onClick={() => setViewerImage(null)}><FiX size={28} /></button>
         </div>
+      )}
+
+      {/* Comment Sheet */}
+      {commentSheetPostId && (
+        <CommentSheet postId={commentSheetPostId} onClose={() => setCommentSheetPostId(null)} />
       )}
 
       <BottomNav />
@@ -274,5 +218,4 @@ const Homepage = () => {
   );
 };
 
-  <BottomNav />
 export default Homepage;
