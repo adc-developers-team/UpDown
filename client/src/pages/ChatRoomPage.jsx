@@ -471,14 +471,14 @@ const ChatRoomPage = () => {
     return 'unknown';
   };
 
-  if (loading) return <div className="h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
-  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
+  if (loading) return <div className="h-screen bg-chat-bg flex items-center justify-center pb-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
+  if (!chatUser) return <div className="h-screen bg-chat-bg flex flex-col items-center justify-center pb-20"><p className="mb-4 text-text-secondary">{error || 'Failed to load chat'}</p><button onClick={() => window.location.reload()} className="bg-primary text-white px-4 py-2 rounded-full text-sm font-medium">Retry</button></div>;
 
   const isOnline = onlineUsers.includes(chatUser._id);
   const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-20">
+    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-20 pb-20">
       {/* Header */}
       <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light">
         <Link to="/" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
@@ -594,4 +594,5 @@ const ChatRoomPage = () => {
   );
 };
 
+  <BottomNav />
 export default ChatRoomPage;

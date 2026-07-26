@@ -127,10 +127,10 @@ const CommunityPage = () => {
     return match ? match[1] : null;
   };
 
-  if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
+  if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center pb-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white pb-20">
+    <div className="min-h-screen bg-chat-bg text-white pb-20 pb-20">
       <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
         <h2 className="text-xl font-bold"><span className="text-primary">UpDown</span> Community</h2>
       </header>
@@ -274,4 +274,5 @@ const CommunityPage = () => {
   );
 };
 
+  <BottomNav />
 export default CommunityPage;

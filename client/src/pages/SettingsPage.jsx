@@ -123,7 +123,7 @@ const SettingsPage = () => {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-primary pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary pb-20 pb-20">
       <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20">
         <Link to="/profile" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Settings</h2>
@@ -287,4 +287,5 @@ const Toggle = ({ label, checked, onChange }) => (
   </div>
 );
 
+  <BottomNav />
 export default SettingsPage;

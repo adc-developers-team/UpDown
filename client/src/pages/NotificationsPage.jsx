@@ -45,7 +45,7 @@ const NotificationsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-primary flex flex-col pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary flex flex-col pb-20 pb-20">
       {/* Header (Themed) */}
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light sticky top-0 z-20">
         <Link to="/" className="text-primary hover:text-accent p-1">
@@ -156,4 +156,5 @@ const NotificationsPage = () => {
 };
 
     <BottomNav />
+  <BottomNav />
 export default NotificationsPage;

@@ -7,7 +7,7 @@ const ProfilePage = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-chat-bg text-primary pb-20">
+    <div className="min-h-screen bg-chat-bg text-primary pb-20 pb-20">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light">
         <Link to="/" className="text-primary hover:text-primary"><FiArrowLeft size={22} /></Link>
         <h2 className="font-semibold text-lg">Profile</h2>
@@ -32,4 +32,5 @@ const ProfilePage = () => {
   );
 };
     <BottomNav />
+  <BottomNav />
 export default ProfilePage;

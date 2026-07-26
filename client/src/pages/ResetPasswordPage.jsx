@@ -25,7 +25,7 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center p-4 pb-20">
+    <div className="min-h-screen bg-chat-bg text-white flex items-center justify-center p-4 pb-20 pb-20">
       <div className="w-full max-w-md bg-surface rounded-2xl shadow-2 p-8">
         <h2 className="text-2xl font-bold text-center mb-6">Reset Password</h2>
         {message && <div className={`p-3 rounded-xl mb-4 text-sm ${message.includes('success') ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{message}</div>}
@@ -39,4 +39,5 @@ const ResetPasswordPage = () => {
     </div>
   );
 };
+  <BottomNav />
 export default ResetPasswordPage;

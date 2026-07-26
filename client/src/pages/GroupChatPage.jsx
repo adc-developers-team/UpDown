@@ -78,12 +78,12 @@ const GroupChatPage = () => {
     }
   };
 
-  if (!group) return <div className="h-screen bg-chat-bg flex items-center justify-center text-primary">Loading...</div>;
+  if (!group) return <div className="h-screen bg-chat-bg flex items-center justify-center text-primary pb-20">Loading...</div>;
 
   const members = Array.isArray(group.members) ? group.members : [];
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-primary pb-20">
+    <div className="h-screen flex flex-col bg-chat-bg text-primary pb-20 pb-20">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light">
         <Link to="/" className="text-primary hover:text-primary"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -129,4 +129,5 @@ const GroupChatPage = () => {
 };
 
       <BottomNav />
+  <BottomNav />
 export default GroupChatPage;
