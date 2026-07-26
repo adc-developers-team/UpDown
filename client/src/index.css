@@ -57,3 +57,51 @@ body {
 ::-webkit-scrollbar-track { background: transparent }
 ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px }
 .pb-safe-area { padding-bottom: env(safe-area-inset-bottom, 0) }
+
+/* ===== Message Bubbles ===== */
+.message-bubble {
+  padding: 10px 14px;
+  border-radius: 20px;
+  position: relative;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 80%;
+  transition: all 0.2s ease;
+}
+
+/* Sent bubble */
+.message-sent {
+  background-color: var(--accent);
+  color: var(--btn-primary-text);
+  border-bottom-right-radius: 6px;
+  margin-left: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Received bubble */
+.message-received {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+/* Light mode – increase received bubble contrast */
+.light .message-received {
+  background-color: #ffffff;
+  border: 1.5px solid #d1d5db;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* Light mode – sent bubble stays dark indigo on white text */
+.light .message-sent {
+  background-color: #6366f1;  /* indigo */
+  color: white;
+}
+
+/* Hover effect */
+.message-bubble:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
