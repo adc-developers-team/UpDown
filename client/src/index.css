@@ -1,18 +1,21 @@
 @import "tailwindcss";
 
+/* ===== UpDown Design System v3.0 ===== */
 :root {
-  --bg-main: #F6F8FC; --bg-surface: #FFFFFF; --bg-sidebar: #F8FAFC; --bg-header: #FFFFFF;
+  --bg-main: #F7F9FC; --bg-surface: #FFFFFF; --bg-sidebar: #F8FAFC; --bg-header: #FFFFFF;
   --bg-input: #F1F5F9; --text-primary: #111827; --text-secondary: #6B7280; --text-muted: #9CA3AF;
-  --border-light: #E6EAF2; --border-medium: #D1D5DB; --primary: #0F5EFF; --primary-dark: #0D4CD9;
-  --primary-light: #E8F0FE; --success: #22C55E; --warning: #F59E0B; --danger: #EF4444;
-  --radius-card: 18px; --radius-btn: 12px; --radius-input: 16px; --shadow-1: 0 1px 2px rgba(0,0,0,.04);
-  --shadow-2: 0 4px 6px -1px rgba(0,0,0,.05), 0 2px 4px -2px rgba(0,0,0,.05);
-  --transition-base: 250ms cubic-bezier(.4,0,.2,1);
+  --border-light: #E8EDF5; --border-medium: #D1D5DB;
+  --primary: #0F172A; --primary-dark: #1E293B; --primary-light: #E2E8F0;
+  --success: #22C55E; --warning: #F59E0B; --danger: #EF4444;
+  --radius-card: 18px; --radius-btn: 14px; --radius-input: 16px;
+  --shadow-1: 0 1px 3px rgba(15,23,42,.04); --shadow-2: 0 4px 6px -1px rgba(15,23,42,.05), 0 2px 4px -2px rgba(15,23,42,.05);
+  --transition-base: 200ms cubic-bezier(.4,0,.2,1);
 }
 .dark {
-  --bg-main: #0E1117; --bg-surface: #181C25; --bg-sidebar: #202533; --bg-header: #0E1117;
-  --bg-input: #202533; --text-primary: #F8FAFC; --text-secondary: #94A3B8; --text-muted: #64748B;
-  --border-light: #2C3342; --border-medium: #475569; --primary: #4F8DFF; --primary-dark: #3B7EFF;
+  --bg-main: #0B1220; --bg-surface: #111827; --bg-sidebar: #1B2433; --bg-header: #0B1220;
+  --bg-input: #1B2433; --text-primary: #F8FAFC; --text-secondary: #94A3B8; --text-muted: #64748B;
+  --border-light: #253044; --border-medium: #475569;
+  --primary: #1E293B; --primary-dark: #334155;
 }
 body {
   background: var(--bg-main); color: var(--text-primary);
@@ -38,6 +41,16 @@ body {
 .hover\:bg-accent-hover:hover { background: var(--primary-dark) !important }
 .message-sent { background: var(--primary) !important; color: #fff !important }
 .message-received { background: var(--bg-surface) !important; color: var(--text-primary) !important; border: 1px solid var(--border-light) !important }
+.online-dot {
+  position: absolute; bottom: 0; right: 0; width: 10px; height: 10px;
+  background: var(--success); border-radius: 50%; border: 2px solid var(--bg-sidebar);
+  box-shadow: 0 0 0 2px var(--bg-sidebar); animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot { 0%,100%{ transform: scale(1); opacity: 1 } 50%{ transform: scale(1.2); opacity: .8 } }
+.text-success { color: var(--success) !important }
+.bg-success { background: var(--success) !important; color: #fff !important }
+.text-danger { color: var(--danger) !important }
+.bg-danger { background: var(--danger) !important; color: #fff !important }
 .animate-fade-in { animation: fadeIn var(--transition-base) ease-out }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
 ::-webkit-scrollbar { width: 4px }
