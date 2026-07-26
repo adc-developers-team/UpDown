@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { FiArrowLeft, FiSend, FiImage, FiUsers, FiBarChart2, FiX, FiPlus, FiSmile } from 'react-icons/fi';
 import { io } from 'socket.io-client';
-import BottomNav from '../components/BottomNav';
 
 const formatMessageTime = (dateString) => {
   const date = new Date(dateString); const now = new Date();
@@ -52,7 +51,7 @@ const GroupChatPage = () => {
   const members = Array.isArray(group.members) ? group.members : [];
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-white pb-20">
+    <div className="h-screen flex flex-col bg-chat-bg text-white">
       <header className="flex items-center gap-4 px-4 py-3 bg-dark-blue border-b border-border-light">
         <Link to="/" className="text-white hover:text-primary"><FiArrowLeft size={22} /></Link>
         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><span className="text-lg font-bold text-primary">{group.name[0].toUpperCase()}</span></div>
@@ -82,7 +81,6 @@ const GroupChatPage = () => {
         </div>
         {newMsg.trim() ? <button type="submit" className="text-primary p-1"><FiSend size={22} /></button> : <button type="button" className="text-text-secondary hover:text-primary p-1"><FiSmile size={22} /></button>}
       </form>
-      <BottomNav />
     </div>
   );
 };
