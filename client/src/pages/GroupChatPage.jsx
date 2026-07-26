@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef , FiImage } from 'react';
-import { useParams, Link , FiImage } from 'react-router-dom';
-import { useAuth , FiImage } from '../context/AuthContext';
+import { useState, useEffect, useRef } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { FiArrowLeft, FiSend, FiImage, FiUsers, FiBarChart2, FiX, FiPlus, FiSmile, FiImage , FiImage } from 'react-icons/fi';
-import { io , FiImage } from 'socket.io-client';
+import { FiArrowLeft, FiSend, FiImage, FiUsers, FiBarChart2, FiX, FiPlus, FiSmile } from 'react-icons/fi';
+import { io } from 'socket.io-client';
 
 const formatMessageTime = (dateString) => {
   const date = new Date(dateString); const now = new Date();
