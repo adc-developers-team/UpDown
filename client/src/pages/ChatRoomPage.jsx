@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useChat } from '../context/ChatContext';
@@ -6,12 +6,14 @@ import axios from 'axios';
 import {
   FiArrowLeft, FiSend, FiSmile, FiMic, FiStopCircle,
   FiPlusCircle, FiImage, FiVideo, FiPhone, FiPhoneOff,
-  FiMicOff, FiVideoOff, FiVolume2, FiCornerUpLeft, FiEdit,
-  FiTrash, FiSlash, FiCheckCircle, FiUserX
+  FiMicOff, FiVideoOff, FiVolume2, FiMoreVertical,
+  FiCornerUpLeft, FiEdit, FiTrash, FiCopy, FiSlash,
+  FiCheckCircle, FiUserX, FiAlertCircle
 } from 'react-icons/fi';
 import { io } from 'socket.io-client';
+import BottomNav from '../components/BottomNav';
 
-/* ---------- helpers (unchanged) ---------- */
+/* ---------- helpers ---------- */
 const getLastSeenText = (d) => {
   if (!d) return 'Last seen long ago';
   const date = new Date(d), now = new Date();
@@ -35,6 +37,15 @@ const formatMsgTime = (d) => {
   if (diffDay === 1) return 'Yesterday';
   if (diffDay < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
   return date.toLocaleDateString('en-US',{day:'numeric',month:'short',year:'numeric'});
+};
+
+const formatDateDivider = (d) => {
+  const now = new Date();
+  const date = new Date(d);
+  if (now.toDateString() === date.toDateString()) return 'Today';
+  const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
+  if (yesterday.toDateString() === date.toDateString()) return 'Yesterday';
+  return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
 };
 
 const QUICK_EMOJIS = ['❤️','😂','👍','😮','😢','🔥'];
@@ -228,22 +239,11 @@ const ChatRoomPage = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: type === 'video' });
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-      const peer = new RTCPeerConnection(iceServers);
-      peerRef.current = peer;
+      const peer = new RTCPeerConnection(iceServers); peerRef.current = peer;
       stream.getTracks().forEach(track => peer.addTrack(track, stream));
-      peer.onicecandidate = (e) => {
-        if (e.candidate) socketRef.current.emit('ice-candidate', { to: userId, candidate: e.candidate });
-      };
-      peer.ontrack = (e) => {
-        if (e.streams && e.streams[0]) {
-          setRemoteStream(e.streams[0]);
-          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-        }
-      };
-
-      const offer = await peer.createOffer();
-      await peer.setLocalDescription(offer);
+      peer.onicecandidate = (e) => { if (e.candidate) socketRef.current.emit('ice-candidate', { to: userId, candidate: e.candidate }); };
+      peer.ontrack = (e) => { if (e.streams && e.streams[0]) { setRemoteStream(e.streams[0]); if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]; } };
+      const offer = await peer.createOffer(); await peer.setLocalDescription(offer);
       socketRef.current.emit('call-user', { callerId: user._id, receiverId: userId, signal: offer, callType: type });
       setCalling(true);
     } catch (err) {
@@ -260,23 +260,12 @@ const ChatRoomPage = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: callType === 'video' });
       setLocalStream(stream);
       if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-
-      const peer = new RTCPeerConnection(iceServers);
-      peerRef.current = peer;
+      const peer = new RTCPeerConnection(iceServers); peerRef.current = peer;
       stream.getTracks().forEach(track => peer.addTrack(track, stream));
-      peer.onicecandidate = (e) => {
-        if (e.candidate) socketRef.current.emit('ice-candidate', { to: callerSignal.callerId, candidate: e.candidate });
-      };
-      peer.ontrack = (e) => {
-        if (e.streams && e.streams[0]) {
-          setRemoteStream(e.streams[0]);
-          if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0];
-        }
-      };
-
+      peer.onicecandidate = (e) => { if (e.candidate) socketRef.current.emit('ice-candidate', { to: callerSignal.callerId, candidate: e.candidate }); };
+      peer.ontrack = (e) => { if (e.streams && e.streams[0]) { setRemoteStream(e.streams[0]); if (remoteVideoRef.current) remoteVideoRef.current.srcObject = e.streams[0]; } };
       await peer.setRemoteDescription(new RTCSessionDescription(callerSignal.signal));
-      const answer = await peer.createAnswer();
-      await peer.setLocalDescription(answer);
+      const answer = await peer.createAnswer(); await peer.setLocalDescription(answer);
       socketRef.current.emit('accept-call', { callerId: callerSignal.callerId, signal: answer });
       setIncoming(false); setInCall(true); startCallTimer();
     } catch (err) {
@@ -302,28 +291,12 @@ const ChatRoomPage = () => {
     if (localStream) localStream.getTracks().forEach(t => t.stop());
     setLocalStream(null); setRemoteStream(null);
     if (peerRef.current) { peerRef.current.close(); peerRef.current = null; }
-    clearInterval(callTimerRef.current);
-    setCallDuration(0);
+    clearInterval(callTimerRef.current); setCallDuration(0);
   };
 
-  const startCallTimer = () => {
-    callTimerRef.current = setInterval(() => setCallDuration(prev => prev + 1), 1000);
-  };
-
-  const toggleMic = () => {
-    if (localStream) {
-      localStream.getAudioTracks().forEach(t => t.enabled = !t.enabled);
-      setMicMuted(!micMuted);
-    }
-  };
-
-  const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled);
-      setVideoOff(!videoOff);
-    }
-  };
-
+  const startCallTimer = () => { callTimerRef.current = setInterval(() => setCallDuration(prev => prev + 1), 1000); };
+  const toggleMic = () => { if (localStream) { localStream.getAudioTracks().forEach(t => t.enabled = !t.enabled); setMicMuted(!micMuted); } };
+  const toggleVideo = () => { if (localStream) { localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled); setVideoOff(!videoOff); } };
   const toggleSpeaker = () => setSpeakerOn(!speakerOn);
 
   const handleBlock = async () => {
@@ -477,12 +450,59 @@ const ChatRoomPage = () => {
   const statusText = isOnline ? 'Online' : getLastSeenText(chatUser.lastSeen);
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full">
+    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-16">
+      {/* Call Overlay */}
+      {(inCall || calling || incoming) && (
+        <div className="absolute inset-0 z-50 bg-black/95 flex flex-col items-center justify-center">
+          {incoming && callerSignal && (
+            <div className="text-center space-y-6">
+              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-4xl font-bold text-primary">
+                {chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}
+              </div>
+              <h2 className="text-2xl font-bold">{chatUser.fullName || chatUser.username}</h2>
+              <p className="text-text-secondary">{callType === 'video' ? 'Video call' : 'Voice call'}</p>
+              <div className="flex gap-6 justify-center mt-4">
+                <button onClick={rejectIncomingCall} className="bg-danger text-white rounded-full p-5"><FiPhoneOff size={28} /></button>
+                <button onClick={acceptIncomingCall} className="bg-success text-white rounded-full p-5"><FiPhone size={28} /></button>
+              </div>
+            </div>
+          )}
+          {(calling || inCall) && (
+            <div className="w-full h-full flex flex-col">
+              <div className="flex-1 flex items-center justify-center">
+                {callType === 'video' && (
+                  <>
+                    <video ref={remoteVideoRef} autoPlay playsInline className="absolute inset-0 w-full h-full object-cover" />
+                    <video ref={localVideoRef} autoPlay playsInline muted className="absolute bottom-6 right-6 w-24 h-36 rounded-xl border-2 border-white object-cover z-10" />
+                  </>
+                )}
+                {callType === 'audio' && (
+                  <div className="text-center">
+                    <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center text-5xl font-bold text-primary mx-auto mb-4">
+                      {chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}
+                    </div>
+                    <h2 className="text-xl font-semibold">{chatUser.fullName || chatUser.username}</h2>
+                    <p className="text-text-secondary mt-2">{calling ? 'Ringing...' : `${Math.floor(callDuration/60)}:${(callDuration%60).toString().padStart(2,'0')}`}</p>
+                  </div>
+                )}
+              </div>
+              <div className="bg-gray-900/90 backdrop-blur px-6 py-5 flex items-center justify-center gap-6 rounded-t-3xl">
+                <button onClick={toggleMic} className={`p-4 rounded-full ${micMuted ? 'bg-danger text-white' : 'bg-gray-700'}`}>{micMuted ? <FiMicOff size={22} /> : <FiMic size={22} />}</button>
+                {callType === 'video' && <button onClick={toggleVideo} className={`p-4 rounded-full ${videoOff ? 'bg-danger text-white' : 'bg-gray-700'}`}>{videoOff ? <FiVideoOff size={22} /> : <FiVideo size={22} />}</button>}
+                <button onClick={toggleSpeaker} className={`p-4 rounded-full ${speakerOn ? 'bg-gray-700' : 'bg-primary'}`}><FiVolume2 size={22} /></button>
+                <button onClick={endCall} className="p-4 rounded-full bg-danger text-white"><FiPhoneOff size={28} /></button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Header */}
-      <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light">
-        <Link to="/" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
-        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+      <header className="h-16 sm:h-[72px] flex items-center gap-3 px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
+        <Link to="/" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
+        <div className="relative w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
           {chatUser.profilePic ? <img src={chatUser.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-lg font-bold text-primary">{chatUser.fullName?.[0] || chatUser.username[0].toUpperCase()}</span>}
+          {isOnline && <span className="online-dot" />}
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="font-semibold text-[15px] truncate">{chatUser.fullName || chatUser.username}</h2>
@@ -491,9 +511,14 @@ const ChatRoomPage = () => {
         <button onClick={() => startCall('audio')} className="p-2 hover:bg-gray-700 rounded-full"><FiPhone size={18} /></button>
         <button onClick={() => startCall('video')} className="p-2 hover:bg-gray-700 rounded-full"><FiVideo size={18} /></button>
         <div className="relative">
-          <button onClick={handleBlock} className="p-2 hover:bg-gray-700 rounded-full">
-            {isBlocked ? <FiCheckCircle size={18} className="text-success" /> : <FiSlash size={18} />}
-          </button>
+          <button onClick={() => setShowMoreMenu(!showMoreMenu)} className="p-2 hover:bg-gray-700 rounded-full"><FiMoreVertical size={18} /></button>
+          {showMoreMenu && (
+            <div className="absolute right-0 top-full mt-1 bg-surface rounded-xl shadow-2 border border-border-light py-1 z-30 w-40 text-sm">
+              <button onClick={handleBlock} className={`w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition ${isBlocked ? 'text-success' : 'text-danger'}`}>
+                {isBlocked ? <><FiCheckCircle size={14} /> Unblock User</> : <><FiSlash size={14} /> Block User</>}
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -502,39 +527,54 @@ const ChatRoomPage = () => {
         {messages.map((msg, i) => {
           const isMine = msg.sender?._id === user._id;
           const mediaType = msg.mediaType || (msg.image ? (msg.image.match(/\.(mp4|webm|ogg)$/) ? 'video' : 'image') : 'text');
+          const showDateDivider = i === 0 || new Date(msg.createdAt).toDateString() !== new Date(messages[i-1].createdAt).toDateString();
           return (
-            <div key={i} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`px-4 py-2.5 rounded-2xl max-w-[80%] sm:max-w-[70%] cursor-pointer select-none ${isMine ? 'message-sent rounded-br-md' : 'message-received rounded-bl-md'} relative group`}
-                onClick={(e) => handleMessageClick(e, msg)}
-                onTouchStart={(e) => handleTouchStart(e, msg)}
-                onTouchEnd={handleTouchEnd}
-                onMouseDown={(e) => handleMouseDown(e, msg)}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
-              >
-                {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
-                {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
-                {mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1" style={{height:'30px'}} preload="metadata" />}
-                {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
-                <div className="flex items-center justify-end gap-1.5 mt-1.5">
-                  <span className="text-[11px] opacity-70 font-medium">{formatMsgTime(msg.createdAt)}</span>
-                  {renderTick(msg)}
+            <div key={i}>
+              {showDateDivider && (
+                <div className="flex items-center justify-center py-2">
+                  <span className="text-[11px] text-text-muted bg-sidebar-bg px-3 py-0.5 rounded-full">{formatDateDivider(msg.createdAt)}</span>
                 </div>
-                {renderReactions(msg)}
-                {reactionPicker === msg._id && (
-                  <div className="absolute -top-14 left-0 bg-surface rounded-full px-2 py-1.5 flex gap-1.5 shadow-2 z-50" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
-                    {QUICK_EMOJIS.map(e => (
-                      <button key={e} onClick={() => reactToMsg(e)} className="hover:scale-125 transition-transform text-lg">{e}</button>
-                    ))}
+              )}
+              <div className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`px-4 py-2.5 rounded-2xl max-w-[78%] cursor-pointer select-none ${isMine ? 'message-sent rounded-br-md' : 'message-received rounded-bl-md'} relative group`}
+                  onClick={(e) => handleMessageClick(e, msg)}
+                  onTouchStart={(e) => handleTouchStart(e, msg)}
+                  onTouchEnd={handleTouchEnd}
+                  onMouseDown={(e) => handleMouseDown(e, msg)}
+                  onMouseUp={handleMouseUp}
+                  onMouseLeave={handleMouseUp}
+                >
+                  {replyTo && (
+                    <div className={`text-xs p-1.5 rounded mb-1 opacity-80 ${isMine ? 'bg-black/20' : 'bg-gray-200 dark:bg-gray-600'}`}>
+                      <span className="font-medium text-primary">{replyTo.sender?.fullName || replyTo.sender?.username || 'User'}</span>
+                      <p className="truncate">{replyTo.text || (replyTo.image ? '📷 Media' : '')}</p>
+                    </div>
+                  )}
+                  {mediaType === 'image' && <img src={msg.image} className="rounded-xl mb-2 max-w-full pointer-events-none" alt="" />}
+                  {mediaType === 'video' && <video controls className="max-w-full rounded-xl mb-2 pointer-events-none" style={{maxHeight:'200px'}}><source src={msg.image} /></video>}
+                  {mediaType === 'audio' && <audio controls src={msg.image} className="w-full mb-1 pointer-events-none" style={{height:'30px'}} />}
+                  {msg.text && <div className="text-[13px] leading-relaxed pointer-events-none">{renderTextWithLinks(msg.text)}</div>}
+                  {msg.text && msg.updatedAt && msg.createdAt !== msg.updatedAt && new Date(msg.createdAt).getTime() !== new Date(msg.updatedAt).getTime() && <span className="text-[10px] text-text-muted ml-1">(edited)</span>}
+                  <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                    <span className="text-[11px] opacity-70 font-medium">{formatMsgTime(msg.createdAt)}</span>
+                    {renderTick(msg)}
                   </div>
-                )}
-                {deleteTarget === msg._id && (
-                  <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-surface rounded-xl shadow-3 border border-border-light py-1 z-50 w-40 text-sm">
-                    <button onClick={() => deleteForMe(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left"><FiUserX size={14} /> Delete for me</button>
-                    {isMine && <button onClick={() => deleteForEveryone(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left text-danger"><FiTrash size={14} /> Delete for everyone</button>}
-                  </div>
-                )}
+                  {renderReactions(msg)}
+                  {reactionPicker === msg._id && (
+                    <div className="absolute -top-14 left-0 bg-surface rounded-full px-2 py-1.5 flex gap-1.5 shadow-2 z-50" onClick={(e) => e.stopPropagation()} style={{ pointerEvents: 'auto' }}>
+                      {QUICK_EMOJIS.map(e => (
+                        <button key={e} onClick={() => reactToMsg(e)} className="hover:scale-125 transition-transform text-lg">{e}</button>
+                      ))}
+                    </div>
+                  )}
+                  {deleteTarget === msg._id && (
+                    <div className="absolute -top-20 left-1/2 -translate-x-1/2 bg-surface rounded-xl shadow-3 border border-border-light py-1 z-50 w-40 text-sm">
+                      <button onClick={() => deleteForMe(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left"><FiUserX size={14} /> Delete for me</button>
+                      {isMine && <button onClick={() => deleteForEveryone(msg._id)} className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 transition text-left text-danger"><FiTrash size={14} /> Delete for everyone</button>}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -550,7 +590,7 @@ const ChatRoomPage = () => {
             <span className="font-medium text-primary">{replyTo.sender?.fullName || replyTo.sender?.username || 'User'}</span>
             <span className="ml-1">{replyTo.text || 'Media'}</span>
           </div>
-          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-primary p-1">✕</button>
+          <button onClick={() => setReplyTo(null)} className="text-gray-400 hover:text-white p-1">✕</button>
         </div>
       )}
 
@@ -588,6 +628,7 @@ const ChatRoomPage = () => {
           <button type="button" onClick={startRecording} className="text-gray-400 hover:text-primary p-1.5"><FiMic size={24} /></button>
         ) : null}
       </form>
+      <BottomNav />
     </div>
   );
 };
