@@ -12,7 +12,7 @@ import CreateGroupPage from './pages/CreateGroupPage'
 import GroupChatPage from './pages/GroupChatPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
 import NotFoundPage from './pages/NotFoundPage'
-import CommunityPage from './pages/CommunityPage';
+import ChatsPage from './pages/ChatsPage';
 import CallsPage from './pages/CallsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -29,10 +29,10 @@ function App() {
       <Route path="/" element={user ? <Homepage /> : <Navigate to="/login" />} />
       <Route path="/profile" element={user ? <ProfilePage /> : <Navigate to="/login" />} />
       <Route path="/settings" element={user ? <SettingsPage /> : <Navigate to="/login" />} />
-      <Route path="/community" element={<CommunityPage />} />
       <Route path="/calls" element={user ? <CallsPage /> : <Navigate to="/login" />} />
       <Route path="/edit-profile" element={user ? <EditProfilePage /> : <Navigate to="/login" />} />
       <Route path="/chat/:userId" element={user ? <ChatRoomPage /> : <Navigate to="/login" />} />
+      <Route path="/chats" element={user ? <ChatsPage /> : <Navigate to="/login" />} />
       <Route path="/add-friends" element={user ? <AddFriendsPage /> : <Navigate to="/login" />} />
       <Route path="/notifications" element={user ? <NotificationsPage /> : <Navigate to="/login" />} />
       <Route path="/create-group" element={user ? <CreateGroupPage /> : <Navigate to="/login" />} />

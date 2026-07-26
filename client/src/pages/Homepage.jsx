@@ -1,333 +1,278 @@
-import BottomNav from '../components/BottomNav';
-import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useChat } from '../context/ChatContext';
 import axios from 'axios';
 import {
-  FiSearch, FiBell, FiPlus, FiUsers, FiMessageSquare, FiX,
-  FiMoreHorizontal, FiChevronDown, FiRefreshCw, FiWifiOff
+  FiHeart, FiMessageSquare, FiShare2, FiSend, FiImage, FiX, FiMoreHorizontal,
+  FiVideo, FiLink, FiMaximize, FiChevronLeft, FiChevronRight
 } from 'react-icons/fi';
+import BottomNav from '../components/BottomNav';
 
-/* ---------- helpers ---------- */
-const formatLastMessageTime = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString), now = new Date();
-  const diffSec = Math.floor((now - date) / 1000);
-  if (diffSec < 60) return 'Just now';
-  const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin}m`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h`;
-  const diffDays = Math.floor(diffHr / 24);
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][date.getDay()];
-  return date.toLocaleDateString('en-US',{day:'numeric',month:'short'});
-};
-
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good Morning';
-  if (hour < 17) return 'Good Afternoon';
-  return 'Good Evening';
-};
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 
 const Homepage = () => {
   const { user } = useAuth();
-  const { setUsers, users, onlineUsers } = useChat();
-  const [search, setSearch] = useState('');
-  const [pendingCount, setPendingCount] = useState(0);
-  const [lastMessages, setLastMessages] = useState({});
-  const [activeTab, setActiveTab] = useState('chats');
-  const [groups, setGroups] = useState([]);
-  const [unreadCounts, setUnreadCounts] = useState({});
+  const [posts, setPosts] = useState([]);
+  const [newText, setNewText] = useState('');
+  const [newImage, setNewImage] = useState(null); // file object
+  const [newVideoUrl, setNewVideoUrl] = useState('');
   const [loading, setLoading] = useState(true);
-  const [fabOpen, setFabOpen] = useState(false);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [refreshing, setRefreshing] = useState(false);
+  const [commentText, setCommentText] = useState({});
+  const [viewerImage, setViewerImage] = useState(null); // full screen image
 
   const token = localStorage.getItem('token');
   const config = { headers: { Authorization: `Bearer ${token}` } };
 
-  const fetchData = useCallback(async () => {
-    setRefreshing(true);
+  useEffect(() => { fetchPosts(); }, []);
+
+  const fetchPosts = async () => {
     try {
-      const [friendsRes, groupsRes] = await Promise.all([
-        axios.get('https://updown-hms5.onrender.com/api/friends', config),
-        axios.get('https://updown-hms5.onrender.com/api/groups', config)
-      ]);
-      setUsers(Array.isArray(friendsRes.data) ? friendsRes.data : []);
-      setGroups(Array.isArray(groupsRes.data) ? groupsRes.data : []);
-    } catch (err) {
-      setUsers([]); setGroups([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      const { data } = await axios.get('https://updown-hms5.onrender.com/api/posts', config);
+      setPosts(Array.isArray(data) ? data : []);
+    } catch (err) { setPosts([]); } finally { setLoading(false); }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > MAX_IMAGE_SIZE) return alert('Image too large (max 10 MB)');
+    setNewImage(file);
+  };
+
+  const uploadImage = async (file) => {
+    const reader = new FileReader();
+    const base64 = await new Promise((resolve) => {
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+    });
+    const { data } = await axios.post('https://updown-hms5.onrender.com/api/upload/image', { image: base64 }, config);
+    return data.imageUrl;
+  };
+
+  const handleCreatePost = async (e) => {
+    e.preventDefault();
+    if (!newText.trim() && !newImage && !newVideoUrl.trim()) return;
+    let imageUrl = '';
+    let video = '';
+    if (newImage) {
+      try {
+        imageUrl = await uploadImage(newImage);
+      } catch (err) { alert('Image upload failed'); return; }
     }
-  }, [user._id]);
+    if (newVideoUrl.trim()) {
+      video = newVideoUrl.trim();
+    }
+    try {
+      await axios.post('https://updown-hms5.onrender.com/api/posts', {
+        text: newText,
+        image: imageUrl,
+        video: video,
+      }, config);
+      setNewText('');
+      setNewImage(null);
+      setNewVideoUrl('');
+      fetchPosts();
+    } catch (err) { alert('Failed to create post'); }
+  };
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const handleLike = async (postId) => {
+    try {
+      await axios.put(`https://updown-hms5.onrender.com/api/posts/${postId}/like`, {}, config);
+      fetchPosts();
+    } catch (err) {}
+  };
 
-  useEffect(() => {
-    const fetchPending = async () => {
-      try {
-        const { data } = await axios.get('https://updown-hms5.onrender.com/api/friends/requests/received', config);
-        setPendingCount(Array.isArray(data) ? data.length : 0);
-      } catch (err) { setPendingCount(0); }
-    };
-    fetchPending();
-    const interval = setInterval(fetchPending, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  const handleComment = async (postId, text) => {
+    if (!text.trim()) return;
+    try {
+      await axios.post(`https://updown-hms5.onrender.com/api/posts/${postId}/comment`, { text }, config);
+      setCommentText(prev => ({ ...prev, [postId]: '' }));
+      fetchPosts();
+    } catch (err) {}
+  };
 
-  useEffect(() => {
-    const fetchMessageData = async () => {
-      try {
-        const [lastRes, unreadRes] = await Promise.all([
-          axios.get(`https://updown-hms5.onrender.com/api/messages/last-messages/${user._id}`, config),
-          axios.get(`https://updown-hms5.onrender.com/api/messages/unread-counts/${user._id}`, config)
-        ]);
-        const map = {};
-        if (Array.isArray(lastRes.data)) {
-          lastRes.data.forEach(msg => {
-            const ids = msg.conversationId.split('_');
-            const other = ids.find(id => id !== user._id);
-            if (other) map[other] = msg;
-          });
-        }
-        setLastMessages(map);
-        setUnreadCounts(unreadRes.data || {});
-      } catch (err) {}
-    };
-    fetchMessageData();
-    const interval = setInterval(fetchMessageData, 5000);
-    return () => clearInterval(interval);
-  }, [user._id]);
+  const handleDeletePost = async (postId) => {
+    if (!confirm('Delete this post?')) return;
+    try {
+      await axios.delete(`https://updown-hms5.onrender.com/api/posts/${postId}`, config);
+      fetchPosts();
+    } catch (err) { alert('Failed to delete'); }
+  };
 
-  useEffect(() => {
-    const handleOnline = () => setIsOffline(false);
-    const handleOffline = () => setIsOffline(true);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+  const handleShare = (postId) => {
+    const url = `${window.location.origin}/post/${postId}`;
+    if (navigator.share) {
+      navigator.share({ title: 'Check this post', url });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert('Link copied!');
+    }
+  };
 
-  const safeUsers = Array.isArray(users) ? users : [];
-  const filteredUsers = safeUsers.filter(u => {
-    const name = (u.fullName || u.username || '').toLowerCase();
-    const keyword = search.toLowerCase();
-    return name.includes(keyword);
-  });
-  const safeGroups = Array.isArray(groups) ? groups : [];
-  const filteredGroups = safeGroups.filter(g => {
-    const name = (g.name || '').toLowerCase();
-    const keyword = search.toLowerCase();
-    return name.includes(keyword);
-  });
+  const formatTime = (d) => {
+    const diff = Date.now() - new Date(d).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  };
 
-  const onlineCount = safeUsers.filter(u => onlineUsers.includes(u._id)).length;
+  const isVideoUrl = (url) => {
+    return /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|vimeo\.com|.*\.mp4)/i.test(url);
+  };
+
+  const getYouTubeId = (url) => {
+    const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+    return match ? match[1] : null;
+  };
+
+  if (loading) return <div className="min-h-screen bg-chat-bg flex items-center justify-center pb-20"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div></div>;
 
   return (
-    <div className="h-screen flex flex-col bg-chat-bg text-primary w-full pb-16 pb-20">
-      {/* Offline Banner */}
-      {isOffline && (
-        <div className="bg-warning/20 text-warning text-xs text-center py-1.5 flex items-center justify-center gap-2">
-          <FiWifiOff size={14} /> You are offline. Messages will sync when connected.
-        </div>
-      )}
-
-      {/* ===== App Bar ===== */}
-      <header className="h-16 sm:h-[72px] flex items-center justify-between px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20 backdrop-blur-sm">
-        <div>
-          <h1 className="text-xl sm:text-[22px] font-extrabold tracking-tight">
-            <span className="text-primary">Up</span>Down
-          </h1>
-          <p className="text-[11px] text-text-secondary leading-tight mt-0.5">
-            {onlineCount > 0 ? `${onlineCount} friends online` : 'No friends online'}
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button onClick={fetchData} className="p-1.5 hover:bg-primary/10 rounded-full transition" title="Refresh">
-            <FiRefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
-          </button>
-          <Link to="/notifications" className="relative p-1.5 hover:bg-primary/10 rounded-full transition">
-            <FiBell size={20} />
-            {pendingCount > 0 && (
-              <span className="absolute top-0 right-0 w-4 h-4 bg-danger rounded-full text-[10px] flex items-center justify-center font-bold ring-2 ring-dark-blue">
-                {pendingCount > 9 ? '9+' : pendingCount}
-              </span>
-            )}
-          </Link>
-          <Link to="/profile" className="p-0.5">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 hover:ring-primary transition">
-              {user?.profilePic ? (
-                <img src={user.profilePic} className="w-full h-full object-cover" alt="" />
-              ) : (
-                <span className="text-sm font-bold text-primary">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>
-              )}
-            </div>
-          </Link>
-        </div>
+    <div className="min-h-screen bg-chat-bg text-white pb-20 pb-20">
+      <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
+        <h2 className="text-xl font-bold"><span className="text-primary">UpDown</span> Community</h2>
       </header>
 
-      {/* ===== Welcome & Search ===== */}
-      <div className="bg-sidebar-bg px-4 pt-4 pb-2 border-b border-border-light/50">
-        <h2 className="text-base sm:text-lg font-semibold text-primary mb-3">
-          {getGreeting()}, {user?.fullName?.split(' ')[0] || user?.username} 👋
-        </h2>
-        <div className="flex items-center bg-bg-input rounded-full h-12 px-4 border border-border-light/50 shadow-sm focus-within:border-primary focus-within:shadow-md transition">
-          <FiSearch className="text-text-muted flex-shrink-0" size={18} />
-          <input
-            type="text"
-            placeholder="Search chats, friends, groups..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="ml-3 bg-transparent outline-none flex-1 text-sm text-primary placeholder-text-muted"
+      <div className="max-w-2xl mx-auto p-4 space-y-6">
+        {/* Post Composer */}
+        <form onSubmit={handleCreatePost} className="bg-surface rounded-2xl p-4 border border-border-light shadow-1 space-y-3">
+          <textarea
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            placeholder="What's on your mind?"
+            className="w-full bg-transparent outline-none text-sm text-primary placeholder-text-muted resize-none"
+            rows={3}
           />
-          {search && (
-            <button onClick={() => setSearch('')} className="p-1 hover:bg-surface rounded-full"><FiX size={16} className="text-text-muted" /></button>
+          <div className="flex items-center gap-2">
+            <label className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+              <FiImage size={20} className="text-text-secondary" />
+              <input type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+            </label>
+            <div className="flex-1 flex items-center bg-bg-input rounded-full px-3 py-1 border border-border-light">
+              <FiVideo size={16} className="text-text-secondary mr-2" />
+              <input
+                type="text"
+                placeholder="Video link (YouTube, Vimeo, MP4)"
+                value={newVideoUrl}
+                onChange={(e) => setNewVideoUrl(e.target.value)}
+                className="bg-transparent outline-none text-sm text-primary flex-1 placeholder-text-muted"
+              />
+              {newVideoUrl && <button type="button" onClick={() => setNewVideoUrl('')} className="p-1"><FiX size={14} className="text-text-muted" /></button>}
+            </div>
+          </div>
+          {(newText || newImage || newVideoUrl) && (
+            <button type="submit" className="w-full bg-primary text-white py-2 rounded-full font-semibold hover:bg-primary-dark transition">
+              Post
+            </button>
+          )}
+        </form>
+
+        {/* Posts Feed */}
+        <div className="space-y-4">
+          {posts.length === 0 ? (
+            <div className="text-center py-10 text-text-muted">
+              <p className="text-lg font-semibold">No posts yet</p>
+              <p className="text-sm">Be the first to share something!</p>
+            </div>
+          ) : (
+            posts.map(post => (
+              <div key={post._id} className="bg-surface rounded-2xl border border-border-light shadow-1 overflow-hidden">
+                <div className="flex items-center gap-3 p-4 pb-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    {post.author?.profilePic ? <img src={post.author.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-lg font-bold text-primary">{post.author?.fullName?.[0] || post.author?.username?.[0]?.toUpperCase()}</span>}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-sm">{post.author?.fullName || post.author?.username}</h3>
+                    <p className="text-xs text-text-secondary">{formatTime(post.createdAt)}</p>
+                  </div>
+                  {post.author?._id === user._id && (
+                    <button onClick={() => handleDeletePost(post._id)} className="text-text-muted hover:text-danger"><FiMoreHorizontal size={16} /></button>
+                  )}
+                </div>
+                <div className="px-4 pb-3 space-y-2">
+                  {post.text && <p className="text-sm leading-relaxed">{post.text}</p>}
+                  {post.image && !post.video && (
+                    <img
+                      src={post.image}
+                      className="rounded-xl w-full cursor-pointer"
+                      onClick={() => setViewerImage(post.image)}
+                      alt=""
+                    />
+                  )}
+                  {post.video && (
+                    <div className="relative rounded-xl overflow-hidden bg-black">
+                      {getYouTubeId(post.video) ? (
+                        <div className="cursor-pointer" onClick={() => window.open(post.video, '_blank')}>
+                          <img src={`https://img.youtube.com/vi/${getYouTubeId(post.video)}/0.jpg`} className="w-full" alt="" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <FiVideo size={40} className="text-white" />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 flex items-center gap-3 cursor-pointer" onClick={() => window.open(post.video, '_blank')}>
+                          <FiVideo size={24} className="text-primary" />
+                          <div>
+                            <p className="text-sm font-medium">Watch video</p>
+                            <p className="text-xs text-text-secondary truncate">{post.video}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center gap-4 px-4 py-2 border-t border-border-light">
+                  <button onClick={() => handleLike(post._id)} className={`flex items-center gap-1.5 text-sm ${post.likes?.includes(user._id) ? 'text-primary' : 'text-text-secondary hover:text-primary'} transition`}>
+                    <FiHeart size={16} className={post.likes?.includes(user._id) ? 'fill-current' : ''} />
+                    <span>{post.likes?.length || 0}</span>
+                  </button>
+                  <button onClick={() => setCommentText(prev => ({ ...prev, [post._id]: prev[post._id] === undefined ? '' : prev[post._id] }))} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition">
+                    <FiMessageSquare size={16} />
+                    <span>{post.comments?.length || 0}</span>
+                  </button>
+                  <button onClick={() => handleShare(post._id)} className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-primary transition">
+                    <FiShare2 size={16} />
+                  </button>
+                </div>
+                {commentText[post._id] !== undefined && (
+                  <div className="px-4 pb-3 space-y-2">
+                    {post.comments?.slice(-3).map(comment => (
+                      <div key={comment._id} className="flex items-start gap-2 text-sm">
+                        <span className="font-semibold text-primary">{comment.author?.fullName || comment.author?.username}</span>
+                        <span className="text-text-secondary">{comment.text}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 mt-2">
+                      <input
+                        type="text"
+                        placeholder="Write a comment..."
+                        value={commentText[post._id] || ''}
+                        onChange={(e) => setCommentText(prev => ({ ...prev, [post._id]: e.target.value }))}
+                        className="flex-1 bg-bg-input rounded-full px-3 py-1.5 text-sm outline-none border border-border-light focus:border-primary"
+                      />
+                      <button onClick={() => handleComment(post._id, commentText[post._id])} className="text-primary p-1"><FiSend size={16} /></button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))
           )}
         </div>
       </div>
 
-      {/* ===== Quick Actions ===== */}
-      <div className="bg-sidebar-bg px-4 pb-3 flex gap-2 overflow-x-auto border-b border-border-light/50">
-        <Link to="/add-friends" className="flex-shrink-0 flex items-center gap-1.5 bg-surface border border-border-light text-text-secondary hover:text-primary text-xs font-medium px-3 py-1.5 rounded-full hover:bg-primary/20 transition">
-          <FiPlus size={14} /> New Chat
-        </Link>
-        <Link to="/create-group" className="flex-shrink-0 flex items-center gap-1.5 bg-surface border border-border-light text-text-secondary hover:text-primary text-xs font-medium px-3 py-1.5 rounded-full hover:bg-primary/20 transition">
-          <FiUsers size={14} /> New Group
-        </Link>
-      </div>
+      {/* Full Screen Image Viewer */}
+      {viewerImage && (
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center" onClick={() => setViewerImage(null)}>
+          <img src={viewerImage} className="max-h-full max-w-full object-contain" alt="" />
+          <button className="absolute top-4 right-4 text-white p-2" onClick={() => setViewerImage(null)}><FiX size={28} /></button>
+        </div>
+      )}
 
-      {/* ===== Pill Tabs ===== */}
-      <div className="flex bg-sidebar-bg border-b border-border-light/50 px-4 gap-2 py-2">
-        {['chats', 'groups'].map(tab => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2.5 rounded-full text-sm font-semibold tracking-wide transition-all duration-200 ${
-              activeTab === tab ? 'bg-primary text-primary shadow-lg shadow-primary/20' : 'text-text-secondary hover:text-primary hover:bg-bg-input'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {/* ===== Chat List ===== */}
-      <div className="flex-1 overflow-y-auto" onScroll={(e) => { /* scroll handler if needed */ }}>
-        {loading ? (
-          <div className="space-y-1 p-2">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 animate-pulse">
-                <div className="w-14 h-14 rounded-full bg-surface" />
-                <div className="flex-1 space-y-2.5">
-                  <div className="h-4 bg-surface rounded w-1/3" />
-                  <div className="h-3.5 bg-surface rounded w-2/3" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : activeTab === 'chats' ? (
-          filteredUsers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-text-muted px-4 text-center">
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                <FiMessageSquare size={40} className="text-primary/50" />
-              </div>
-              <p className="text-xl font-semibold text-primary mb-2">No chats yet</p>
-              <p className="text-sm mb-6">Start your first conversation</p>
-              <Link to="/add-friends" className="bg-primary text-primary px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Tap + to chat</Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-800/30">
-              {filteredUsers.map(u => {
-                const lastMsg = lastMessages[u._id];
-                const unread = unreadCounts[u._id] || 0;
-                return (
-                  <Link
-                    key={u._id}
-                    to={`/chat/${u._id}`}
-                    className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]"
-                  >
-                    <div className="relative flex-shrink-0">
-                      <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/10">
-                        {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xl font-bold text-primary">{u.fullName?.[0] || u.username[0].toUpperCase()}</span>}
-                      </div>
-                      {onlineUsers.includes(u._id) && <span className="online-dot" />}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline">
-                        <h3 className="font-semibold text-[15px] truncate">{u.fullName || u.username}</h3>
-                        {lastMsg && <span className="text-xs text-text-muted ml-2 flex-shrink-0 font-medium">{formatLastMessageTime(lastMsg.createdAt)}</span>}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <p className="text-[13px] text-text-secondary truncate flex-1">{lastMsg ? (lastMsg.text || (lastMsg.image ? '📷 Media' : '')) : 'No messages yet'}</p>
-                        {unread > 0 && <span className="flex-shrink-0 w-5 h-5 bg-primary rounded-full text-[10px] flex items-center justify-center font-bold text-primary">{unread > 99 ? '99+' : unread}</span>}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          )
-        ) : filteredGroups.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-muted px-4 text-center">
-            <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-              <FiUsers size={40} className="text-primary/50" />
-            </div>
-            <p className="text-xl font-semibold text-primary mb-2">No groups yet</p>
-            <p className="text-sm mb-6">Create a group to chat together</p>
-            <Link to="/create-group" className="bg-primary text-primary px-6 py-3 rounded-full text-sm font-semibold hover:bg-primary-dark transition shadow-lg shadow-primary/20">Create Group</Link>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-800/30">
-            {filteredGroups.map(g => {
-              const members = Array.isArray(g.members) ? g.members : [];
-              return (
-                <Link key={g._id} to={`/group-chat/${g._id}`} className="flex items-center gap-4 px-4 py-3.5 hover:bg-bg-input/20 transition-colors active:scale-[0.99]">
-                  <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/10">
-                    <span className="text-xl font-bold text-primary">{g.name?.[0]?.toUpperCase()}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-[15px] truncate">{g.name}</h3>
-                    <p className="text-[13px] text-text-secondary mt-1">{members.length} members</p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* ===== Expandable FAB ===== */}
-      <div className="absolute bottom-6 right-6 flex flex-col-reverse items-end gap-3 z-10">
-        {fabOpen && (
-          <>
-            <Link to="/create-group" className="flex items-center gap-2 bg-surface border border-border-light rounded-full px-4 py-2.5 shadow-2 hover:scale-105 active:scale-95 transition-all animate-fade-in">
-              <FiUsers size={18} /><span className="text-sm font-medium">New Group</span>
-            </Link>
-            <Link to="/add-friends" className="flex items-center gap-2 bg-surface border border-border-light rounded-full px-4 py-2.5 shadow-2 hover:scale-105 active:scale-95 transition-all animate-fade-in">
-              <FiPlus size={18} /><span className="text-sm font-medium">New Chat</span>
-            </Link>
-          </>
-        )}
-        <button
-          onClick={() => setFabOpen(!fabOpen)}
-          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-3 transition-all duration-300 ${fabOpen ? 'bg-surface rotate-45' : 'bg-primary text-primary'}`}
-        >
-          <FiPlus size={26} />
-        </button>
-      </div>
+      <BottomNav />
     </div>
   );
 };
 
-      <BottomNav />
   <BottomNav />
 export default Homepage;
