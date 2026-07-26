@@ -259,7 +259,7 @@ const Homepage = () => {
                       <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/10">
                         {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xl font-bold text-primary">{u.fullName?.[0] || u.username[0].toUpperCase()}</span>}
                       </div>
-                      {onlineUsers.includes(u._id) && <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-success rounded-full ring-2 ring-sidebar-bg" />}
+                      {onlineUsers.includes(u._id) && <span className="online-dot" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline">
