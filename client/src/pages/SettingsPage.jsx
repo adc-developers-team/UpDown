@@ -5,7 +5,7 @@ import { usePWA } from '../hooks/usePWA';
 import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
 import {
-  FiArrowLeft, FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
+  FiEdit, FiLogOut, FiUser, FiMail, FiDownload,
   FiMoon, FiSun, FiShield, FiInfo, FiSmartphone,
   FiTrash2, FiAlertTriangle, FiDatabase,
   FiMonitor, FiXCircle, FiLock, FiUnlock,
@@ -123,14 +123,12 @@ const SettingsPage = () => {
   const handleLogout = () => { logout(); navigate('/login'); };
 
   return (
-    <div className="min-h-screen bg-chat-bg text-primary pb-20 pb-20">
-      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-border-light/50 sticky top-0 z-20">
-        <Link to="/profile" className="text-primary hover:text-primary p-1"><FiArrowLeft size={22} /></Link>
+    <div className="min-h-screen bg-chat-bg text-white pb-20">
+      <header className="h-16 sm:h-[72px] flex items-center px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
         <h2 className="font-semibold text-lg">Settings</h2>
       </header>
 
       <div className="px-4 py-6 space-y-4 max-w-2xl mx-auto">
-        {/* Profile Card – clickable to edit profile */}
         <Link to="/edit-profile" className="block bg-surface rounded-2xl p-4 flex items-center gap-4 border border-border-light shadow-1 hover:border-primary/30 transition group">
           <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden ring-2 ring-primary/20 group-hover:ring-primary/40 transition">
             {user?.profilePic ? <img src={user.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xl font-bold text-primary">{user?.fullName?.[0] || user?.username?.[0]?.toUpperCase()}</span>}
@@ -143,7 +141,6 @@ const SettingsPage = () => {
           <FiEdit size={18} className="text-text-secondary group-hover:text-primary transition" />
         </Link>
 
-        {/* Appearance – theme toggle */}
         <div className="bg-surface rounded-2xl p-4 border border-border-light shadow-1 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${dark ? 'bg-yellow-400/10 text-yellow-400' : 'bg-indigo-400/10 text-indigo-400'}`}>
@@ -161,18 +158,14 @@ const SettingsPage = () => {
           </button>
         </div>
 
-        {/* Install PWA */}
         {isInstallable && (
-          <button onClick={installApp} className="w-full flex items-center gap-4 bg-primary text-primary font-semibold p-4 rounded-2xl hover:bg-primary-dark transition-all shadow-2">
-            <FiDownload size={20} /> Install UpDown App
-          </button>
+          <button onClick={installApp} className="w-full flex items-center gap-4 bg-primary text-white font-semibold p-4 rounded-2xl hover:bg-primary-dark transition-all shadow-2"><FiDownload size={20} /> Install UpDown App</button>
         )}
 
-        {/* Accordion Sections – polished with soft animation */}
         <div className="space-y-3">
           <AccordionSection title="Account" icon={<FiUser size={20} className="text-primary" />} show={showAccount} setShow={setShowAccount}>
-            <Link to="/edit-profile" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Edit Profile</Link>
-            <button onClick={handleDeactivate} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition text-warning">Deactivate Account</button>
+            <Link to="/edit-profile" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Edit Profile</Link>
+            <button onClick={handleDeactivate} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-warning">Deactivate Account</button>
           </AccordionSection>
 
           <AccordionSection title="Privacy & Security" icon={<FiShield size={20} className="text-primary" />} show={showPrivacy} setShow={setShowPrivacy}>
@@ -181,42 +174,29 @@ const SettingsPage = () => {
             <Toggle label="Send Read Receipts" checked={privacy.sendReadReceipts} onChange={(v) => handlePrivacyToggle('sendReadReceipts', v)} />
             <div className="pt-2">
               <p className="text-sm font-medium text-text-secondary mb-2">Blocked Users</p>
-              {blockedUsers.length === 0 ? (
-                <p className="text-sm text-text-muted">No blocked users</p>
-              ) : (
-                blockedUsers.map(u => (
-                  <div key={u._id} className="flex items-center gap-3 p-2 bg-bg-input rounded-xl mb-1">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                      {u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-bold text-primary">{u.fullName?.[0] || u.username?.[0]?.toUpperCase()}</span>}
-                    </div>
-                    <span className="text-sm flex-1">{u.fullName || u.username}</span>
-                    <button onClick={() => handleUnblock(u._id)} className="text-primary text-sm hover:underline">Unblock</button>
-                  </div>
-                ))
-              )}
+              {blockedUsers.length === 0 ? <p className="text-sm text-text-muted">No blocked users</p> : blockedUsers.map(u => (
+                <div key={u._id} className="flex items-center gap-3 p-2 bg-bg-input rounded-xl mb-1">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">{u.profilePic ? <img src={u.profilePic} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-bold text-primary">{u.fullName?.[0] || u.username?.[0]?.toUpperCase()}</span>}</div>
+                  <span className="text-sm flex-1">{u.fullName || u.username}</span>
+                  <button onClick={() => handleUnblock(u._id)} className="text-primary text-sm hover:underline">Unblock</button>
+                </div>
+              ))}
             </div>
             <div className="pt-2">
               <p className="text-sm font-medium text-text-secondary mb-2">Active Sessions</p>
-              {sessions.length === 0 ? (
-                <p className="text-sm text-text-muted">No other sessions</p>
-              ) : (
-                sessions.map((session, i) => (
-                  <div key={session._id || i} className="flex items-center gap-3 p-3 bg-bg-input rounded-xl mb-1">
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{session.device?.substring(0, 30) || 'Unknown Device'}</p>
-                      <p className="text-xs text-text-muted">IP: {session.ip} · {new Date(session.lastActive).toLocaleString()}</p>
-                    </div>
-                    <button onClick={() => handleRemoveSession(session._id)} className="text-danger hover:text-red-400 p-1"><FiXCircle size={16} /></button>
-                  </div>
-                ))
-              )}
+              {sessions.length === 0 ? <p className="text-sm text-text-muted">No other sessions</p> : sessions.map((session, i) => (
+                <div key={session._id || i} className="flex items-center gap-3 p-3 bg-bg-input rounded-xl mb-1">
+                  <div className="flex-1"><p className="text-sm font-medium">{session.device?.substring(0, 30) || 'Unknown Device'}</p><p className="text-xs text-text-muted">IP: {session.ip} · {new Date(session.lastActive).toLocaleString()}</p></div>
+                  <button onClick={() => handleRemoveSession(session._id)} className="text-danger hover:text-red-400 p-1"><FiXCircle size={16} /></button>
+                </div>
+              ))}
             </div>
-            <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition text-danger mt-2">Delete Account</button>
+            <button onClick={() => setDeleteConfirm(true)} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger mt-2">Delete Account</button>
           </AccordionSection>
 
           <AccordionSection title="Chats" icon={<FiSmartphone size={20} className="text-primary" />} show={showChat} setShow={setShowChat}>
             <Toggle label="Auto-download media" checked={autoDownload} onChange={handleAutoDownloadToggle} />
-            <button onClick={handleClearHistory} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition text-danger">Clear Chat History</button>
+            <button onClick={handleClearHistory} className="w-full text-left p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition text-danger">Clear Chat History</button>
           </AccordionSection>
 
           <AccordionSection title="Calls" icon={<FiPhone size={20} className="text-primary" />} show={showCalls} setShow={setShowCalls}>
@@ -224,10 +204,10 @@ const SettingsPage = () => {
           </AccordionSection>
 
           <AccordionSection title="Help" icon={<FiHelpCircle size={20} className="text-primary" />} show={showHelp} setShow={setShowHelp}>
-            <Link to="/faq" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">FAQ</Link>
-            <Link to="/contact" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Contact Support</Link>
-            <Link to="/privacy" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Privacy Policy</Link>
-            <Link to="/terms" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-surface transition">Terms of Service</Link>
+            <Link to="/faq" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">FAQ</Link>
+            <Link to="/contact" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Contact Support</Link>
+            <Link to="/privacy" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Privacy Policy</Link>
+            <Link to="/terms" className="block p-3 bg-bg-input rounded-xl text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition">Terms of Service</Link>
           </AccordionSection>
 
           <AccordionSection title="About" icon={<FiInfo size={20} className="text-primary" />} show={showAbout} setShow={setShowAbout}>
@@ -239,11 +219,8 @@ const SettingsPage = () => {
           </AccordionSection>
         </div>
 
-        {/* Logout – with extra spacing for bottom nav */}
         <div className="pb-2">
-          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-danger/10 hover:bg-danger/20 border border-danger/30 p-4 rounded-2xl transition text-danger font-medium">
-            <FiLogOut size={20} /> Logout
-          </button>
+          <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 bg-danger/10 hover:bg-danger/20 border border-danger/30 p-4 rounded-2xl transition text-danger font-medium"><FiLogOut size={20} /> Logout</button>
         </div>
       </div>
 
@@ -254,8 +231,8 @@ const SettingsPage = () => {
             <h2 className="text-lg font-semibold text-center">Delete Account?</h2>
             <p className="text-sm text-text-secondary text-center">This action is permanent. All your messages, friends, and data will be lost forever.</p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(false)} className="flex-1 py-2 bg-gray-100 dark:bg-surface rounded-full text-sm">Cancel</button>
-              <button onClick={handleDeleteAccount} className="flex-1 py-2 bg-danger text-primary rounded-full text-sm font-semibold">Delete Forever</button>
+              <button onClick={() => setDeleteConfirm(false)} className="flex-1 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">Cancel</button>
+              <button onClick={handleDeleteAccount} className="flex-1 py-2 bg-danger text-white rounded-full text-sm font-semibold">Delete Forever</button>
             </div>
           </div>
         </div>
@@ -267,14 +244,10 @@ const SettingsPage = () => {
 
 const AccordionSection = ({ title, icon, show, setShow, children }) => (
   <div className="bg-surface rounded-2xl border border-border-light shadow-1 overflow-hidden">
-    <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-bg-input/50 transition">
-      {icon}
-      <span className="flex-1 text-left font-medium">{title}</span>
-      <span className={`text-sm text-text-secondary transition-transform duration-200 ${show ? 'rotate-180' : ''}`}>▼</span>
+    <button onClick={() => setShow(!show)} className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+      {icon}<span className="flex-1 text-left font-medium">{title}</span><span className={`text-sm text-text-secondary transition-transform duration-200 ${show ? 'rotate-180' : ''}`}>▼</span>
     </button>
-    <div className={`transition-all duration-300 ease-in-out ${show ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-      <div className="px-5 pb-4 space-y-2">{children}</div>
-    </div>
+    <div className={`transition-all duration-300 ease-in-out ${show ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}><div className="px-5 pb-4 space-y-2">{children}</div></div>
   </div>
 );
 
@@ -287,5 +260,4 @@ const Toggle = ({ label, checked, onChange }) => (
   </div>
 );
 
-  <BottomNav />
 export default SettingsPage;

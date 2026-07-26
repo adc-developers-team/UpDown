@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { FiArrowLeft, FiSearch, FiUserPlus, FiUserCheck, FiUserX, FiClock, FiUsers, FiX } from 'react-icons/fi';
+import { FiSearch, FiUserPlus, FiUserCheck, FiUserX, FiClock, FiUsers, FiX } from 'react-icons/fi';
 import BottomNav from '../components/BottomNav';
 
 const RECENT_KEY = 'updown_recent_searches';
@@ -50,7 +50,9 @@ const AddFriendsPage = () => {
 
   return (
     <div className="min-h-screen bg-chat-bg text-white flex flex-col pb-20">
-      <header className="h-16 sm:h-[72px] flex items-center gap-4 px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20"><Link to="/" className="text-white hover:text-primary p-1"><FiArrowLeft size={22} /></Link><h2 className="font-semibold text-lg">Add Friends</h2></header>
+      <header className="h-16 sm:h-[72px] flex items-center justify-between px-4 bg-dark-blue border-b border-border-light sticky top-0 z-20">
+        <h2 className="font-semibold text-lg">Friends</h2>
+      </header>
       <div className="px-4 py-3 bg-sidebar-bg"><form onSubmit={handleSearch} className="flex items-center bg-bg-input rounded-full h-12 px-4 border border-border-light focus-within:border-primary focus-within:shadow-md transition"><FiSearch className="text-text-muted flex-shrink-0" size={18} /><input type="text" placeholder="Search by name, username or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="ml-3 bg-transparent outline-none flex-1 text-sm text-white placeholder-text-muted" />{search && <button type="button" onClick={() => setSearch('')} className="p-1 hover:bg-gray-700 rounded-full"><FiX size={16} className="text-text-muted" /></button>}</form></div>
       <div className="flex bg-sidebar-bg border-b border-border-light overflow-x-auto">{['all', 'requests', 'sent', 'suggested'].map(t => (<button key={t} onClick={() => setTab(t)} className={`px-4 py-3 text-sm font-medium capitalize whitespace-nowrap border-b-2 transition-colors ${tab === t ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-white'}`}>{t === 'all' ? 'Search' : t === 'requests' ? `Requests (${receivedRequests.length})` : t === 'sent' ? `Sent (${sentRequests.length})` : 'Suggested'}</button>))}</div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
