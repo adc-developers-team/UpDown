@@ -1,6 +1,9 @@
 import { createContext, useContext, useState, useCallback } from 'react';
 
-const NotificationContext = createContext();
+const NotificationContext = createContext({
+  notification: null,
+  showNotification: () => {},   // ডিফল্ট ফাংশন, যাতে ডিস্ট্রাকচারিং ক্র্যাশ না করে
+});
 
 export const useNotification = () => useContext(NotificationContext);
 
