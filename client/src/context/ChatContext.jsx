@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
-import { useNotifications } from './NotificationContext';
+import { useNotification } from './NotificationContext';
 import { io } from 'socket.io-client';
 
 const ChatContext = createContext();
@@ -9,7 +9,7 @@ export const useChat = () => useContext(ChatContext);
 
 export const ChatProvider = ({ children }) => {
   const { user } = useAuth();
-  const { showNotification } = useNotifications();
+  const { showNotification } = useNotification();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
