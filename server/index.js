@@ -5,6 +5,9 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/auth.routes.js';
+import postsRoutes from './routes/posts.routes.js';
+import storiesRoutes from './routes/stories.routes.js';
+import { Message } from './models/Message.js';
 
 dotenv.config();
 
@@ -28,8 +31,10 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/posts', postsRoutes);
+app.use('/api/stories', storiesRoutes);
 
-// Health check route
+// Health check
 app.get('/', (req, res) => {
   res.json({ 
     message: 'UpDown API by ADC Developers', 
@@ -38,17 +43,32 @@ app.get('/', (req, res) => {
   });
 });
 
-// Socket.io connection
+// Socket.io (Chat - optional for now)
 io.on('connection', (socket) => {
   console.log('✅ User connected:', socket.id);
+
+  socket.on('message', async (data) => {
+    try {
+      const conversation = await Message.create({
+        senderId: socket.userId || 'guest',
+        conversationId: socket.userId || 'general',
+        content: data.content,
+        status: 'sent'
+      });
+
+      io.emit('message', conversation);
+    } catch (error) {
+      console.error('❌ Message error:', error.message);
+    }
+  });
 
   socket.on('disconnect', () => {
     console.log('❌ User disconnected:', socket.id);
   });
 });
 
-// Start server
 httpServer.listen(PORT, () => {
   console.log(`🚀 UpDown Server running on port ${PORT}`);
   console.log(`📡 Socket.io ready for real-time connections`);
+  console.log(`📰 Social Feed API ready!`);
 });
