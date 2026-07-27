@@ -1,20 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import axios from 'axios';
-import { FiEye, FiEyeOff, FiCheck, FiX, FiLoader } from 'react-icons/fi';
-import BottomNav from '../components/BottomNav';
+import { FiEye, FiEyeOff, FiCheck, FiX, FiLoader, FiMoon, FiSun } from 'react-icons/fi';
 
 const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const { login, signup } = useAuth();
+  const { dark, toggle } = useTheme();
+
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
@@ -43,58 +46,129 @@ const LoginPage = () => {
     try {
       if (isLogin) await login(email, password);
       else {
-        await signup(fullName, username, email, password);
-        setMessage('Account created! You can now sign in.');
+        const res = await signup(fullName, username, email, password);
+        setMessage(res?.message || 'Registration successful! Please check your email.');
         setFullName(''); setUsername(''); setEmail(''); setPassword(''); setConfirmPassword('');
       }
     } catch (err) { setMessage(err.response?.data?.message || 'Something went wrong'); }
     finally { setLoading(false); }
   };
 
+  const handleResendVerification = async () => {
+    if (!email) return alert('Please enter your email first');
+    setResending(true); setMessage('');
+    try {
+      const res = await axios.post('https://updown-hms5.onrender.com/api/auth/resend-verification', { email });
+      setMessage(res.data.message || 'Verification email resent.');
+    } catch (err) { setMessage(err.response?.data?.message || 'Failed to resend verification email'); }
+    finally { setResending(false); }
+  };
+
   return (
-    <div className="min-h-screen bg-chat-bg text-primary flex items-center justify-center p-4 pb-20 pb-20">
-      <div className="w-full max-w-md bg-surface rounded-2xl shadow-2 p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-        {message && <div className={`p-3 rounded-xl mb-4 text-sm ${message.includes('successfully') || message.includes('created') ? 'bg-success/10 text-success' : 'bg-danger/10 text-danger'}`}>{message}</div>}
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)] p-4">
+      <div className="w-full max-w-md bg-[var(--color-surface)] rounded-[20px] shadow-[var(--shadow-1)] border border-[var(--color-border)] p-8">
+        {/* Theme Toggle */}
+        <div className="flex justify-end mb-4">
+          <button onClick={toggle} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+            {dark ? <FiSun className="text-yellow-400" /> : <FiMoon className="text-gray-500" />}
+          </button>
+        </div>
+
+        <h2 className="text-3xl font-bold text-[var(--color-text-primary)] text-center mb-2">
+          {isLogin ? 'Welcome Back' : 'Create Account'}
+        </h2>
+        <p className="text-[var(--color-text-secondary)] text-center mb-8">
+          {isLogin ? 'Sign in to your account' : 'Fill in the details to get started'}
+        </p>
+
+        {message && (
+          <div className={`p-3 rounded-lg mb-4 text-sm ${
+            message.toLowerCase().includes('successful') || message.toLowerCase().includes('sent')
+              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+              : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+          }`}>
+            {message}
+            {message.includes('Please verify') && (
+              <button type="button" onClick={handleResendVerification} disabled={resending}
+                className="ml-2 text-[var(--color-primary-action)] underline cursor-pointer disabled:opacity-50 inline-flex items-center gap-1">
+                {resending ? <FiLoader className="animate-spin" size={14} /> : 'Resend'}
+              </button>
+            )}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           {!isLogin && (
-            <input type="text" placeholder="Full Name" value={fullName} onChange={e => setFullName(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" />
-          )}
-          <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary" required />
-          {!isLogin && (
-            <div className="relative">
-              <input type="text" placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border pr-10 ${usernameAvailable === false && username.length > 0 ? 'border-danger' : usernameAvailable === true ? 'border-success' : 'border-border-light focus:border-primary'}`} required />
-              <div className="absolute right-3 top-3">
-                {checkingUsername && <FiLoader className="animate-spin text-text-muted" />}
-                {!checkingUsername && usernameAvailable === true && <FiCheck className="text-success" />}
-                {!checkingUsername && usernameAvailable === false && username.length > 0 && <FiX className="text-danger" />}
-              </div>
+            <div>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Full Name</label>
+              <input type="text" placeholder="John Doe" value={fullName} onChange={e => setFullName(e.target.value)}
+                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-[16px] px-4 py-3 h-11 outline-none focus:ring-2 ring-[var(--color-primary-action)] text-[var(--color-text-primary)]" />
             </div>
           )}
-          <div className="relative">
-            <input type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border border-border-light focus:border-primary pr-10" required />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-text-muted hover:text-primary">{showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
+          <div>
+            <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Email</label>
+            <input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)}
+              className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-[16px] px-4 py-3 h-11 outline-none focus:ring-2 ring-[var(--color-primary-action)] text-[var(--color-text-primary)]" required />
           </div>
           {!isLogin && (
-            <div className="relative">
-              <input type={showConfirm ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className={`w-full bg-bg-input rounded-xl px-4 py-3 outline-none text-primary border pr-10 ${confirmPassword && password !== confirmPassword ? 'border-danger' : confirmPassword && password === confirmPassword ? 'border-success' : 'border-border-light focus:border-primary'}`} required />
-              <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-3 text-text-muted hover:text-primary">{showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}</button>
+            <div>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Username <span className="text-xs">(helps friends find you)</span></label>
+              <div className="relative">
+                <input type="text" placeholder="john_doe" value={username} onChange={e => setUsername(e.target.value)}
+                  className={`w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-[16px] px-4 py-3 h-11 outline-none focus:ring-2 pr-10 ${
+                    usernameAvailable === false && username.length > 0 ? 'ring-2 ring-red-500' : ''
+                  } ${usernameAvailable === true ? 'ring-2 ring-green-500' : ''}`} required />
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  {checkingUsername && <FiLoader className="animate-spin text-gray-400" />}
+                  {!checkingUsername && usernameAvailable === true && <FiCheck className="text-green-500" />}
+                  {!checkingUsername && usernameAvailable === false && username.length > 0 && <FiX className="text-red-500" />}
+                </div>
+              </div>
+              {usernameAvailable === false && username.length > 0 && <p className="text-red-500 text-xs mt-1">Username is already taken</p>}
+              {usernameAvailable === true && <p className="text-green-500 text-xs mt-1">Username is available</p>}
             </div>
           )}
-          <button type="submit" disabled={loading} className="w-full bg-primary text-primary py-3 rounded-full font-semibold hover:bg-primary-dark transition disabled:opacity-50 flex items-center justify-center gap-2">
+          <div>
+            <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Password</label>
+            <div className="relative">
+              <input type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)}
+                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-[16px] px-4 py-3 h-11 outline-none focus:ring-2 ring-[var(--color-primary-action)] pr-10" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
+          </div>
+          {!isLogin && (
+            <div>
+              <label className="block text-sm text-[var(--color-text-secondary)] mb-1">Confirm Password</label>
+              <div className="relative">
+                <input type={showConfirm ? 'text' : 'password'} placeholder="••••••••" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                  className={`w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-[16px] px-4 py-3 h-11 outline-none focus:ring-2 pr-10 ${
+                    confirmPassword && password !== confirmPassword ? 'ring-2 ring-red-500' : ''
+                  } ${confirmPassword && password === confirmPassword ? 'ring-2 ring-green-500' : ''}`} required />
+                <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                </button>
+              </div>
+              {confirmPassword && password !== confirmPassword && <p className="text-red-500 text-xs mt-1">Passwords do not match</p>}
+              {confirmPassword && password === confirmPassword && <p className="text-green-500 text-xs mt-1">Passwords match</p>}
+            </div>
+          )}
+          <button type="submit" disabled={loading}
+            className="w-full bg-[var(--color-primary)] hover:bg-[#1E293B] text-white font-semibold py-3 rounded-[16px] transition-colors duration-200 disabled:opacity-50 flex items-center justify-center gap-2">
             {loading && <FiLoader className="animate-spin" />}
             {isLogin ? (loading ? 'Signing in...' : 'Sign In') : (loading ? 'Creating Account...' : 'Create Account')}
           </button>
         </form>
-        <p className="text-text-secondary text-center mt-4 text-sm">
+        <p className="text-[var(--color-text-secondary)] text-center mt-6">
           {isLogin ? "Don't have an account? " : "Already have an account? "}
-          <button type="button" onClick={() => { setIsLogin(!isLogin); setMessage(''); setUsernameAvailable(null); }} className="text-primary font-medium hover:underline">{isLogin ? 'Sign Up' : 'Sign In'}</button>
+          <button type="button" onClick={() => { setIsLogin(!isLogin); setMessage(''); setUsernameAvailable(null); }}
+            className="text-[var(--color-primary-action)] font-medium hover:underline">
+            {isLogin ? 'Sign Up' : 'Sign In'}
+          </button>
         </p>
-        {isLogin && <p className="text-center mt-2"><Link to="/forgot-password" className="text-xs text-primary hover:underline">Forgot Password?</Link></p>}
       </div>
-      <BottomNav />
     </div>
   );
 };
-  <BottomNav />
 export default LoginPage;

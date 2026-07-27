@@ -1,107 +1,71 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* ===== UpDown Design System v3.0 ===== */
 :root {
-  --bg-main: #F7F9FC; --bg-surface: #FFFFFF; --bg-sidebar: #F8FAFC; --bg-header: #FFFFFF;
-  --bg-input: #F1F5F9; --text-primary: #111827; --text-secondary: #6B7280; --text-muted: #9CA3AF;
-  --border-light: #E8EDF5; --border-medium: #D1D5DB;
-  --primary: #0F172A; --primary-dark: #1E293B; --primary-light: #E2E8F0;
-  --success: #22C55E; --warning: #F59E0B; --danger: #EF4444;
-  --radius-card: 18px; --radius-btn: 14px; --radius-input: 16px;
-  --shadow-1: 0 1px 3px rgba(15,23,42,.04); --shadow-2: 0 4px 6px -1px rgba(15,23,42,.05), 0 2px 4px -2px rgba(15,23,42,.05);
-  --transition-base: 200ms cubic-bezier(.4,0,.2,1);
+  /* Brand Colors */
+  --color-primary: #0F172A;
+  --color-primary-action: #2563EB;
+  --color-success: #22C55E;
+  --color-danger: #EF4444;
+  --color-warning: #F59E0B;
+  --color-background: #F7F9FC;
+  --color-surface: #FFFFFF;
+  --color-border: #E8EDF5;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-1: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-2: 0 4px 6px rgba(0,0,0,0.04), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow-3: 0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.06);
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-size-display: 32px;
+  --font-size-heading: 24px;
+  --font-size-subheading: 18px;
+  --font-size-body: 16px;
+  --font-size-caption: 13px;
+  --font-size-small: 12px;
+
+  /* Animation */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
 }
+
+/* Dark mode variables */
 .dark {
-  --bg-main: #0B1220; --bg-surface: #111827; --bg-sidebar: #1B2433; --bg-header: #0B1220;
-  --bg-input: #1B2433; --text-primary: #F8FAFC; --text-secondary: #94A3B8; --text-muted: #64748B;
-  --border-light: #253044; --border-medium: #475569;
-  --primary: #1E293B; --primary-dark: #334155;
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-border: #334155;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
 }
+
 body {
-  background: var(--bg-main); color: var(--text-primary);
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  -webkit-font-smoothing: antialiased; transition: background var(--transition-base), color var(--transition-base);
-}
-.bg-chat-bg { background: var(--bg-main) !important }
-.bg-dark-blue { background: var(--bg-header) !important; border-bottom: 1px solid var(--border-light) !important }
-.bg-sidebar-bg { background: var(--bg-sidebar) !important }
-.bg-surface { background: var(--bg-surface) !important }
-.bg-bg-input { background: var(--bg-input) !important }
-.bg-gray-700 { background: var(--bg-surface) !important }
-.bg-gray-800 { background: var(--bg-input) !important }
-.border-gray-700, .border-border-light { border-color: var(--border-light) !important }
-.text-gray-400, .text-text-secondary { color: var(--text-secondary) !important }
-.text-gray-500, .text-text-muted { color: var(--text-muted) !important }
-.text-white, .text-gray-100 { color: var(--text-primary) !important }
-.text-primary { color: var(--primary) !important }
-.text-accent { color: var(--primary) !important }
-.bg-primary { background: var(--primary) !important; color: #fff !important }
-.bg-accent { background: var(--primary) !important; color: #fff !important }
-.hover\:bg-primary-dark:hover { background: var(--primary-dark) !important }
-.hover\:bg-accent-hover:hover { background: var(--primary-dark) !important }
-.message-sent { background: var(--primary) !important; color: #fff !important }
-.message-received { background: var(--bg-surface) !important; color: var(--text-primary) !important; border: 1px solid var(--border-light) !important }
-.online-dot {
-  position: absolute; bottom: 0; right: 0; width: 10px; height: 10px;
-  background: var(--success); border-radius: 50%; border: 2px solid var(--bg-sidebar);
-  box-shadow: 0 0 0 2px var(--bg-sidebar); animation: pulse-dot 2s infinite;
-}
-@keyframes pulse-dot { 0%,100%{ transform: scale(1); opacity: 1 } 50%{ transform: scale(1.2); opacity: .8 } }
-.text-success { color: var(--success) !important }
-.bg-success { background: var(--success) !important; color: #fff !important }
-.text-danger { color: var(--danger) !important }
-.bg-danger { background: var(--danger) !important; color: #fff !important }
-.animate-fade-in { animation: fadeIn var(--transition-base) ease-out }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
-::-webkit-scrollbar { width: 4px }
-::-webkit-scrollbar-track { background: transparent }
-::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 2px }
-.pb-safe-area { padding-bottom: env(safe-area-inset-bottom, 0) }
-
-/* ===== Message Bubbles ===== */
-.message-bubble {
-  padding: 10px 14px;
-  border-radius: 20px;
-  position: relative;
-  word-wrap: break-word;
-  font-size: 14px;
-  line-height: 1.5;
-  max-width: 80%;
-  transition: all 0.2s ease;
-}
-
-/* Sent bubble */
-.message-sent {
-  background-color: var(--accent);
-  color: var(--btn-primary-text);
-  border-bottom-right-radius: 6px;
-  margin-left: auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-/* Received bubble */
-.message-received {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-bottom-left-radius: 6px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
-/* Light mode – increase received bubble contrast */
-.light .message-received {
-  background-color: #ffffff;
-  border: 1.5px solid #d1d5db;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-/* Light mode – sent bubble stays dark indigo on white text */
-.light .message-sent {
-  background-color: #6366f1;  /* indigo */
-  color: white;
-}
-
-/* Hover effect */
-.message-bubble:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-family: var(--font-family);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
 }

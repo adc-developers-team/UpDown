@@ -17,8 +17,8 @@ import BottomNav from '../components/BottomNav';
 const getLastSeenText = (d) => {
   if (!d) return 'Last seen long ago';
   const date = new Date(d), now = new Date();
-  const diffSec = Math.floor((now - date) / 1000);
-  if (diffSec < 60) return 'Last seen just now';
+
+
   const diffMin = Math.floor(diffSec / 60);
   if (diffMin < 60) return `Last seen ${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
